@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg12"
+   width="1365.3333"
+   height="1024"
+   viewBox="0 0 1365.3333 1024"
+   sodipodi:docname="splash.pi-base.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   inkscape:export-filename="splash.pi-base.png"
+   inkscape:export-xdpi="72"
+   inkscape:export-ydpi="72"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs16">
+    <rect
+       x="-35.949368"
+       y="-41.191982"
+       width="1088.9663"
+       height="193.97681"
+       id="rect7318-8" />
+    <rect
+       x="-35.949368"
+       y="-41.191982"
+       width="1088.9663"
+       height="193.97681"
+       id="rect7318" />
+    <rect
+       x="-35.949368"
+       y="-41.191982"
+       width="1088.9663"
+       height="193.97681"
+       id="rect7318-9" />
+  </defs>
+  <sodipodi:namedview
+     id="namedview14"
+     pagecolor="#000000"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="1.3037281"
+     inkscape:cx="678.43899"
+     inkscape:cy="509.69216"
+     inkscape:window-width="2754"
+     inkscape:window-height="1867"
+     inkscape:window-x="2732"
+     inkscape:window-y="246"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="g18" />
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="Image"
+     id="g18"
+     style="display:inline">
+    <rect
+       style="display:inline;fill:#000000;fill-opacity:0;stroke-width:0;stroke-linejoin:round"
+       id="rect251"
+       width="946"
+       height="261"
+       x="271.66663"
+       y="381.5"
+       inkscape:highlight-color="#ffffff" />
+    <g
+       id="g405"
+       transform="translate(125.89439)"
+       inkscape:export-filename="..\pkg\etc\boot.jpg"
+       inkscape:export-xdpi="72"
+       inkscape:export-ydpi="72">
+      <text
+         xml:space="preserve"
+         transform="matrix(0.9642724,0,0,1.0741396,324.14756,419.72302)"
+         id="text7316"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:120px;line-height:1.25;font-family:'Gravitate BRK';-inkscape-font-specification:'Gravitate BRK, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;white-space:pre;shape-inside:url(#rect7318);display:inline;fill:#ff7f26;fill-opacity:1;stroke:none"><tspan
+           x="-35.949219"
+           y="72.632123"
+           id="tspan448">PI-BASE</tspan></text>
+      <text
+         xml:space="preserve"
+         transform="matrix(0.9642724,0,-0.62015479,-1.0741396,377.37019,592.46055)"
+         id="text7316-2"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:120px;line-height:1.25;font-family:'Gravitate Segments BRK';-inkscape-font-specification:'Gravitate Segments BRK, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;white-space:pre;shape-inside:url(#rect7318-8);display:inline;fill:#923800;fill-opacity:1;stroke:none"><tspan
+           x="-35.949219"
+           y="72.632123"
+           id="tspan450">PI-BASE</tspan></text>
+    </g>
+  </g>
+</svg>
