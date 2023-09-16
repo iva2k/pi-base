@@ -5,7 +5,7 @@ Framework for creating Raspberry Pi appliances.
 PI-BASE is a framework for quick development of projects for Raspberry Pi running Linux (Raspberry Pi OS, previously called Raspbian), e.g. for IoT, appliances, manufacturing test stations, etc.
 
 <!--ts-->
-- [PI-BASE](#pi-base)
+- [pi-base](#pi-base)
   - [Deployment](#deployment)
     - [Assemble Raspberry Pi](#assemble-raspberry-pi)
     - [Create Mini-SD Card or M2 SSD with Boot software image](#create-mini-sd-card-or-m2-ssd-with-boot-software-image)
@@ -36,7 +36,7 @@ PI-BASE is a framework for quick development of projects for Raspberry Pi runnin
   - [TODOs](#todos)
   - [CREDITS](#credits)
 
-<!-- Added by: iva2k, at: Thu, Apr 20, 2023  2:47:35 PM -->
+<!-- Added by: iva2k, at: Sat, Sep 16, 2023 12:22:43 PM -->
 
 <!--te-->
 
