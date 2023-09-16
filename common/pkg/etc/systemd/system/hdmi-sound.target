@@ -1,0 +1,9 @@
+[Unit]
+Description=Sound via HDMI
+RefuseManualStart=yes
+
+
+[Install]
+Also=hdmi-sound-rpi3.target
+Also=hdmi-sound-rpi4-c1.target
+Also=hdmi-sound-rpi4-c2.target

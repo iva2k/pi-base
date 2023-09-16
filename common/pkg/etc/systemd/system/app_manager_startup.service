@@ -1,0 +1,67 @@
+[Unit]
+Description=App Manager Startup
+
+# To see the loading chain, `systemd-analyze critical-chain app_manager_startup.service`
+
+# VT console Requirements:
+# fbi (/dev/fb0 needed):
+
+
+# Systemd targets / service / device load sequence:
+#   local-fs.target # Too early: no /dev/fb0, no HDMI audio sink. Analog audio sink works.
+#   sysinit.target  # Too early: no /dev/fb0, no HDMI audio sink
+#   sockets.target
+#   basic.target
+#   alsa-restore.service
+#   getty.target    # Too early: no /dev/fb0, no HDMI audio sink
+#   systemd-logind.service
+#   network.target
+#   network-online.target
+#   sound.target
+#   systemd-user-sessions.service # Too early: No HDMI audio sink, splashscreen shows couple seconds later.
+#   plymouth-quit-wait.service
+#     autovt@tty6.service, getty@.service
+#   sys-devices-platform-soc-3f902000.hdmi-sound-card1-controlC1.device
+#   ? plymouth-quit.service
+#   # display-manager.service
+#   # graphical-session-pre.target
+#   # graphical-session.target
+#   default.target:
+#     multi-user.target # /dev/fb0, HDMI audio work
+#     graphical.target  # /dev/fb0, HDMI audio work
+
+# For HDMI audio to work (play app boot sound), it needs hdmi-sound:
+After=hdmi-sound.target network-online.target
+Requires=hdmi-sound.target network-online.target
+
+[Service]
+Environment=FRAMEBUFFER=/dev/fb0
+Environment=VT_SPLASH=1
+Environment=VT_MANAGER=2
+
+#? Type=notify ;# Use `systemd-notify READY=1` in script
+# See https://www.freedesktop.org/software/systemd/man/systemd.service.html
+# See https://unix.stackexchange.com/a/544863/458623
+
+# Based on https://unix.stackexchange.com/questions/516749/how-best-to-start-my-systemd-service-to-run-multiple-apps
+# Similar to rc-local.service <https://github.com/systemd/systemd/blob/main/units/rc-local.service.in>
+Type=forking
+TimeoutSec=0
+KillMode=mixed
+RemainAfterExit=yes
+GuessMainPID=no
+
+ExecStart=/usr/bin/bash -c "chvt 2 && /usr/local/bin/app_manager_startup start"
+# TODO: (soon) Consider refactoring manager.py into `supervisorctl`, splash sound/image to a separate oneshot service. Consider using `systemd-run -t N ` instead of `openvt`
+
+# /usr/bin/fbi in app_manager_startup needs to have TTY (to manage FB under VT)
+StandardInput=tty
+StandardOutput=journal+console
+TTYPath=/dev/tty2
+User=pi
+Group=pi
+#Restart=on-failure
+Restart=on-abort
+
+[Install]
+WantedBy=default.target

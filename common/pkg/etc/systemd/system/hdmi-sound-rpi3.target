@@ -1,0 +1,15 @@
+[Unit]
+Description=Sound via HDMI on RPI3
+RefuseManualStart=yes
+Wants=hdmi-sound.target
+Before=hdmi-sound.target
+
+After=alsa-restore.service sound.target 
+Requires=alsa-restore.service sound.target 
+
+After=sys-devices-platform-soc-3f902000.hdmi-sound-card1-controlC1.device
+Wants=sys-devices-platform-soc-3f902000.hdmi-sound-card1-controlC1.device
+ConditionPathExists=|/sys/devices/platform/soc/fef05700.hdmi/sound/card2/controlC2/
+
+[Install]
+WantedBy=hdmi-sound.target

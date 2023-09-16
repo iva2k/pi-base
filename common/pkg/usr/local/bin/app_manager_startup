@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+
+# based on https://raspberry-projects.com/pi/pi-operating-systems/raspbian/custom-boot-up-screen
+
+# Note: When editing this script, make sure no output is sent to STDOUT - it will show on VT1. 
+# (Only if absolutely necessary, e.g. catastrophic failure)
+# Send all output to STDERR, i.e.  echo "..." >&2
+
+### BEGIN INIT INFO
+# Provides:          app_manager_startup
+# Required-Start:
+# Required-Stop:
+# Should-Start:
+# Default-Start:
+# Default-Stop:
+# Short-Description: Show custom splashscreen
+# Description:       Show custom splashscreen
+### END INIT INFO
+
+LT="app_manager_startup"
+
+base="/home/pi"
+BOOTIMG=/etc/boot.jpg
+#BOOTWAV=/etc/splash/boot.wav
+BOOTWAV=/etc/boot.wav
+audio_delay=0 ;# seconds
+duration=10   ;# seconds
+blend=3000    ;# milliseconds
+
+## TODO: (when needed) Implement VT number from conf.yaml
+fb=${FRAMEBUFFER:-"/dev/fb0"}
+vt_splash=${VT_SPLASH:-1}
+vt_manager=${VT_MANAGER:-"$((vt_splash+1))"}
+
+do_start () {
+  echo "START do_start() " >&2
+  if [ -f $BOOTIMG ]; then
+    echo "  + Loading image $BOOTIMG to $fb " >&2
+
+    # `fbi -T 1 ...` doesn't work under systemd UNLESS "StandardInput=tty, StandardOutput=tty" are set in the Unit file.
+    chvt "$vt_splash"
+    sudo /usr/bin/fbi -d "$fb" -T "$vt_splash" -t $duration --once --noverbose --blend $blend $BOOTIMG >&2 &
+    chvt "$vt_splash"
+
+    echo "  + DONE Loading image $BOOTIMG to $fb " >&2
+  fi
+  if [ -f $BOOTWAV ]; then
+    echo "  + Delay $audio_delay before starting sound " >&2
+    chvt "$vt_splash"
+    /bin/sleep $audio_delay
+    chvt "$vt_splash"
+    echo "  + DONE Delay $audio_delay before starting sound " >&2
+
+    echo "  + Starting sound $BOOTWAV " >&2
+    # Play to both audio sinks
+    /usr/bin/aplay -D sysdefault:0 $BOOTWAV >&2 &
+    /usr/bin/aplay -D sysdefault:1 $BOOTWAV >&2 &
+    echo "  + DONE Starting sound $BOOTWAV " >&2
+    chvt "$vt_splash"
+  fi
+
+  chvt "$vt_splash"
+  echo "  + Delay $duration after image / sound start " >&2
+  /bin/sleep $duration
+  echo "  + DONE Delay $duration after image / sound start " >&2
+  chvt "$vt_splash"
+
+  if [ -f "$base/modules/manager.py" ]; then
+    app="$base/modules/manager.py"
+    echo "  + Starting '$app'..." >&2
+    chvt "$vt_manager"
+    # Use python with -u option to make stdout/stderr unbuffered
+    cmd="sudo /usr/bin/openvt -c $vt_manager -s -f -- /usr/bin/python -u \"$app\" --vt $vt_manager"
+    echo "  + Start cmd=\"$cmd\" " >&2
+    /usr/bin/nohup /usr/bin/bash -c "$cmd" >&2 &
+    chvt "$vt_manager"
+    # /usr/bin/bash -c "$cmd" >&2 &
+    echo "  + DONE Starting \"$app\" " >&2
+    #? | /usr/bin/systemd-cat -t manager.py
+
+    # Not sleeping here jams VT switching and leaves the manager and it's child app inaccessible (though running).
+    # `nohup` does not seem to help.
+    # Give it plenty enough time for the manager to start and finish.
+    # TODO: (soon) Consider using -w option in `openvt` command so we will wait for the manager to finish.
+    #       However, for daemon manager it won't work.
+    delay=30
+    echo "  + Delay $delay after manager.py started " >&2
+    /bin/sleep "$delay"
+    echo "  + DONE Delay $delay after manager.py started " >&2
+
+    # TODO: (when needed) systemd-notify READY=1 ; # .service should have 'Type=notify'
+
+  else
+    # TODO: (when needed) Recover by making VT2 a console (bash)?
+    #? sudo /bin/openvt -c 2 -f "printf '\033[1;1H\033[2J (tput cap 1 1; tput ed ~ tput clear) Error: file $base/modules/manager.py not found.' && /usr/bin/bash"
+    echo "Error: File '$base/modules/manager.py' not found. USER=$USER" >&2
+  fi
+
+  echo "DONE do_start() " >&2
+  exit 0
+}
+
+# Redirect stderr to systemd log (journal)
+exec 2> >(systemd-cat -t $LT -p info)
+
+# Echo to stderr (will show up in systemd jourlnal)
+echo "$0 $*" >&2
+echo "  + USER=$USER FRAMEBUFFER=$FRAMEBUFFER VT_SPLASH=$VT_SPLASH VT_MANAGER=$VT_MANAGER " >&2
+
+case "$1" in
+  start|"")
+    do_start
+    ;;
+  restart|reload|force-reload)
+    echo "Error: argument '$1' not supported" >&2
+    exit 3
+    ;;
+  stop)
+    # No-op
+    exit 0
+    ;;
+  status)
+    exit 0
+    ;;
+  *)
+    echo "Usage: $0 [start|stop]" >&2
+    exit 3
+    ;;
+esac

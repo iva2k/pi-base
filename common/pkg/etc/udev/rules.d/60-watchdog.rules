@@ -1,0 +1,1 @@
+KERNEL=="watchdog", OWNER="root", GROUP="watchdog", MODE="0660"
