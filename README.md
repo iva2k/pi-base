@@ -6,4 +6,4 @@ PI-BASE is a framework for quick development of projects for Raspberry Pi runnin
 
 ## Documentation
 
-[PI-BASE README](pi-base/README.md)
+[PI-BASE README](pi_base/README.md)

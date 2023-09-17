@@ -130,19 +130,22 @@ For details on creating new Service Account and setting up `*_secrets.json` key 
 
 Either clone this git repo directly to RPi, or enable SSH on the RPi and then upload all files to it over SCP/SSH from Windows/Linux (if git is installed on Windows, it has scp implementation) using `upload.sh` / `upload.cmd`, then SSH to RPi and run `install.sh` from one of build subfolders.
 
-New Projects should be created in sub-folders, which should contain:
+New Projects should be created in sub-folders named `<project>` in the repo root folder. Project sub-folder should contain:
 
-- Builder configuration files `conf.yaml`.
-- `pkg` folder with any files to be copied to RPi root file system during install. Add an empty `.gitkeep` file if there are no files/folders to copy, as missing `pkg` sub-folder will prevent `make.py` from working properly # TODO: fix hard dependency.
+- Builder configuration file `conf.yaml`.
+- `pkg` folder with folders tree containg any files to be copied to RPi root file system during install. Add an empty `.gitkeep` file if there are no files/folders to copy, as missing `pkg` sub-folder will prevent `make.py` from working properly # TODO: fix hard dependency.
 - `install.sh` - should set up environment variables and invoke common_install.sh for majority of installation, and perform any custom steps.
 - `requirements.txt` - contains list of python modules to be installed
-- `<project>/py` - main file to be executed on RPI
+- `<project>.py` - main file to be executed on RPI
+- Any other files specific to the project (every file that needs to be copied to the target should be added to the `conf.yaml`)
 
-Non-Project folders:
+pi-base repo contains the following files and folders:
 
-- common - Various Python modules shared between all projects, common installation files.
-- pictures - photos and screenshots.
-- graphics - various graphics design files.
+- pi-base/lib - Various Python modules used by pi-base and available for use in the projects.
+- pi-base/common - Various files shared between all projects, common installation files.
+- pi-base/common/graphics - various graphics design files provided as templates for the projects.
+- pi-base/pictures - photos and screenshots.
+- pi-base/scripts - various utility scripts.
 - blank - A blank starter project with a template for creating new projects ('blank' build type is excluded in make.py).
 
 ### App Layers
