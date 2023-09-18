@@ -2,7 +2,7 @@
 
 Framework for creating Raspberry Pi appliances.
 
-PI-BASE is a framework for quick development of projects for Raspberry Pi running Linux (Raspberry Pi OS, previously called Raspbian), e.g. for IoT, appliances, manufacturing test stations, etc.
+PI-BASE is a framework for quick development of appliance projects using Raspberry Pi running Linux (Raspberry Pi OS, previously called Raspbian), e.g. for IoT, home automation, custom appliances, manufacturing test stations, etc.
 
 <!--ts-->
 - [pi-base](#pi-base)
@@ -17,8 +17,8 @@ PI-BASE is a framework for quick development of projects for Raspberry Pi runnin
     - [App Layers](#app-layers)
     - [Remote Debugging](#remote-debugging)
     - [Toolchain](#toolchain)
-      - [`make.py` \[`<project>`\]](#makepy-project)
-      - [`upload.sh` / `upload.cmd`](#uploadsh--uploadcmd)
+      - [`pi_base/make.py` \[`<project>`\]](#pi_basemakepy-project)
+      - [`pi_base/upload.sh` / `pi_base/upload.cmd`](#pi_baseuploadsh--pi_baseuploadcmd)
       - [`<project>/install.sh`](#projectinstallsh)
       - [`common/common_install.sh`](#commoncommon_installsh)
       - [`common/common_requirements.txt`](#commoncommon_requirementstxt)
@@ -90,25 +90,25 @@ TODO: (when needed) Add a 'installer' user (sudoer) to install.sh to differ from
 
 ### Build the RPI App
 
-Run `make.py` script on the host computer.
+Run `pi_base/make.py` script on the host computer.
 
 ### Upload the App to RPI
 
 Boot RPi with the created Mini-SD Card or the M2 SSD.
 
-Run `upload.sh` script from host computer (run `upload.cmd` script on Windows without bash. Note: `upload.cmd` is not maintained and lacks some latest features of `upload.sh`).
+Run `pi_base/upload.sh` script from host computer (run `pi_base/upload.cmd` script on Windows without bash. Note: `upload.cmd` is not maintained and lacks some latest features of `pi_base/upload.sh`).
 
 ### Install the App on RPI
 
 Login either in RPi console or via SSH as [ssh://pi@RPI.local](ssh://pi@RPI.local). If you entered a different hostname in the Raspberry Pi Imager, use that hostname.
 
-Run `/home/pi/pi-base/build/<site_id>/<project>/install.sh` (site_id is the short name of the Deployment Site it is built for by `make.py`). It may take some time to download and install all the packages on the first run. Subsequent runs (e.g. while developing) will be faster.
+Run `/home/pi/pi-base/build/<site_id>/<project>/install.sh` (site_id is the short name of the Deployment Site it is built for by `pi_base/make.py`). It may take some time to download and install all the packages on the first run. Subsequent runs (e.g. while developing) will be faster.
 
 RPi is ready now. Power down the RPi and make necessary connections to the system (per the instructions in each project).
 
 ## Data Backend
 
-Test station backend connection currently uses `common/gd_service.py` to store backend files on GoogleDrive.
+As a backend, pi-base currently uses `common/gd_service.py` to store backend files on GoogleDrive.
 
 The connection details are determined by `*_secrets.json` file which is never commited to the git repo, but instead distributed by other secure means. It is included into build and also given to the tester app by `<project>/conf.yaml` files.
 
@@ -128,12 +128,12 @@ For details on creating new Service Account and setting up `*_secrets.json` key 
 
 ## Development
 
-Either clone this git repo directly to RPi, or enable SSH on the RPi and then upload all files to it over SCP/SSH from Windows/Linux (if git is installed on Windows, it has scp implementation) using `upload.sh` / `upload.cmd`, then SSH to RPi and run `install.sh` from one of build subfolders.
+Either clone this git repo directly to RPi, or enable SSH on the RPi and then upload all files to it over SCP/SSH from Windows/Linux (if git is installed on Windows, it has scp implementation) using `pi_base/upload.sh` / `pi_base/upload.cmd`, then SSH to RPi and run `install.sh` from one of build subfolders.
 
 New Projects should be created in sub-folders named `<project>` in the repo root folder. Project sub-folder should contain:
 
 - Builder configuration file `conf.yaml`.
-- `pkg` folder with folders tree containg any files to be copied to RPi root file system during install. Add an empty `.gitkeep` file if there are no files/folders to copy, as missing `pkg` sub-folder will prevent `make.py` from working properly # TODO: fix hard dependency.
+- `pkg` folder with folders tree containg any files to be copied to RPi root file system during install. Add an empty `.gitkeep` file if there are no files/folders to copy, as missing `pkg` sub-folder will prevent `pi_base/make.py` from working properly # TODO: (now) fix hard dependency.
 - `install.sh` - should set up environment variables and invoke common_install.sh for majority of installation, and perform any custom steps.
 - `requirements.txt` - contains list of python modules to be installed
 - `<project>.py` - main file to be executed on RPI
@@ -146,7 +146,7 @@ pi-base repo contains the following files and folders:
 - pi-base/common/graphics - various graphics design files provided as templates for the projects.
 - pi-base/pictures - photos and screenshots.
 - pi-base/scripts - various utility scripts.
-- blank - A blank starter project with a template for creating new projects ('blank' build type is excluded in make.py).
+- blank - A blank starter project with a template for creating new projects ('blank' build type is excluded in `pi_base/make.py`).
 
 ### App Layers
 
@@ -159,7 +159,7 @@ The app on Raspberry Pi consists of few layers:
 
 Raspbery Pi on boot will execute the chain of layers to load the app, which takes full control of Raspberry Pi VT1.
 
-It is possible to enable Raspberry Pi GUI (change INST_ENABLE_GUI setting in project's `install.sh`), and use VT7 for Graphical Interface. VT1 will still be the main app console and VT2/VT4 will be additional consoles for manager and test history.
+It is possible to enable Raspberry Pi GUI (change INST_ENABLE_GUI setting in project's `install.sh`), and use VT7 for Graphical Interface. VT1 will still be the main app console and VT2/VT4 will be additional consoles for manager and appliance history.
 
 It is possible to run each individual layer, e.g. for debugging or verification:
 
@@ -170,9 +170,9 @@ It is possible to run each individual layer, e.g. for debugging or verification:
 
     Some of the layers can be debugged on a workstation (PC or Mac), without RPi image deployed.
 
-- App itself: `python <app type>/<app type>.py` e.g. `python gen2-eolt/gen2-eolt.py`
+- App itself: `python <app type>/<app type>.py` e.g. `python blank/blank.py`
 
-Note that `modpath.py` (which main goal is to locate all app resources deployed on the target) is currently crudely tries to be also helpful on the workstation, so development is possible. But it means that some files have to be placed in reachable places before the local app will work correctly. To do so invoke `python make.py --type all` to create build directories, and also inspect modpath.py for the hard-coded helpers that may need adjustment.
+Note that `modpath.py` (which main goal is to locate all app resources deployed on the target) is currently crudely tries to be also helpful on the workstation, so development is possible. But it means that some files have to be placed in reachable places before the local app will work correctly. To do so invoke `python pi_base/make.py --type all` to create build directories, and also inspect modpath.py for the hard-coded helpers that may need adjustment.
 
 ### Remote Debugging
 
@@ -188,11 +188,11 @@ To exit `conspy`, quickly press `[Esc]` key 3 times.
 
 Overview:
 
- > `make.py` -> `upload.sh` -> on target: `build/<site_id>/<project>/install.sh`
+ > `pi_base/make.py` -> `pi_base/upload.sh` -> on target: `build/<site_id>/<project>/install.sh`
 
-#### `make.py` [`<project>`]
+#### `pi_base/make.py` [`<project>`]
 
-(On Windows should run command: `python make.py [--site <site_id> --type <project>]`)
+(On Windows should run command: `python pi_base/make.py [--site <site_id> --type <project>]`)
 
 Python script that makes / prepares selected project in its staging folder (which is `./build/<site_id>/<project>/`).
 
@@ -213,9 +213,9 @@ It performs the following steps:
      5. `<project>/requirements.txt`
      6. `<project>/pkg/`
 
-TODO: (soon) Add command-line option to run upload.sh
+TODO: (soon) Add command-line option to run `pi_base/upload.sh`
 
-#### `upload.sh` / `upload.cmd`
+#### `pi_base/upload.sh` / `pi_base/upload.cmd`
 
 Script for the host computer that copies whole pi-base folder (or selected build site subfolder) from the host computer to the target RPi device over SSH.
 
@@ -237,7 +237,7 @@ It should call common_install.sh file for all common parts to be installed.
 
 #### `common/common_install.sh`
 
-Script that is copied over to `build/<site_id>/<project>/common_install.sh` by make.py.
+Script that is copied over to `build/<site_id>/<project>/common_install.sh` by `pi_base/make.py`.
 
 It installs common parts, enables app_manager_startup.service, which is run upon RPi boot and executes `<project>/modules/manager.py`.
 
@@ -333,7 +333,7 @@ We use VT1 for the main app (whether it is slideshow/video carousel or text-base
 
 As part of the common_install.sh, VT1 and VT2 are removed from the normal system use, by disabling login on these VTs, which is done by masking getty@ttyN and autovt@ttyN systemd services for each of the VTs. common_install.sh uses INST_DISABLE_VTS environment variable (space-separated list of numbers) set by the app's install.sh, so the app's install.sh can decide which actual VTs to remove from system use by setting that variable. If app's install.sh does not set INST_DISABLE_VTS, no VTs will be disabled by default.
 
-User of the system can still switch between VTs by Ctrl+Alt+F{n} keys on the keyboard. With VT1 used for the main app, VT2 showing the manager, the remaining VTs can be either assigned by the app to do some other features (could imagine showing device test log on e.g. VT3, list of all found BLE devices on VT4, etc.), or if the app installer leaves VTs enabled, they will have regular virtual terminals with logind/getty so user can (be instructed to) login and invoke normal Linux commands on the command line. VT7 can be given to the Graphical login / desktop GUI if so desired (be carefull with that, as X may decide to switch to its GUI and steal the display from VTx).
+User of the system can still switch between VTs by Ctrl+Alt+F{n} keys on the keyboard. With VT1 used for the main app, VT2 showing the manager, the remaining VTs can be either assigned by the app to do some other features (could imagine showing appliance events log on e.g. VT3, list of all found BLE devices on VT4, etc.), or if the app installer leaves VTs enabled, they will have regular virtual terminals with logind/getty so user can (be instructed to) login and invoke normal Linux commands on the command line. VT7 can be given to the Graphical login / desktop GUI if so desired (be carefull with that, as X may decide to switch to its GUI and steal the display from VTx).
 
 Note: Occasionally VT display stops updating and responding to Ctrl+Alt+F{n} keys, while SSH connection continues working and VT's can be accessed via `conspy`. One cause was noticed if a swap file is corrupted (error can be found is dmesg or /var/log/syslog). Do `sudo rm /var/swap && reboot`, the swap file will be recreated. Another fix is to shutdown and power off, then power on again (simple reboot does not seem to help).
 
