@@ -1,0 +1,18 @@
+{
+    "recommendations": [
+        "visualstudioexptteam.vscodeintellicode",
+        "njpwerner.autodocstring",
+        "donjayamanne.python-environment-manager",
+        "jithurjacob.nbpreviewer",
+        "ms-python.pylint",
+        "oderwat.indent-rainbow",
+        "atlassian.atlascode",
+        "ms-toolsai.jupyter",
+        "ms-vscode.makefile-tools",
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "gruntfuggly.todo-tree",
+        "redhat.vscode-yaml",
+        "yzane.markdown-pdf"
+    ]
+}
