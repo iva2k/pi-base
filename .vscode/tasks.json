@@ -1,0 +1,40 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Python Env",
+            "hide": true,
+            "type": "shell",
+            "command": "conda activate py3.9.4",
+            "windows": {
+                "command": "conda activate py3.9.4"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Pi BASE Build All & Upload",
+            "type": "shell",
+            "command": "conda activate py3.9.4 && '${config:python.pythonPath}\\python3' pi_base/make.py --site BASE --type all && pi_base/upload.sh --site BASE",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        }
+    ],
+    "inputs":[
+        {
+            "type": "promptString",
+            "id": "WinSerialPort",
+            "description": "Enter the Serial port to use.",
+            "default": "COM3",
+        },
+        {
+            "type": "promptString",
+            "id": "serialPort",
+            "description": "Enter the Serial port to use.",
+            "default": "/dev/ttyUSB0",
+        }
+    ],
+}
