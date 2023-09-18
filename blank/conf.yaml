@@ -1,0 +1,33 @@
+Info:
+    Name: 'Blank'
+    Type: blank
+    Version: '%s'
+    Settings:
+        debug: True
+        verbose: True
+    GoogleDrive:
+        secrets: 'auto' # Use value from sites DB, also auto-add to 'Files'
+Conf:
+    Server: false
+Modules:
+    - app_utils.py
+    - gd_service.py
+    - large.py
+    - large.txt
+    - loggr.py
+    - manager.py
+    - os_utils.py
+    - remoteiot.py
+    - tput.py
+    - winserial.py
+Files:
+    - { src: 'pi_base/modpath.py', dst: 'app/' }
+    - { src: 'pi_base/modpath.py', dst: 'modules/' }
+    - { src: 'secrets/remote_secrets.yaml', dst: 'app/' }
+    - { src: 'blank/blank.py', dst: 'app/' }
+    # - { src: 'pi_base/common/a.py', dst: 'modules/renamed.b.py' }
+    # - { src: 'secrets/sa_admin_client_secrets.json', dst: 'app/' }
+PostInstall:
+    DeleteFiles:
+        # - /home/pi/app/sa_admin_client_secrets.json
+        - /home/pi/app/remote_secrets.yaml
