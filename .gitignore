@@ -24,6 +24,7 @@ _assets
 # Generated Files
 
 # Key files
+/secrets
 secrets.zip
 *secrets.json
 *secrets.yaml
