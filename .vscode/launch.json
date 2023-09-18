@@ -1,0 +1,265 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+
+    {
+      "name": "Python: make BASE blank",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/make.py",
+      "args": [
+        "--site", "BASE",
+        "--type", "blank",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+
+    {
+      "name": "Python: blank/blank.py",
+      "type": "python",
+      "request": "launch",
+      "program": "blank/blank.py",
+      "args": [
+        "-D"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+
+    {
+      "name": "Python: pi_base/lib/large",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/large.py",
+      "args": [],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: pi_base/lib/tput",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/tput.py",
+      "args": [],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: pi_base/lib/app_utils",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/app_utils.py",
+      "args": [],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+
+    {
+      "name": "Python: Deployment Sites List",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/deploy_site.py",
+      "args": [
+        "-D",
+        "sites"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Deployment Sites Unique ID",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/deploy_site.py",
+      "args": [
+        "-D",
+        "unique",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Deployment Sites Add site",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/deploy_site.py",
+      "args": [
+        "-D",
+        "add",
+        "JAYBIL",
+        "Jaybil",
+        "sa_admin_client_secrets.json",
+        "--description", "Jaybil",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    {
+      "name": "Python: Remote Devices List",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/remoteiot.py",
+      "args": [
+        "-D",
+        "devices"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Remote Unique ID",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/remoteiot.py",
+      "args": [
+        "-D",
+        "unique",
+        // site_id, app_type, app_name:
+        "BASE", "blank", "Blank",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Remote Add this device (app_conf.yaml)",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/remoteiot.py",
+      "args": [
+        "-D",
+        "add_at_install",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Remote Add this device BASE blank",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/remoteiot.py",
+      "args": [
+        "-D",
+        "add",
+        // site_id, app_type, app_name:
+        "BASE", "blank", "Blank",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Remote Query if this device has remote control",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/remoteiot.py",
+      "args": [
+        "-D",
+        "query",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    {
+      "name": "Python: Printer Install",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/printer.py",
+      "args": [
+        "install"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: Printer Devices",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/printer.py",
+      "args": [
+        "devices"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Printer Printers",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/printer.py",
+      "args": [
+        "printers"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Printer Add - ZT411 CUPS",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/printer.py",
+      "args": [
+        "add",
+        "ZT411",
+        "usb//",
+        "drv:///sample.drv/zebra.ppd",
+        "-L", "Ilya's desk",
+        "-D", "Zebra label printer"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: Printer Add - ZT411 LPrint",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/printer.py",
+      "args": [
+        "add",
+        "ZT411",
+        "usb//",
+        "zpl_2inch-203dpi-tt",
+        "-L", "Ilya's desk",
+        "-D", "Zebra label printer"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: Printer Print - ZT411 PNG",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/printer.py",
+      "args": [
+        "print",
+        "ZT411",
+        "scripts/printer-test-label.png",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Printer Print - ZT411 PDF",
+      "type": "python",
+      "request": "launch",
+      "program": "pi_base/lib/printer.py",
+      "args": [
+        "print",
+        "ZT411",
+        "scripts/printer-test-label.pdf",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+
+  ]
+}
