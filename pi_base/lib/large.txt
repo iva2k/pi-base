@@ -1,0 +1,62 @@
+MMMMMMMMMM      MMMMMMMMM      MMMMMMMMM      MMMMMMMMM
+MM       MM    MM       MM    MM       MM    MM       MM
+MM       MM    MM       MM    MM             MM
+MM       MM    MM       MM    MM             MM
+MM       MM    MM       MM    MM             MM
+MM       MM    MM       MM     MMMMMMMMM      MMMMMMMMM
+MMMMMMMMMM     MMMMMMMMMMM             MM             MM
+MM             MM       MM             MM             MM
+MM             MM       MM             MM             MM
+MM             MM       MM    MM       MM    MM       MM
+MM             MM       MM     MMMMMMMMM      MMMMMMMMM
+# pass GREEN BLACK PASS
+MMMMMMMMMMM     MMMMMMMMM       MMMMMM       MM
+MM             MM       MM        MM         MM
+MM             MM       MM        MM         MM
+MM             MM       MM        MM         MM
+MM             MM       MM        MM         MM
+MM             MM       MM        MM         MM
+MMMMMMMM       MMMMMMMMMMM        MM         MM
+MM             MM       MM        MM         MM
+MM             MM       MM        MM         MM
+MM             MM       MM        MM         MM
+MM             MM       MM      MMMMMM       MMMMMMMMMMM
+# fail RED BLACK FAIL
+MMMMMMMMMM     MM       MM     MMMMMMMMM     MM        MM
+MM       MM    MM       MM    MM       MM     MM      MM
+MM       MM    MM       MM    MM               MM    MM
+MM       MM    MM       MM    MM                MM  MM
+MM       MM    MM       MM    MM                 MMMM
+MMMMMMMMMM     MM       MM     MMMMMMMMM          MM
+MM       MM    MM       MM             MM         MM
+MM       MM    MM       MM             MM         MM
+MM       MM    MM       MM             MM         MM
+MM       MM    MM       MM    MM       MM         MM
+MMMMMMMMMM      MMMMMMMMM      MMMMMMMMM          MM
+# busy WHITE BLACK BUSY
+ MMMMMMMMM        MMMMMM       MMMMMMMMM     MM       MM                    MMMMMMMMM     MM       MM
+MM       MM         MM        MM       MM    MMM      MM                   MM       MM    MMM      MM
+MM                  MM        MM             MM M     MM                   MM       MM    MM M     MM
+MM                  MM        MM             MM M     MM                   MM       MM    MM M     MM
+MM                  MM        MM             MM  M    MM                   MM       MM    MM  M    MM
+ MMMMMMMMM          MM        MM             MM   M   MM    MMMMMMMMMMMM   MM       MM    MM   M   MM
+         MM         MM        MM      MMM    MM    M  MM                   MM       MM    MM    M  MM
+         MM         MM        MM       MM    MM     M MM                   MM       MM    MM     M MM
+         MM         MM        MM       MM    MM     M MM                   MM       MM    MM     M MM
+MM       MM         MM        MM      MMM    MM      MMM                   MM       MM    MM      MMM
+ MMMMMMMMM        MMMMMM       MMMMMMM MM    MM       MM                    MMMMMMMMM     MM       MM
+# signon BLUE BLACK SIGNON
+MMMMMMMMMMM    MMMMMMMMMM     MMMMMMMMMM      MMMMMMMMM     MMMMMMMMMM     
+MM             MM       MM    MM       MM    MM       MM    MM       MM    
+MM             MM       MM    MM       MM    MM       MM    MM       MM    
+MM             MM       MM    MM       MM    MM       MM    MM       MM    
+MM             MM       MM    MM       MM    MM       MM    MM       MM    
+MMMMMMMM       MM       MM    MM       MM    MM       MM    MM       MM    
+MM             MMMMMMMMMM     MMMMMMMMMM     MM       MM    MMMMMMMMMM     
+MM             MM    MM       MM    MM       MM       MM    MM    MM       
+MM             MM     MM      MM     MM      MM       MM    MM     MM      
+MM             MM      MM     MM      MM     MM       MM    MM      MM     
+MMMMMMMMMMM    MM       MM    MM       MM     MMMMMMMMM     MM       MM    
+# error RED BLACK ERROR
+
+
