@@ -1,0 +1,5 @@
+# Select site_id and project type for development (used in 'modpath.py')
+# Last line starting without '#' will be used to set `site_id` and `project` (comma-separated)
+
+## Deployment Site, Project
+BASE, blank
