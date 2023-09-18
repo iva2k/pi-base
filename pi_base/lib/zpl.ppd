@@ -1,0 +1,376 @@
+*PPD-Adobe: "4.3"
+*FormatVersion:	"4.3"
+*FileVersion:	"@!VERSION"
+*LanguageVersion: English
+*LanguageEncoding: ISOLatin1
+*PCFileName:	"@!PRNAME"
+*Manufacturer:	"Peninsula"
+*Product:	"(Peninsula @!MAKE @!MODEL)"
+@!!QUASISECT
+@!!PAGESECT
+*cupsVersion:	1.1
+*cupsManualCopies: FALSE
+*cupsModelNumber: @!CUPSMODEL
+@!!CUPSFILTER
+*APPrinterUtilityPath: "@!APPLOC"
+*ModelName:     "Peninsula @!MAKE @!MODEL Driver"
+*ShortNickName: "Peninsula @!MAKE @!MODEL Driver"
+*NickName:      "@!MAKE @!MODEL Driver (peninsula-group.com)"
+*APPrinterIconPath: "/Library/Printers/Peninsula/Icons/penThermal.icns"
+*PSVersion:	"(3010.000) 550"
+*LanguageLevel:	"3"
+*ColorDevice: True
+*DefaultColorSpace: RGB
+*FileSystem:	False
+*Throughput:	"1"
+*LandscapeOrientation: Plus90
+*TTRasterizer:	Type42
+
+*OpenUI *ColorModel/Color Model: PickOne
+*OrderDependency: 10 AnySetup *ColorModel
+*DefaultColorModel: RGB
+*ColorModel RGB/RVB: "<</cupsColorOrder 0/cupsColorSpace 1/cupsCompression 0/cupsBitsPerColor 8>>setpagedevice"
+*CloseUI: *ColorModel
+
+*HWMargins: 0 0 0 0
+*VariablePaperSize: True
+*MinSize: 1
+*MaxSize: 100000
+*MaxMediaWidth: 100000
+*MaxMediaHeight: 100000
+*NonUIOrderDependency: 100 AnySetup *CustomPageSize
+*CustomPageSize True: "pop pop pop <</PageSize [ 5 -2 roll ] /ImagingBBox null>>setpagedevice"
+*End
+*ParamCustomPageSize Width: 1 points 1 100000
+*ParamCustomPageSize Height: 2 points 1 100000
+*ParamCustomPageSize Orientation: 3 int 0 0
+*ParamCustomPageSize WidthOffset: 4 points 0 0
+*ParamCustomPageSize HeightOffset: 5 points 0 0
+
+*OpenUI *PageSize/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageSize
+
+@!SIZES1
+
+*CloseUI: *PageSize
+
+*OpenUI *PageRegion: PickOne
+*OrderDependency: 10 AnySetup *PageRegion
+
+@!SIZES2
+
+*CloseUI: *PageRegion
+
+@!SIZES3
+
+@!SIZES4
+
+*OpenGroup: Multi/Multi Label Extract Settings
+
+*OpenUI *ppStartPage/Multi Extract Start Label : PickOne
+*OrderDependency: 20 AnySetup *ppStartPage
+*DefaultppStartPage: 0
+*ppStartPage 0/0: ""
+*CloseUI: *ppStartPage
+*CustomppStartPage True: ""
+*ParamCustomppStartPage Text: 1 string 1 10
+
+*OpenUI *ppEndPage/Multi Extract End   Label : PickOne
+*OrderDependency: 20 AnySetup *ppEndPage
+*DefaultppEndPage: 0
+*ppEndPage 0/0: ""
+*CloseUI: *ppEndPage
+*CustomppEndPage True: ""
+*ParamCustomppEndPage Text: 1 string 1 10
+
+*CloseGroup: Multi
+
+*OpenGroup: Thermal/Thermal Printer Settings
+
+*OpenUI *ppMeth/Print Method: PickOne
+*OrderDependency: 20 AnySetup *ppMeth
+*DefaultppMeth: @!THERMALTYPE
+*ppMeth 0/Direct Thermal: ""
+*ppMeth 1/Thermal Transfer: ""
+*CloseUI: *ppMeth
+
+@!!PORIENT
+
+*OpenUI *ppDitherMode/Print Dither Mode: PickOne
+*OrderDependency: 20 AnySetup *ppDitherMode
+*DefaultppDitherMode: @!pDitherMode
+*ppDitherMode 0/Optimise For Barcodes: ""
+*ppDitherMode 1/Error Diffusion Dither (Images): ""
+*ppDitherMode 2/No Enhancement: ""
+*CloseUI: *ppDitherMode
+
+*OpenUI *ppTemp/Print Head Temperature: PickOne
+*OrderDependency: 40 AnySetup *ppTemp
+*DefaultppTemp: @!DEFTEMP
+*ppTemp @!MINTEMP: ""@!!DEFTEMP
+*ppTemp @!MAXTEMP: ""
+*CloseUI: *ppTemp
+
+*CustomppTemp True: ""
+*ParamCustomppTemp Text: 1 string 1 10
+
+*OpenUI *ppSpeed/Print Speed: PickOne
+*OrderDependency: 20 AnySetup *ppSpeed
+*DefaultppSpeed: @!DEFSPEED
+*ppSpeed @!MINSPEED/@!MINSPEED Inch Sec: ""@!!DEFSPEED
+*ppSpeed @!MAXSPEED/@!MAXSPEED Inch Sec: ""
+*CloseUI: *ppSpeed
+
+*CustomppSpeed True: "ppSpeed=Custom"
+*ParamCustomppSpeed Text: 1 string 1 10
+
+*OpenUI *ppEdge/Edge Sensing: PickOne
+*OrderDependency: 20 AnySetup *ppEdge
+*DefaultppEdge: @!DEFEDGE
+*ppEdge 0/Die Cut Labels On Roll: ""
+*ppEdge 1/Continuous Paper (Not Labels): ""
+*ppEdge 2/See Through Reflective Sensed Labels: ""
+*ppEdge 3/Black Mark Or Slotted Labels: ""
+*CloseUI: *ppEdge
+
+*OpenUI *ppGap/Label Gap: PickOne
+*OrderDependency: 20 AnySetup *ppGap
+*DefaultppGap: @!DEFGAP
+*ppGap @!MINGAP/@!MINGAP: ""@!!DEFGAP
+*ppGap @!MAXGAP/@!MAXGAP: ""
+*CloseUI: *ppGap
+
+*CustomppGap True: ""
+*ParamCustomppGap Text: 1 string 1 10
+
+@!!THOLD
+
+@!!PBAROFF
+
+@!!PBLACKMARK
+
+*CloseGroup: Thermal
+
+*OpenGroup: extras/Printer Extras Settings
+
+*OpenUI *Resolution/Output Resolution: PickOne
+*OrderDependency: 20 AnySetup *Resolution
+*DefaultResolution: @!RESOLUTION
+@!!RESOLUTIONS
+*CloseUI: *Resolution
+
+*OpenUI *ppFastCopies/Fast Copies: PickOne
+*OrderDependency: 20 AnySetup *ppFastCopies
+*DefaultppFastCopies: Off
+*ppFastCopies 0/Fast Copies On: ""
+*ppFastCopies 1/Fast Copies Off: ""
+*CloseUI: *ppFastCopies
+
+@!!CUTTER
+
+@!!REWINDER
+
+@!!REVERSE
+
+@!!PEELER
+
+@!!SPEC
+
+*OpenUI *ppSlowPage/ppSlowPage: PickOne
+*OrderDependency: 20 AnySetup *ppSlowPage
+*DefaultppSlowPage: @!SLOWPAGE
+*ppSlowPage @!SLOWPAGE/@!SLOWPAGE: ""
+*CloseUI: *ppSlowPage
+
+*CloseGroup: extras
+
+*OpenGroup: extract/Extract Label From Larger Page
+
+*OpenUI *ppExtrac/Page Extraction: PickOne
+*OrderDependency: 20 AnySetup *ppExtract
+*DefaultppExtrac: @!PPEXTRAC
+*ppExtrac Off/Off: ""
+*ppExtrac On/On: ""
+*CloseUI: *ppExtrac
+
+*OpenUI *ppRot/Rotate Label: PickOne
+*OrderDependency: 20 AnySetup *ppRot
+*DefaultppRot: @!EXTRACROT
+*ppRot @!EXTRACROT/@!EXTRACROT Degrees: ""
+*CloseUI: *ppRot
+
+*OpenUI *ppScale/Scale Label: PickOne
+*OrderDependency: 20 AnySetup *ppScale
+*DefaultppScale: @!EXTRACSCALE
+*ppScale @!EXTRACSCALE/@!EXTRACSCALE: ""
+*CloseUI: *ppScale
+
+*OpenUI *ppWidth/Page Extract Width: PickOne
+*OrderDependency: 20 AnySetup *ppWidth
+*DefaultppWidth: @!EXTRACWID
+*ppWidth @!EXTRACWID/@!EXTRACWID: ""
+*CloseUI: *ppWidth
+
+*OpenUI *ppHeight/Page Extract Height: PickOne
+*OrderDependency: 20 AnySetup *ppHeight
+*DefaultppHeight: @!EXTRACHEI
+*ppHeight @!EXTRACHEI/@!EXTRACHEI: ""
+*CloseUI: *ppHeight
+
+*OpenUI *ppTMarg/Top Margin Adjust: PickOne
+*OrderDependency: 20 AnySetup *ppTMarg
+*DefaultppTMarg: @!EXTRACTOP
+*ppTMarg @!EXTRACTOP/@!EXTRACTOP: ""
+*CloseUI: *ppTMarg
+
+*OpenUI *ppLMarg/Left Margin Adjust: PickOne
+*OrderDependency: 20 AnySetup *ppLMarg
+*DefaultppLMarg: @!EXTRACLEFT
+*ppLMarg @!EXTRACLEFT/@!EXTRACLEFT: ""
+*CloseUI: *ppLMarg
+
+
+*OpenUI *ppCropT/Crop Top Margin: PickOne
+*OrderDependency: 20 AnySetup *ppCropT
+*DefaultppCropT: @!CROPT
+*ppCropT @!CROPT/@!CROPT: ""
+*CloseUI: *ppCropT
+
+*OpenUI *ppCropL/Crop Left Margin: PickOne
+*OrderDependency: 20 AnySetup *ppCropL
+*DefaultppCropL: @!CROPL
+*ppCropL @!CROPL/@!CROPL: ""
+*CloseUI: *ppCropL
+
+*OpenUI *ppCropWid/Crop Width: PickOne
+*OrderDependency: 20 AnySetup *ppCropWid
+*DefaultppCropWid: @!CROPWID
+*ppCropWid @!CROPWID/@!CROPWID: ""
+*CloseUI: *ppCropWid
+
+*OpenUI *ppCropHei/Crop Height: PickOne
+*OrderDependency: 20 AnySetup *ppCropHei
+*DefaultppCropHei: @!CROPHEI
+*ppCropHei @!CROPHEI/@!CROPHEI: ""
+*CloseUI: *ppCropHei
+
+*OpenUI *ppRepAcc/Repeat Across: PickOne
+*OrderDependency: 20 AnySetup *ppRepAcc
+*DefaultppRepAcc: @!REPACC
+*ppRepAcc @!REPACC/@!REPACC: ""
+*CloseUI: *ppRepAcc
+
+*OpenUI *ppRepDwn/Repeat Down: PickOne
+*OrderDependency: 20 AnySetup *ppRepDwn
+*DefaultppRepDwn: @!REPDWN
+*ppRepDwn @!REPDWN/@!REPDWN: ""
+*CloseUI: *ppRepDwn
+
+*OpenUI *ppRepHMrg/Repeat Horizontal Margin: PickOne
+*OrderDependency: 20 AnySetup *ppRepHMrg
+*DefaultppRepHMrg: @!REPHMARG
+*ppRepHMrg @!REPHMARG/@!REPHMARG: ""
+*CloseUI: *ppRepHMrg
+
+*OpenUI *ppRepVMrg/Repeat Vertical Margin: PickOne
+*OrderDependency: 20 AnySetup *ppRepVMrg
+*DefaultppRepVMrg: @!REPVMARG
+*ppRepVMrg @!REPVMARG/@!REPVMARG: ""
+*CloseUI: *ppRepVMrg
+
+
+*OpenUI *ppOver/Overlays: PickOne
+*OrderDependency: 20 AnySetup *ppOver
+*DefaultppOver: @!OVER
+*ppOver @!OVER/@!OVER: ""
+*CloseUI: *ppOver
+
+*OpenUI *ppOverT/Overlay Top Position: PickOne
+*OrderDependency: 20 AnySetup *ppOverT
+*DefaultppOverT: @!OVERT
+*ppOverT @!OVERT/@!OVERT: ""
+*CloseUI: *ppOverT
+
+*OpenUI *ppOverL/Overlay Left Position: PickOne
+*OrderDependency: 20 AnySetup *ppOverL
+*DefaultppOverL: @!OVERL
+*ppOverL @!OVERL/@!OVERL: ""
+*CloseUI: *ppOverL
+
+*OpenUI *ppOverW/Overlay Width: PickOne
+*OrderDependency: 20 AnySetup *ppOverW
+*DefaultppOverW: @!OVERW
+*ppOverW @!OVERW/@!OVERW: ""
+*CloseUI: *ppOverW
+
+*OpenUI *ppOverH/Overlay Height: PickOne
+*OrderDependency: 20 AnySetup *ppOverH
+*DefaultppOverH: @!OVERH
+*ppOverH @!OVERH/@!OVERH: ""
+*CloseUI: *ppOverH
+
+*OpenUI *ppOverTT/Overlay Top: PickOne
+*OrderDependency: 20 AnySetup *ppOverTT
+*DefaultppOverTT: @!OVERTT
+*ppOverTT @!OVERTT/@!OVERTT: ""
+*CloseUI: *ppOverTT
+
+*OpenUI *ppOverTL/Overlay Left: PickOne
+*OrderDependency: 20 AnySetup *ppOverTL
+*DefaultppOverTL: @!OVERTL
+*ppOverTL @!OVERTL/@!OVERTL: ""
+*CloseUI: *ppOverTL
+
+*OpenUI *ppUpDown/Page 2+ Vertical Offset : PickOne
+*OrderDependency: 20 AnySetup *ppUpDown
+*DefaultppUpDown: @!2VERT
+*ppUpDown @!2VERT/@!2VERT: ""
+*CloseUI: *ppUpDown
+
+*OpenUI *ppRaw/Raw Output: PickOne
+*OrderDependency: 20 AnySetup *ppRaw
+*DefaultppRaw: @!RAWOUT
+*ppRaw  @!RAWOUT/@!RAWOUT: ""
+*CloseUI: *ppRaw
+
+*OpenUI *Talk/Talk: PickOne
+*OrderDependency: 20 AnySetup *Talk
+*DefaultTalk: @!LANGUAGE
+*Talk @!LANGUAGE/@!LANGUAGE: ""
+*CloseUI: *Talk
+
+*OpenUI *PModel/PModel: PickOne
+*OrderDependency: 20 AnySetup *PModel
+*DefaultPModel: @!MODEL
+*PModel @!MODEL/@!MODEL: ""
+*CloseUI: *PModel
+
+*OpenUI *POffset/POffset: PickOne
+*OrderDependency: 20 AnySetup *POffset
+*DefaultPOffset: @!pOff
+*POffset @!pOff/@!pOff: ""
+*CloseUI: *POffset
+
+*OpenUI *POpts/POpts: PickOne
+*OrderDependency: 20 AnySetup *POpts
+*DefaultPOpts: GX5TFG1625676JHG
+*POpts GX5TFG1625676JHG/GX5TFG1625676JHG: ""
+*CloseUI: *POpts
+
+*OpenUI *ppSpeOpts/ppSpeOpts: PickOne
+*OrderDependency: 20 AnySetup *ppSpeOpts
+*DefaultppSpeOpts: @!speOpts
+*ppSpeOpts @!speOpts/@!speOpts: ""
+*CloseUI: *ppSpeOpts
+
+*OpenUI *ppStartStop/ppStartStop: PickOne
+*OrderDependency: 20 AnySetup *ppStartStop
+*DefaultppStartStop: @!startStop
+*ppStartStop @!startStop/@!startStop: ""
+*CloseUI: *ppStartStop
+
+*CloseGroup: extract
+
+*% End
+
+@!!isShared
