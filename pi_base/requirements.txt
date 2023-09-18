@@ -1,0 +1,29 @@
+esptool==3.3
+bleak==0.19.5
+coolname==2.2.0
+fpdf~=1.7.2
+Gooey~=1.0.8.1
+inquirer~=2.9.2
+Pillow~=9.1.0
+qrcode~=7.4.2
+pyinstaller==5.7.0
+pexpect~=4.8.0
+
+cryptography>=2.1.4,<35
+pyparsing>=2.0.3,<2.4.0
+
+numpy~=1.22.3
+scipy~=1.9.1
+PyDrive2~=1.14.0
+semver~=2.13.0
+pyserial~=3.5
+pyyaml~=6.0
+setuptools~=67.8.0
+
+slack_sdk~=3.21.0
+
+# Packages for ESP-IDF
+bitstring==3.1.9
+
+# Package for communicating with FDI chip FT4222(Wrapper around libFT4222.dll from FTDI)
+ft4222==1.8.0
