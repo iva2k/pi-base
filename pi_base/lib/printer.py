@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# We're not going after extreme performance here
+# pylint: disable=logging-fstring-interpolation
+
 # Targeting printing labels from Python software on Zebra ZT411 (203dpi) and ZT610 printers (both using ZPL language).
 # CUPS was supposed to be supporting ZPL, but recent development is on a path to remove PPD and drivers support
 # and drop non-IPP printers.
@@ -155,7 +158,7 @@ class PrinterInterface(ABC):
     def autoadd_printers(self, options: Dict[str, str] = None) -> Tuple[int, List[Dict[str, str]]]:
         """Add all found compatible printers
         """
-        return ()
+        return (-1, [])
 
     def autoadd_zebra(self) -> int:
         """Attempts to add the Zebra ZT411 printer
@@ -651,6 +654,7 @@ def cmd_add_printer(printer_name, printer_uri, ppd_file, options=None):
 
 def cmd_autoadd_printers(options=None):
     printer = OsPrinter()
+    # ? printer.autoadd_zebra()
     res, printers = printer.autoadd_printers(options)
     _print_printers(printers)
     return res
@@ -772,9 +776,6 @@ def main():
 
 
 if __name__ == '__main__':
-    printer = OsPrinter()
-    printer.autoadd_zebra()
-    exit()
     rc = main()
     if rc:
         sys.exit(rc)
