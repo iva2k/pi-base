@@ -768,7 +768,7 @@ def main():
             return cmd_print_file(args.printer_name, args.file_name, options=args.rest)
 
     except Exception as e:
-        logger.error(f'Error {type(e)} {e}')
+        logger.error(f'Error {type(e)} "{e}"')
         return -1
 
     parser.print_help()

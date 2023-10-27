@@ -229,7 +229,7 @@ class DeploySiteDB():
             elif self.db_file:
                 self.db_file_save(self.sites, self.db_file)
         except Exception as e:
-            self.loggr.error(f'Error {type(e)} {e} saving site database file')
+            self.loggr.error(f'Error {type(e)} "{e}" saving site database file')
             return -1
         return 0
 

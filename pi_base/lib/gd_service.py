@@ -341,7 +341,7 @@ def gd_connect(loggr, gd_secrets, extra_fields_with_values: Dict[str, str] = Non
                     extra[k] = v
             except Exception as err:
                 if loggr:
-                    loggr.error(f'Error "{err}" loading GD Account file "{gd_secrets}". {skip_msg}')
+                    loggr.error(f'Error {type(err)} "{err}" loading GD Account file "{gd_secrets}". {skip_msg}')
         else:
             if loggr:
                 loggr.warning(f'GD Account file "{gd_secrets}" not found. {skip_msg}')

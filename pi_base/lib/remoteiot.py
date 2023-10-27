@@ -195,7 +195,7 @@ class Remoteiot():
             elif self.db_file:
                 self.db_file_save(self.devices, self.db_file)
         except Exception as e:
-            self.loggr.error(f'Error {type(e)} {e} saving device database file')
+            self.loggr.error(f'Error {type(e)} "{e}" saving device database file')
             return -1
         return 0
 
@@ -292,7 +292,7 @@ class Remoteiot():
                         device_id = line[len(prefix):].strip()
                         break
         except Exception as err:
-            self.loggr.error(f'Error "{err}" reading remoteiot config file "{remoteiot_conf_file}".')
+            self.loggr.error(f'Error {type(err)} "{err}" reading remoteiot config file "{remoteiot_conf_file}".')
 
         return True, device_id
 
