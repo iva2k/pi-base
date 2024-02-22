@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Upload all files in this folder (or build/ sub-folder) to remote host over SSH / SCP
+# Upload all files in this folder (or the build/ sub-folder) to a remote host over SSH / SCP
 
 # This script tries to use `rsync` if available
 # Further, to eliminate multiple password prompts, it can use:
@@ -65,16 +65,17 @@ ssh_keygen_git="$($which ssh-keygen 2>/dev/null)"
 # sshpass= ; rsync= ;# scp only
 # rsync= ;# sshpass+scp
 # scp= ;# rsync only
+# ssh_secret_file= ;# Ignore existing secrets file
 
 SCP_DIR=
-SCP_CMD=
+SCP_CMD=()
 do_mkdir=
-# SSH_OPTS=
-SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+# SSH_OPTS=()
+SSH_OPTS=(-o "StrictHostKeyChecking=accept-new")
 
 export SSHPASSWD=
 SSH_SOCKET=
-SSH_CTRL=
+SSH_CTRL=()
 pass=
 ssh_secret=
 
@@ -249,14 +250,14 @@ while test $# -gt 0; do
     [ -z "${host_dir}" ] && { echo "no value specified for --path" >&2; exit 1; }
     ;;
   -c|--cmd) # arg with mandatory value
-    SCP_CMD=$2; shift
+    SCP_CMD=("$2"); shift
     SCP_DIR=
-    [ -z "${SCP_CMD}" ] && { echo "no value specified for -c / --cmd" >&2; exit 1; }
+    [ -z "${SCP_CMD[*]}" ] && { echo "no value specified for -c / --cmd" >&2; exit 1; }
     ;;
   --cmd=*) # arg with mandatory=value
-    SCP_CMD="${1#*=}"
+    SCP_CMD=("${1#*=}")
     SCP_DIR=
-    [ -z "${SCP_CMD}" ] && { echo "no value specified for --cmd" >&2; exit 1; }
+    [ -z "${SCP_CMD[*]}" ] && { echo "no value specified for --cmd" >&2; exit 1; }
     ;;
   -h|--help)
     usage
@@ -275,7 +276,7 @@ done
 [ -z "${host_dir}" ] && host_dir="/home/${user}"
 
 # Debug:
-# [ 1 -eq "$debug" ] && echo "DEBUG script=$script, parent=$parent, is_sourced=$is_sourced, cmd=$SCP_CMD, user=$user, host=$host, host_dir=$host_dir"
+# [ 1 -eq "$debug" ] && echo "DEBUG script=$script, parent=$parent, is_sourced=$is_sourced, cmd=${SCP_CMD[*]@Q}, user=$user, host=$host, host_dir=$host_dir"
 # [ 1 -eq "$debug" ] && echo "DEBUG SOURCE=${SOURCE}"
 # [ 1 -eq "$debug" ] && echo "DEBUG BUILD=${BUILD}"
 
@@ -292,7 +293,7 @@ function upload () {
   # [ 1 -eq "$debug" ] && echo "DEBUG src_parent=${src_parent}"
   # [ 1 -eq "$debug" ] && echo "DEBUG src_basename=${src_basename}"
   # [ 1 -eq "$debug" ] && echo "DEBUG Command:"
-  # [ 1 -eq "$debug" ] && echo "DEBUG   cd ${src_parent} ; ${SCP_CMD} -pr ${src_basename}/ ${user}@${host}:${dst}"
+  # [ 1 -eq "$debug" ] && echo "DEBUG   cd ${src_parent} ; ${SCP_CMD[*]@Q} -pr ${src_basename}/ ${user}@${host}:${dst}"
   echo
   (
     cd "${src_parent}" || exit
@@ -300,14 +301,14 @@ function upload () {
     if [ 1 -eq $do_mkdir ]; then
       echo "== Making remote directory '${dst}'"
       SCRIPT="mkdir -p \"${dst}\""
-      # echo "DEBUG: $ ${pass}${ssh} $SSH_OPTS \"${user}@${host}\" \"$SCRIPT\""
-      ${pass}${ssh} $SSH_OPTS "${user}@${host}" -p "$port" "$SCRIPT"
+      [ 1 -eq "$debug" ] && echo "DEBUG: $ ${pass:+$pass }${ssh} ${SSH_OPTS[*]} \"${user}@${host}\" \"$SCRIPT\""
+      ${pass:+$pass }"${ssh}" "${SSH_OPTS[@]}" "${user}@${host}" -p "$port" "$SCRIPT"
     fi
 
     echo "== Copying '${src}' directory to '${host}:${dst}'  ..."
-    [ 1 -eq "$debug" ] && echo "DEBUG \$ ${SCP_CMD} $REMOTE_CMD \"${src_basename}${SCP_DIR}\" \"${user}@${host}:${dst}\" "
+    [ 1 -eq "$debug" ] && echo "DEBUG \$ ${SCP_CMD[*]@Q} \"${src_basename}${SCP_DIR}\" \"${user}@${host}:${dst}\" "
     local result;
-    ${SCP_CMD} "${src_basename}${SCP_DIR}" "${user}@${host}:${dst}"
+    "${SCP_CMD[@]}" "${src_basename}${SCP_DIR}" "${user}@${host}:${dst}"
     result=$?
     # [ 1 -eq "$debug" ] && echo "DEBUG result=$result"
 
@@ -322,7 +323,7 @@ function end_upload () {
     ${ssh_git} -S "$SSH_SOCKET" -O exit "${user}@${host}"
     # rm "$SSH_SOCKET" 2>/dev/null
     SSH_SOCKET=
-    SSH_CTRL=
+    SSH_CTRL=()
     echo "Closed SSH connection to ${user}@${host}:${port}"
     echo
   fi
@@ -338,8 +339,8 @@ function prep_upload () {
     exit 1
   fi
 
-  if [ -n "$SCP_CMD" ]; then
-    # [ 1 -eq "$debug" ] && echo "DEBUG: -c/--command arg is given, not using defaults. SCP_CMD=$SCP_CMD"
+  if [ -n "${SCP_CMD[*]}" ]; then
+    [ 1 -eq "$debug" ] && echo "DEBUG: -c/--command arg is given, not using defaults. SCP_CMD=${SCP_CMD[*]@Q}"
     return
   fi
 
@@ -359,22 +360,26 @@ function prep_upload () {
       fi
       echo "Found file '$ssh_secret', taking password from it."
       pass="$sshpass -f $ssh_secret "
-      SCP_CMD="$rsync --mkpath -raxtz --info=progress2 -e '${pass}${ssh} $SSH_OPTS -p $port'"
+      my_e=(${pass:+$pass} "${ssh}" "${SSH_OPTS[@]}" -p "$port")
+      SCP_CMD=("$rsync" --mkpath -raxtz --info=progress2 -e "${my_e[*]}")
     else
       SSH_SOCKET=$(mktemp -q -u ~/".ssh/${user}@${host}+${port}=XXXXXX")
       if [ -z "$SSH_SOCKET" ]; then
         echo "$0: Can't create temp file, exiting."
         exit 1
       fi
-      SSH_CTRL="-o ControlPath=$SSH_SOCKET"
+      SSH_CTRL=("-o" "ControlPath=${SSH_SOCKET}")
+      [ 1 -eq "$debug" ] && echo "DEBUG SSH_SOCKET=$SSH_SOCKET"
+      [ 1 -eq "$debug" ] && echo "DEBUG SSH_CTRL=${SSH_CTRL[*]@Q}"
+
       trap 'end_upload' INT
 
       echo "Opening SSH connection to ${user}@${host}:${port}..."
       # Open master connection, will ask for the password:
-      # echo "DEBUG \$ ${ssh_git} -M -f -N $SSH_OPTS $SSH_CTRL -o ControlPersist=yes \"${user}@${host}\" -p $port"
-      # Broken: ${ssh} -M -f -N $SSH_OPTS $SSH_CTRL -o ControlPersist=yes "${user}@${host}" -p "$port"
-      ${ssh_git} -M -f -N $SSH_OPTS $SSH_CTRL -o ControlPersist=yes "${user}@${host}" -p "$port"
-      # ${ssh} -vvv -M -f -N $SSH_OPTS $SSH_CTRL -o ControlPersist=yes "${user}@${host}" -p "$port"
+      [ 1 -eq "$debug" ] && echo "DEBUG \$ ${ssh_git} -M -f -N "${SSH_OPTS[*]}" ${SSH_CTRL[*]@Q} -o ControlPersist=yes \"${user}@${host}\" -p $port"
+      # Broken: ${ssh} -M -f -N "${SSH_OPTS[@]}" $SSH_CTRL -o ControlPersist=yes "${user}@${host}" -p "$port"
+      ${ssh_git} -M -f -N "${SSH_OPTS[@]}" "${SSH_CTRL[@]}" -o ControlPersist=yes "${user}@${host}" -p "$port"
+      # ${ssh} -vvv -M -f -N "${SSH_OPTS[@]}" "${SSH_CTRL[@]}" -o ControlPersist=yes "${user}@${host}" -p "$port"
       # echo "DEBUG Muliplex connection created using \"$SSH_SOCKET\""
       if [ -S "$SSH_SOCKET" ]; then
         echo "Opened SSH connection to ${user}@${host}:${port}."
@@ -386,7 +391,8 @@ function prep_upload () {
 
       # `-O proxy` fixes ControlMaster use on Windows, see https://github.com/PowerShell/Win32-OpenSSH/issues/405#issuecomment-1481385347
       # first added in openssh (1:7.4p1-1) 2016-12-19
-      SCP_CMD="$rsync --mkpath -raxtz --info=progress2 -e '${ssh} $SSH_OPTS $SSH_CTRL -O proxy'"
+      my_e=("${ssh}" "${SSH_OPTS[@]}" ${SSH_CTRL[*]} "-O" "proxy")
+      SCP_CMD=("$rsync" --mkpath -raxtz --info=progress2 -e "${my_e[*]}")
     fi
   elif [ -n "$scp" ]; then
     # No rsync, use scp
@@ -412,14 +418,14 @@ function prep_upload () {
     fi
 
     do_mkdir=1 ;# scp cannot make nested directories on the path to the destination target.
-    SCP_CMD="${pass}${scp} -pr $SSH_OPTS -P $port"
+    SCP_CMD=(${pass:+$pass} "${scp}" -pr "${SSH_OPTS[@]}" -P "$port")
     # SCP_DIR reflects difference between scp and rsync commands - scp requires directory to have trailing '/'
     SCP_DIR=/
   else
     echo "$0: Neither 'rsync' nor 'scp' is found, exiting."
     exit 1
   fi
-  [ 1 -eq "$debug" ] && echo "DEBUG prep_upload() ssh_secret=$ssh_secret SSHPASSWD=$SSHPASSWD SSH_SOCKET=$SSH_SOCKET SSH_CTRL=$SSH_CTRL ssh=$ssh scp=$scp sshpass=$sshpass rsync=$rsync do_mkdir=$do_mkdir SCP_CMD=$SCP_CMD SCP_DIR=$SCP_DIR"
+  [ 1 -eq "$debug" ] && echo "DEBUG prep_upload() ssh_secret=$ssh_secret SSHPASSWD=$SSHPASSWD SSH_SOCKET=$SSH_SOCKET SSH_CTRL=${SSH_CTRL[*]@Q} ssh=$ssh scp=$scp sshpass=$sshpass rsync=$rsync do_mkdir=$do_mkdir SCP_CMD=${SCP_CMD[*]@Q} SCP_DIR=$SCP_DIR"
 }
 
 function print_info () {
