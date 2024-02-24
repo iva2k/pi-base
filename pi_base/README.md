@@ -48,7 +48,7 @@ Acquire all the parts (Raspberry Pi board, case, power supply, Micro-SD card or 
 
 ### Create Micro-SD Card or M2 SSD with Boot software image
 
-See [SDCARD](SDCARD-v1.7.md)
+See [SDCARD](SDCARD.md)
 
 TODO: (when needed) Add a 'installer' user (sudoer) to install.sh to differ from default user 'pi'.
 

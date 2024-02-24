@@ -2,6 +2,8 @@
 
 These instructions are for Raspberry Pi Imager v1.7.2 or later.
 
+See [SDCARD](SDCARD.md) for newer Raspberry Pi Imager version.
+
   1. Download and install "Raspberry Pi Imager" from [raspberrypi.com/software](https://www.raspberrypi.com/software).
   2. (Optionally) download a "Raspberry Pi OS" Operating System image file from [raspberrypi.com/software](https://www.raspberrypi.com/software) to local disk.
   3. Run Raspberry Pi Imager:
