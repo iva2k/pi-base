@@ -690,13 +690,9 @@ def parse_args():
     uninstall_parser = subparsers.add_parser('uninstall', help='Uninstall all OS components that "install" command installed')
     devices_parser = subparsers.add_parser('devices', help='Get list of available devices')
     printers_parser = subparsers.add_parser('printers', help='Get list of added printers')
-    add_parser = subparsers.add_parser('add', help='Add a new printer')
-    autoadd_parser = subparsers.add_parser('autoadd', help='Auto add all printers')
-    delete_parser = subparsers.add_parser('delete', help='Delete printer')
-    test_parser = subparsers.add_parser('test', help='Print test page')
-    print_parser = subparsers.add_parser('print', help='Print PDF file')
 
     # Additional args for "add" command
+    add_parser = subparsers.add_parser('add', help='Add a new printer')
     add_parser.add_argument('printer_name', type=str, help='Printer name')
     add_parser.add_argument('printer_uri', type=str, help='Printer URI')
     add_parser.add_argument('ppd_file', type=str, help='Printer driver PPD file')
@@ -705,15 +701,19 @@ def parse_args():
     # add_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     # Additional args for "autoadd" command
+    autoadd_parser = subparsers.add_parser('autoadd', help='Auto add all printers')
     # ? autoadd_parser.add_argument('printer_name', type=str, help='Printer name')
 
     # Additional args for "delete" command
+    delete_parser = subparsers.add_parser('delete', help='Delete printer')
     delete_parser.add_argument('printer_name', type=str, help='Printer name')
 
     # Additional args for "test" command
+    test_parser = subparsers.add_parser('test', help='Print test page')
     test_parser.add_argument('printer_name', type=str, help='Printer name')
 
     # Additional args for "print" command
+    print_parser = subparsers.add_parser('print', help='Print PDF file')
     print_parser.add_argument('printer_name', type=str, help='Printer name')
     print_parser.add_argument('file_name', type=str, help='The name of the PDF file')
     print_parser.add_argument('rest', nargs=argparse.REMAINDER)
