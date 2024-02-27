@@ -13,6 +13,7 @@ import logging
 import os
 import platform
 import shutil
+from subprocess import check_output, CalledProcessError
 import sys
 from timeit import default_timer as timer
 import yaml
@@ -177,6 +178,28 @@ class Builder():
                     shutil.copy2(src=src, dst=dst)
                 # TODO: (when needed) improve report for dst=''
                 logger.info(f'    + Copied {item["src"]} to {item["dst"]}')
+
+    def make_ssh_cert(self, file, passphrase=""):
+        cmd = ''
+        if not file:
+            file = '~/.ssh/ssh_cert'
+        try:
+            cmd = f'ssh-keygen -t ed25519 -b 4096 -f "{file}" -N "{passphrase}"'
+            p = check_output(cmd, shell=True, text=True)
+            # Restrict the permissions on the private key file
+
+            if os.name == 'nt':
+                cmd = 'icacls "privateKeyPath" /grant :R'
+            else:
+                cmd = 'chmod 400 ~/.ssh/id_ed25519'
+                # ~/.ssh/id_ed25519.pub
+                # Windows C:\Users\your-user\.ssh\id_ed25519.pub
+                # /home/<user>/.ssh/id_ed25519.pub
+            p = check_output(cmd, shell=True, text=True)
+            return True
+        except CalledProcessError as e:
+            logger.error(f'Error {e} while executing command "{cmd}"')
+            return False
 
     def make_files_from_template(self, target_dir):
         # Make files staged in the templates
