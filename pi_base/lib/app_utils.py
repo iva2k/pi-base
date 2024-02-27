@@ -3,14 +3,29 @@
 import datetime
 import json
 import os
+import platform
 import time
 #import zmq
 import threading
-from subprocess import check_output, CalledProcessError
+from subprocess import run, check_output, CalledProcessError
 from typing import List
 from uuid import getnode as get_mac
+
+import requests
 import yaml
 
+
+def get_os_name() -> str:
+    # if platform.system() == "Windows":
+    if os.name == 'nt':
+        return "Windows"
+    elif platform.system() == 'Darwin':
+        return "MacOS"
+    # elif platform.system() == "Linux":
+    elif os.name == 'posix':  # Linux
+        return "Linux"
+    else:
+        return "Unknown"
 
 def uptime():
     cmd = 'uptime'
@@ -272,7 +287,7 @@ def cvt(vt_number=1, loggr=None):
             loggr.debug(f'cvt({vt_number}) cmd={cmd} result={result}')
     except Exception as err:
         if loggr:
-            loggr.error(f'Error {err} in cvt({vt_number}) cmd={cmd}')
+            loggr.error(f'Error {type(err)} "{err}" in cvt({vt_number}) cmd={cmd}')
     return
 
 
@@ -400,6 +415,52 @@ def find_path(path_name: str, paths: List[str], loggr=None, is_dir=False) -> str
         loggr.warning(f'{"Directory" if is_dir else "File"} "{path_name}" not found. Paths searched: "{paths_str}"')
     return None
 
+
+def download_and_execute(url, downloaded_file_path, command=None, remove_after=False, timeout=30, loggr=None) -> int:
+    """Download from given URL a file and either execute the file or optionally execute the given command. Intended use is to download and install software.
+
+    Args:
+        url (str): URL to the download file
+        downloaded_file_path (str): Path to where store the file
+        command (_type_, optional): Command to execute once the file is downloaded. Defaults to None.
+        remove_after (bool, optional): True to remove downloaded file after. Defaults to False.
+        timeout (int, optional): Maximum time to wait. Defaults to 30.
+
+    Returns:
+        int: Error code
+    """
+
+    # Download the executable file
+    try:
+        with open(downloaded_file_path, 'wb') as file:
+            response = requests.get(url, stream=True, timeout=timeout)
+            response.raise_for_status()
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    file.write(chunk)
+                    if loggr: loggr.info('.', end='')
+    except requests.exceptions.RequestException as e:
+        if loggr: loggr.error(f'Error {type(e)} "{e}" while downloading file "{downloaded_file_path}" from {url}.')
+        return 1
+
+    # Run the downloaded executable
+    try:
+        if not command:
+            command = [downloaded_file_path]
+        run(command, shell=True, check=True)
+    except CalledProcessError as e:
+        if loggr: loggr.error(f'Error {type(e)} "{e}" while running the command "{" ".join(command)}" for the downloaded file "{downloaded_file_path}".')
+        # TODO: (when needed) Remove the downloaded file.
+        return 1
+
+    # Optionally, you can remove the downloaded file after it's executed
+    if remove_after:
+        try:
+            os.remove(downloaded_file_path)
+        except OSError as e:
+            if loggr: loggr.error(f'Error {type(e)} "{e}" trying to remove the downloaded file "{downloaded_file_path}".')
+
+    return 0
 
 class PeriodicTask(threading.Thread):
     """Helper class to manage periodic tasks
