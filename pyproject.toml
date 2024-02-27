@@ -40,25 +40,8 @@ include-package-data = true
 
 [tool.setuptools.package-data]
 # If there are data files included in your packages that need to be installed, specify them here.
-# "pi_base" = ["*"]
+"pi_base" = ["*.txt", "*.sh", "*.cmd"]
 "pi_base.lib" = ["*"]
-#"*" = ["*.*"]
-# "pi_base.common" = ["*"]
-# "pi_base.common.graphics" = ["*"]
-# "pi_base.common.pkg" = ["*"]
-# "pi_base.common.pkg.boot" = ["*"]
-# "pi_base.common.pkg.etc" = ["*"]
-# "pi_base.common.pkg.etc.default" = ["*"]
-# "pi_base.common.pkg.etc.lightdm" = ["*"]
-# "pi_base.common.pkg.etc.samba" = ["*"]
-# "pi_base.common.pkg.etc.systemd" = ["*"]
-# "pi_base.common.pkg.etc.systemd.system" = ["*"]
-# "pi_base.common.pkg.etc.systemd.system.getty@tty1.service.d" = ["*"]
-# "pi_base.common.pkg.etc.udev" = ["*"]
-# "pi_base.common.pkg.etc.udev.rules*d" = ["*"]
-# "pi_base.common.pkg.etc.wpa_supplicant" = ["*"]
-# "pi_base.common.pkg.etc.X11" = ["*"]
-# "pi_base.common.pkg.etc.X11.xorg.conf.d" = ["*"]
 
 [tool.setuptools.packages.find]
 namespaces = true

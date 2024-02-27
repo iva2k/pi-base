@@ -1,0 +1,13 @@
+{
+  "description": "Using npm's package.json file purely for simple organization of many shell commands, each can be easily ran as `npm run <command>` if node.js/npm is installed.",
+  "scripts": {
+    "a": "(bash -c pi_base/scripts/pkg-check.sh)",
+
+    "pkg:clean": "rm -rf dist pi_base.egg-info",
+    "pkg:build": "python3 -m build",
+    "pkg:extract": "(cd dist && tar -zxvf *.tar.gz)",
+    "pkg:diff-build-data": "bash -c pi_base/scripts/pkg-check.sh",
+    "pkg:check-build-data": "npm run pkg:clean && npm run pkg:build && npm run pkg:extract && npm run pkg:diff-build-data",
+    "all": "npm run pkg:check-build-data && echo SUCCESS!"
+  }
+}
