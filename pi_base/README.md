@@ -64,7 +64,7 @@ Run `pi_base/upload.sh` script from host computer (run `pi_base/upload.cmd` scri
 
 ### Install the App on RPI
 
-Login either in RPi console or via SSH as [ssh://pi@RPI.local](ssh://pi@RPI.local). If you entered a different hostname in the Raspberry Pi Imager, use that hostname.
+Login either in RPi console or via SSH as [ssh://pi@RPI.local](ssh://pi@RPI.local). If you entered a different hostname and/or userbname in the Raspberry Pi Imager, use that hostname.
 
 Run `/home/pi/pi-base/build/<site_id>/<project>/install.sh` (site_id is the short name of the Deployment Site it is built for by `pi_base/make.py`). It may take some time to download and install all the packages on the first run. Subsequent runs (e.g. while developing) will be faster.
 
@@ -88,7 +88,7 @@ To avoid any potential name collision with existing or future Google props, the 
 - pibase_gd_sites_folder_id     - Sites DB File   Folder ID on Google Drive
 - pibase_gd_sites_file_title    - Sites DB File   Title     on Google Drive
 
-For details on creating new Service Account and setting up `*_secrets.json` key file (properties for Google APIs) see [GD_SERVICE.md](./common/GD_SERVICE.md). After creating the key file, add all needed `pibase_XXX` properties to it.
+For details on creating new Service Account and setting up `*_secrets.json` key file (properties for Google APIs) see [GD_SERVICE.md](./lib/GD_SERVICE.md). After creating the key file, add all needed `pibase_XXX` properties to it.
 
 ## Development
 
@@ -269,7 +269,6 @@ pip install -e git+https://github.com/iva2k/raspi-device-mocks.git#egg=raspi-dev
 # Or, can link source directly from another location:
 pip install -e c:/dev/raspi-device-mocks --no-binary :all:
 pip install cliff
-
 ```
 
 This project settled on cliff for arguments parsing, and argparse in some instances. Other CLI tools of interest:
