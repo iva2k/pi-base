@@ -1,2 +1,4 @@
 /_import
 /swd
+*.sap
+*.cfg
