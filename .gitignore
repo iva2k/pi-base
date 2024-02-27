@@ -21,7 +21,21 @@ develop.txt
 _assets
 *._WIP
 
+
 # Generated Files
+build/
+dist/
+*.egg-info/
+*.egg
+*.py[cod]
+__pycache__/
+*.so
+*~
+# due to using tox and pytest
+.tox
+.cache
+
+*report*.csv
 
 # Key files
 /secrets
@@ -32,10 +46,7 @@ ssh_secret.txt
 devices.csv
 sites.csv
 
-*report*.csv
-
-# Files copied over
-/build
-
 # Secure info
 /common/pkg/etc/wpa_supplicant/wpa_supplicant.conf
+
+

@@ -16,7 +16,16 @@
         {
             "label": "Pi BASE Build All & Upload",
             "type": "shell",
-            "command": "conda activate py3.9.4 && '${config:python.pythonPath}\\python3' pi_base/make.py --site BASE --type all && pi_base/upload.sh --site BASE",
+            "command": "conda init && conda activate py3.9.4 && '${config:python.pythonPath}\\python3' pi_base/make.py --site BASE --type all && pi_base/upload.sh --site BASE",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "Pi BASE Build Package",
+            "type": "shell",
+            "command": "conda init && conda activate py3.9.4 && rm -rfv dist pi_base.egg-info && '${config:python.pythonPath}\\python3' -m build && (cd dist && tar -zxvf *.tar.gz)",
             "problemMatcher": [],
             "group": {
                 "kind": "build"
