@@ -25,6 +25,8 @@ _assets
 # Generated Files
 build/
 dist/
+reports/
+venv/
 *.egg-info/
 *.egg
 *.py[cod]
@@ -47,6 +49,5 @@ devices.csv
 sites.csv
 
 # Secure info
-/common/pkg/etc/wpa_supplicant/wpa_supplicant.conf
-
+pi_base/common/pkg/etc/wpa_supplicant/wpa_supplicant.conf
 

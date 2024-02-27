@@ -8,6 +8,16 @@
     "pkg:extract": "(cd dist && tar -zxvf *.tar.gz)",
     "pkg:diff-build-data": "bash -c pi_base/scripts/pkg-check.sh",
     "pkg:check-build-data": "npm run pkg:clean && npm run pkg:build && npm run pkg:extract && npm run pkg:diff-build-data",
-    "all": "npm run pkg:check-build-data && echo SUCCESS!"
+    "all": "npm run pkg:check-build-data && echo SUCCESS!",
+
+    "dev:init": "python3 -m venv venv && source venv/Scripts/activate && pip install --upgrade pip && pip install -e . && pip install -e .[dev]",
+    "dev:env": "source venv/Scripts/activate",
+    "tox:lint": "tox run -e lint",
+    "tox:test": "tox run -e test",
+    "tox:docs": "tox run -e docs",
+    "tox:build": "tox run -e build",
+    "ruff:format": "ruff format .",
+    "docs:test": "sphinx-build -b doctest ",
+    "docs:auto-api": "sphinx-apidoc"
   }
 }
