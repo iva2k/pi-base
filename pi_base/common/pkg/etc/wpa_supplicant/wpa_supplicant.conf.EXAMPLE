@@ -3,8 +3,7 @@ update_config=1
 country=US
 
 network={
-	ssid="GDM Guest"
-	psk="93602021"
+	ssid="Our Guest"
+	psk="012345"
 	key_mgmt=WPA-PSK
 }
-
