@@ -12,6 +12,43 @@
     },
 
     {
+      "name": "Python: pi-base make BASE blank",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "pi_base",
+      "args": [
+        "make",
+        "--site", "BASE",
+        "--type", "blank",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: pi-base make --help",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "pi_base",
+      "args": [
+        "make",
+        "--help",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: pi-base --help",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "pi_base",
+      "args": [
+        "--help",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+    {
       "name": "Python: make BASE blank",
       "type": "debugpy",
       "request": "launch",

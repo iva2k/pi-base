@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
+"""Make appliance image, class Builders and CLI.
+
+Raises:
+    ValueError: If site value not found
+
+Returns:
+    int: Error code
+"""
+
 # We're not going after extreme performance here
 # pylint: disable=logging-fstring-interpolation
 
@@ -19,7 +28,11 @@ from timeit import default_timer as timer
 import yaml
 
 # "modpath" must be first of our modules
-from modpath import base_path  # pylint: disable=wrong-import-position
+try:
+    from .modpath import base_path  # pylint: disable=wrong-import-position
+except:
+    from modpath import base_path  # pylint: disable=wrong-import-position
+
 from deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
 
 logging.basicConfig(level=logging.INFO)
@@ -46,24 +59,25 @@ caller_dir = os.getcwd()
 logger.debug(f'script_dir={script_dir}, caller_dir={caller_dir}')
 
 
-class Builder():
+class Builder:
     def __init__(self, args, system, sites_db: DeploySiteDB):
         self.app_info = None
         self.system = system
         self.sites_db = sites_db
         self.now = datetime.datetime.now()
         self.conf_dat = {}
-        self.error = False
+        self.error = 0
         self.ver = "0.0.0"
         self.comment = ""
         self.type = args.type
         self.site_id = args.site
-        self.base_dir = os.path.dirname(script_dir)
-        # self.stage_dir = os.path.join(self.base_dir, self.type, 'pkg')
+        self.base_dir = os.path.dirname(script_dir)  # TODO: (now) Redesign it to be: This is base dir of the project (not connected to the pi_base package location)
+        self.package_dir = self.base_dir  # TODO: (now) Find pacage dir for pi_base/lib and pi_base/common assets
         self.stage_dir = os.path.join(self.base_dir, 'build', self.site_id, self.type)
-        logger.debug(f'base_dir  : {self.base_dir}')
-        logger.debug(f'stage_dir : {self.stage_dir}')
-        logger.debug(f'app_dir   : {app_dir}')
+        logger.debug(f'base_dir    : {self.base_dir}')
+        logger.debug(f'package_dir : {self.package_dir}')
+        logger.debug(f'stage_dir   : {self.stage_dir}')
+        logger.debug(f'app_dir     : {app_dir}')
 
     def rmdir(self, path):
         path = os.path.normpath(path)
@@ -135,7 +149,8 @@ class Builder():
 
     def make_modules(self, target_app):
         """ Copies modules from common/ to staging directory target_app/modules.
-            If the list is given in config file 'Modules' section, only the listed files are copied.
+
+        If the list is given in config file 'Modules' section, only the listed files are copied.
         """
         logger.info("  + Creating modules folder:")
         # Make target_app/modules folder (make sure it is empty first)
@@ -145,12 +160,13 @@ class Builder():
         self.mkdir(target_dir)
         if 'Modules' in self.conf_dat:
             for item in self.conf_dat['Modules']:
-                src = os.path.normpath(os.path.join(self.base_dir, 'pi_base', 'lib', item))
+                src = os.path.normpath(os.path.join(self.package_dir, 'pi_base', 'lib', item))
                 dst = os.path.normpath(target_dir + os.sep)
                 logger.debug(f'Copying {src} to {dst}')
                 shutil.copy2(src, dst)
                 logger.info(f'    + Copied {item}')
         else:
+            # TODO: (now) Redesign using of base_dir/common to be conditional on it's presence, not on the absence of 'Modules' section in config.
             src = os.path.normpath(os.path.join(self.base_dir, 'common'))
             dst = target_dir
             logger.debug(f'Copying {src} to {dst}')
@@ -163,7 +179,7 @@ class Builder():
         if 'Files' in self.conf_dat:
             logger.info("  + Copying additional files per conf.'Files':")
             logger.debug(f'Preparing {target_app}')
-            items = self.conf_dat['Files']
+            items = self.conf_dat["Files"]
             for item in items:
                 src_is_dir = item['src'][-1:] == '/'
                 src = os.path.normpath(os.path.join(self.base_dir, item['src']))
@@ -209,6 +225,7 @@ class Builder():
             # Fixed items: (shall we require them in each _conf.yaml instead?)
             items = [
                 # Common files / dirs:
+                # TODO: (now) Use self.package_dir instead of self.base_dir:
                 {'src': 'pi_base/common/pkg/',                     'dst': './pkg'},
                 {'src': 'pi_base/common/common_requirements.txt',  'dst': './'},
                 {'src': 'pi_base/common/common_install.sh',        'dst': './'},
@@ -219,12 +236,10 @@ class Builder():
                 {'src': f'{self.type}/install.sh',       'dst': './'},
             ]
             for item in items:
-                src_is_dir = (item['src'][-1:] == '/')
-                src = os.path.normpath(
-                    os.path.join(self.base_dir, item['src']))
-                dst_is_dir = (item['dst'][-1:] == '/')
-                dst = os.path.normpath(os.path.join(
-                    target_dir, item['dst'])) + (os.sep if dst_is_dir else '')
+                src_is_dir = item['src'][-1:] == '/'
+                src = os.path.normpath(os.path.join(self.base_dir, item['src']))
+                dst_is_dir = item['dst'][-1:] == '/'
+                dst = os.path.normpath(os.path.join(target_dir, item['dst'])) + (os.sep if dst_is_dir else '')
                 self.mkdir(dst if dst_is_dir else os.path.dirname(dst))
                 logger.debug(f'Copying "{src}" to  "{dst}"')
                 if src_is_dir:
@@ -261,7 +276,34 @@ class Builder():
         logger.info(f'Done Making build of {self.type}.\n')
 
 
-def main():
+def find_package_dir():
+    # TODO: (now) Here's an idea, implement robust design:
+    import pkgutil
+
+    data = pkgutil.get_data(__name__, "templates/temp_file")
+
+
+def find_package_dir2():
+    # TODO: (now) Here's an idea, implement robust design: Deprecated in python 3.11 in 2021:
+    try:
+        from importlib import resources as impresources
+    except ImportError:
+        # Try backported to PY<37 `importlib_resources`.
+        import importlib_resources as impresources
+
+    from . import common  # relative-import the *package* containing the templates
+
+    try:
+        inp_file = impresources.files(common) / 'temp_file'
+        with inp_file.open("rb") as f:  # or "rt" as text file with universal newlines
+            template = f.read()
+    except AttributeError:
+        # Python < PY3.9, fall back to method deprecated in PY3.11.
+        template = impresources.read_text(common, 'temp_file')
+        # or for a file-like stream:
+        template = impresources.open_text(common, 'temp_file')
+
+def main() -> int:
     start_time = timer()
     system = platform.system()
     rel = platform.release()
@@ -276,7 +318,7 @@ def main():
 
     # first element is the default choice
     sites_list = [site.site_id for site in db.sites]
-    site_help_text = "Must be one of: " + ', '.join(types_list)
+    site_help_text = "Must be one of: " + ', '.join(sites_list)
 
     parser.add_argument('-D', '--debug', help='Enable debugging log', action='store_true')
     parser.add_argument('-t', '--type', default=types_list[0], help=type_help_text, choices=types_list+["all"])
@@ -293,15 +335,16 @@ def main():
             args1.type = item
             build = Builder(args1, system, db)
             if build.error:
-                return
+                return build.error
             build.make()
     else:
         build = Builder(args, system, db)
         if build.error:
-            return
+            return build.error
         build.make()
     end_time = timer()
     print(f'Elapsed time {end_time - start_time:0.2f}s')
+    return 0
 
 
 if __name__ == "__main__":

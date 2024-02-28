@@ -271,7 +271,7 @@ pip install -e c:/dev/raspi-device-mocks --no-binary :all:
 pip install cliff
 ```
 
-This project settled on cliff for arguments parsing, and argparse in some instances. Other CLI tools of interest:
+This project settled on [cliff](https://pypi.org/project/cliff/) for arguments parsing, and argparse in some instances. Other CLI tools of interest:
 
 - Fire: <https://github.com/google/python-fire/blob/master/docs/guide.md>
 - Click: <https://click.palletsprojects.com/en/7.x/>

@@ -20,6 +20,9 @@ pyserial~=3.5
 pyyaml~=6.0
 setuptools~=67.8.0
 
+# click~=8.1.7
+# cliff~=4.6.0
+
 slack_sdk~=3.21.0
 
 # Packages for ESP-IDF
@@ -27,3 +30,6 @@ bitstring==3.1.9
 
 # Package for communicating with FDI chip FT4222(Wrapper around libFT4222.dll from FTDI)
 ft4222==1.8.0
+
+# Google Drive
+pydrive2~=1.14.0
