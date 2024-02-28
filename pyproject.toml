@@ -32,6 +32,8 @@ dynamic = ["version"]
 dependencies = [
   "importlib-metadata",
   # Add runtime dependencies here
+  "pyyaml~=6.0"
+
 ]
 
 # [project.optional-dependencies]
@@ -43,8 +45,10 @@ Homepage = "https://github.com/iva2k/pi-base"
 Issues = "https://github.com/iva2k/pi-base/issues"
 
 [project.scripts]
-# pi-base = "pi_base:main"
-pi-base = "Project.pi_base:main"
+# Provide both underscore and dash versions of CLI:
+pi-base = "pi_base.__main__:main"
+pi_base = "pi_base.__main__:main"
+# `pi_base/__main__.py` file supports calling module as a script: `python pi_base`
 
 [tool.setuptools]
 include-package-data = true
