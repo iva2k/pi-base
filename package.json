@@ -11,6 +11,9 @@
     "all": "npm run pkg:check-build-data && echo SUCCESS!",
 
     "dev:init": "python3 -m venv venv && source venv/Scripts/activate && pip install --upgrade pip && pip install -e . && pip install -e .[dev]",
+    "dev:editable": "pip install -e . && pip install -e .[dev]",
+    "dev:strict": "pip install -e . --config-settings editable_mode=strict && pip install -e .[dev]",
+    "dev:uninstall": "pip uninstall pi_base",
     "dev:env": "source venv/Scripts/activate",
     "tox:lint": "tox run -e lint",
     "tox:test": "tox run -e test",

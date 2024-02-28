@@ -1,7 +1,9 @@
 # See:
 #  https://medium.com/@Mr_Pepe/setting-your-python-project-up-for-success-in-2024-365e53f7f31e
 #  https://setuptools.pypa.io/en/latest/userguide/development_mode.html
-#  
+#  https://github.com/Mr-Pepe/python-template
+#    pip install cruft ruff cookiecutter && cruft create git@github.com:Mr-Pepe/python-template.git # Broken on Windows!
+
 
 [build-system]
 requires      = ["setuptools>=61.0.0"]
@@ -10,7 +12,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pi_base"
-version = "0.0.1"
+# version = "0.0.1"
 authors = [
   { name="Ilya Ivanchenko", email="iva2k@yahoo.com" },
 ]
@@ -24,10 +26,12 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-# dynamic = ["version"]
+dynamic = ["version"]
 # For an analysis of this field vs pip's requirements files see:
 # https://packaging.python.org/discussions/install-requires-vs-requirements/
 dependencies = [
+  "importlib-metadata",
+  # Add runtime dependencies here
 ]
 
 # [project.optional-dependencies]
@@ -66,59 +70,74 @@ exclude = [
 # [tool.setuptools_scm]
 
 [project.optional-dependencies]
-lint = [
-  "mypy",
-  "ruff",
-]
-test = [
-  "pytest==7.4.1",
-  "pytest-cov==4.1.0",
-  "coverage[toml]==7.3.1",
-]
-doc = [
-  "sphinx",
-]
-build = [
-  "build[virtualenv]==1.0.3",
-]
 dev = [
-  "tox",
+  "pi_base[tox]",
   "pi_base[lint]",
   "pi_base[test]",
   "pi_base[doc]",
   "pi_base[build]",
 ]
+tox = [
+  "tox==4.11.1",
+]
+lint = [
+  "mypy==1.5.1",
+  "pytest==7.4.1",
+  "types-docutils",
+  "types-setuptools",
+  "jinja2==3.1.2",
+  "ruff==0.1.6",
+]
+test = [
+  "pytest==7.4.1",
+  "pytest-randomly==3.15.0",
+  "pytest-cov==4.1.0",
+  "coverage[toml]==7.3.1",
+]
+doc = [
+  "sphinx==7.2.6",
+  "sphinx_rtd_theme==1.3.0",
+  "sphinx-autodoc-typehints==1.24.0",
+  "pip-licenses==4.3.2",
+  "jinja2==3.1.2",
+]
+build = [
+  "build[virtualenv]==1.0.3",
+]
 
+
+[tool.pyright]
+exclude = ["build/**"]
 
 [tool.ruff]
 line-length = 200
 src = ["pi_base"]
 extend-exclude = [
-    "conf.py",
+  "conf.py",
 ]
 target-version = "py38"
 select = ["ALL"]
 ignore = [
-    "COM812",   # Conflicts with the formatter
-    "ISC001",   # Conflicts with the formatter
-    "ANN101",   # "missing-type-self"
-    "PT001",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
-    "PT004",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
-    "PT005",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
-    "PT023",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+  "COM812",   # Conflicts with the formatter
+  "ISC001",   # Conflicts with the formatter
+  "ANN101",   # "missing-type-self"
+  "PT001",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+  "PT004",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+  "PT005",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+  "PT023",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
 ]
 
 [tool.ruff.per-file-ignores]
 "tests/**" = [
-    "S101", # Use of `assert` detected
-    "D103", # Missing docstring in public function
+  "S101", # Use of `assert` detected
+  "D103", # Missing docstring in public function
 ]
 "**/__init__.py" = [
-    "F401", # Imported but unused
-    "F403", # Wildcard imports
+  "F401", # Imported but unused
+  "F403", # Wildcard imports
 ]
 "docs/**" = [
-    "INP001",   # Requires __init__.py but docs folder is not a package.
+  "INP001",   # Requires __init__.py but docs folder is not a package.
 ]
 
 [tool.ruff.lint.pyupgrade]
@@ -132,23 +151,50 @@ convention = "google"
 disallow_untyped_defs = true # Functions need to be annotated
 warn_unused_ignores = true
 exclude = [
-    "pi_base-\\d+", # Ignore temporary folder created by setuptools when building an sdist
-    "venv.*/",
-    "build/",
-    "dist/",
+  "pi_base-\\d+", # Ignore temporary folder created by setuptools when building an sdist
+  "venv.*/",
+  "build/",
+  "dist/",
 ]
 
 [tool.pytest.ini_options]
 addopts = """
-    --import-mode=append
-    --cov=pi_base
-    --cov-config=pyproject.toml
-    --cov-report=
-    """
+  --vv
+  --doctest-modules
+  --import-mode=append
+  --ignore-glob={{ cookiecutter.package_name }}-[0-9]*
+  --ignore="docs/_scripts"
+  --cov=pi_base
+  --cov-config=pyproject.toml
+  --cov-report=
+  """
+
+[tool.coverage.run]
+branch = true
 
 [tool.coverage.paths]
 # Maps coverage measured in site-packages to source files in src
-source = ["src/", ".tox/*/lib/python*/site-packages/"]
+source = ["pi_base", ".tox/*/lib/python*/site-packages/"]
+
+[tool.coverage.report]
+exclude_also = [
+  "\\.\\.\\.",
+  "if TYPE_CHECKING:"
+  ]
+partial_branches = [
+  "pragma: no branch",
+  "if not TYPE_CHECKING:"
+  ]
 
 [tool.coverage.html]
 directory = "reports/coverage_html"
+
+[tool.coverage.xml]
+output = "reports/coverage.xml"
+
+[[tool.mypy.overrides]]
+module = [
+  # Ignore packages that do not provide type hints here
+  # For example, add "dash.*" to ignore all imports from Dash
+  ]
+ignore_missing_imports = true
