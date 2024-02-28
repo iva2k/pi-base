@@ -6,39 +6,23 @@
 # pylint: disable=logging-fstring-interpolation
 
 import argparse
-import inspect
 import logging
 import os
 import subprocess
 import sys
 
 try:
+    from .modpath import get_script_dir  # pylint: disable=wrong-import-position
     from .make import main as make_main
 except:
+    from modpath import get_script_dir  # pylint: disable=wrong-import-position
     from make import main as make_main
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != '__main__' else None)
 # logger.setLevel(logging.DEBUG)
 
-# No root first slash (will be added as necessary):
-app_dir = "home/pi"
-etc_dir = "etc"
-
-
-def get_script_dir(follow_symlinks: bool=True) -> str:
-    if getattr(sys, 'frozen', False):  # py2exe, PyInstaller, cx_Freeze
-        path = os.path.abspath(sys.executable)
-    else:
-        path = inspect.getabsfile(get_script_dir)
-    if follow_symlinks:
-        path = os.path.realpath(path)
-    return os.path.dirname(path)
-
-
-script_dir = get_script_dir()
-caller_dir = os.getcwd()
-logger.debug(f'script_dir={script_dir}, caller_dir={caller_dir}')
+# caller_dir = os.getcwd()
 
 def make_command(args):
     try:
@@ -56,8 +40,10 @@ def make_command(args):
     return 0
 
 def upload_command(args):
+    script_dir = get_script_dir()
+    prog = os.path.join(script_dir, "upload.sh")
     try:
-        subprocess.run(["bash", "upload.sh"] + args, check=True)
+        subprocess.run(["bash", prog] + args, check=True)
     except subprocess.CalledProcessError as e:
         return e.returncode
     return 0
@@ -72,10 +58,14 @@ def main(loggr=logger) -> int:
     command_help_text = "Must be one of: " + ', '.join(commands_list)
 
     parser = argparse.ArgumentParser(description="PI-BASE CLI")
+    parser.add_argument('-D', '--debug', help='Enable debugging log', action='store_true')
     parser.add_argument("command", choices=commands_list, help=command_help_text) # , help="Arguments for command")
     parser.add_argument("args", nargs=argparse.REMAINDER, help="Arguments for command")
 
     args = parser.parse_args()
+
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
 
     if args.command in commands:
         res = commands[args.command](args.args)

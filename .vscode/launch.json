@@ -49,7 +49,7 @@
     },
 
     {
-      "name": "Python: make BASE blank",
+      "name": "Python: pi_base/make BASE blank",
       "type": "debugpy",
       "request": "launch",
       "program": "pi_base/make.py",

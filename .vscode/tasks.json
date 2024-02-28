@@ -14,6 +14,16 @@
             "problemMatcher": []
         },
         {
+            "label": "pi-base Build All & Upload",
+            "type": "shell",
+            "command": "'${config:python.pythonPath}\\python3' pi_base make --site BASE --type all && pi_base upload --site BASE",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        },
+
+        {
             "label": "Pi BASE Build All & Upload",
             "type": "shell",
             "command": "conda init && conda activate py3.9.4 && '${config:python.pythonPath}\\python3' pi_base/make.py --site BASE --type all && pi_base/upload.sh --site BASE",

@@ -16,24 +16,28 @@ import argparse
 import copy
 import datetime
 import errno
-import inspect
+# import inspect
 import json
 import logging
 import os
 import platform
 import shutil
 from subprocess import check_output, CalledProcessError
-import sys
+# import sys
 from timeit import default_timer as timer
 import yaml
 
 # "modpath" must be first of our modules
 try:
-    from .modpath import base_path  # pylint: disable=wrong-import-position
+    from .modpath import get_script_dir, base_path  # pylint: disable=wrong-import-position
 except:
-    from modpath import base_path  # pylint: disable=wrong-import-position
+    from modpath import get_script_dir, base_path  # pylint: disable=wrong-import-position
 
-from deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
+try:
+    from .lib.deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
+except:
+    from deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != '__main__' else None)
@@ -42,17 +46,6 @@ logger = logging.getLogger(__name__ if __name__ != '__main__' else None)
 # No root first slash (will be added as necessary):
 app_dir = "home/pi"
 etc_dir = "etc"
-
-
-def get_script_dir(follow_symlinks=True):
-    if getattr(sys, 'frozen', False):  # py2exe, PyInstaller, cx_Freeze
-        path = os.path.abspath(sys.executable)
-    else:
-        path = inspect.getabsfile(get_script_dir)
-    if follow_symlinks:
-        path = os.path.realpath(path)
-    return os.path.dirname(path)
-
 
 script_dir = get_script_dir()
 caller_dir = os.getcwd()
