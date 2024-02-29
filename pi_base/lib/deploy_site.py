@@ -2,6 +2,9 @@
 
 # WIP: Creating: Service to manage sites db
 
+# We're not going after extreme performance here
+# pylint: disable=logging-fstring-interpolation
+
 import argparse
 import csv
 import io
@@ -35,9 +38,8 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-class DeploySite():
-    """Deployment Site
-    """
+class DeploySite:
+    """Deployment Site."""
 
     def __init__(self, site_id: str = None, site_name: str = None, sa_client_secrets: str = None, description: str = None):
         self.site_id = site_id
@@ -59,9 +61,8 @@ class DeploySite():
         return hasattr(self, key)
 
 
-class DeploySiteDB():
-    """Store of Deployment Sites
-    """
+class DeploySiteDB:
+    """Store of Deployment Sites."""
 
     # TODO: (soon) DRY - move DB code into a generic class. Use here and in remoteiot.py.
 
@@ -327,11 +328,14 @@ def parse_args():
     return args, parser
 
 
-def main():
+def main(loggr=logger):
     args, parser = parse_args()
-    logger.debug(f'DEBUG {vars(args)}')
+    if loggr:
+        if args.debug:
+            loggr.setLevel(logging.DEBUG)
+        loggr.debug(f'DEBUG {vars(args)}')
 
-    db = DeploySiteDB(debug=args.debug)
+    db = DeploySiteDB(loggr=loggr, debug=args.debug)
 
     try:
         if args.command == 'sites':
@@ -342,7 +346,8 @@ def main():
             return cmd_add(db, args)
 
     except Exception as e:
-        logger.error(f'Error {type(e)} "{e}"')
+        if loggr:
+            loggr.error(f'Error {type(e)} "{e}"')
         return -1
 
     parser.print_help()

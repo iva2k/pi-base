@@ -47,13 +47,17 @@ logger = logging.getLogger(__name__ if __name__ != '__main__' else None)
 app_dir = "home/pi"
 etc_dir = "etc"
 
-script_dir = get_script_dir()
-caller_dir = os.getcwd()
-logger.debug(f'script_dir={script_dir}, caller_dir={caller_dir}')
+# script_dir = get_script_dir()
+# caller_dir = os.getcwd()
+# logger.debug(f'script_dir={script_dir}, caller_dir={caller_dir}')
 
 
 class Builder:
-    def __init__(self, args, system, sites_db: DeploySiteDB):
+    def __init__(self, args, system, sites_db: DeploySiteDB, loggr=logger):
+        self.loggr = loggr
+        if not self.loggr:
+            raise ValueError('Please provide loggr argument')
+
         self.app_info = None
         self.system = system
         self.sites_db = sites_db
@@ -64,17 +68,18 @@ class Builder:
         self.comment = ""
         self.type = args.type
         self.site_id = args.site
-        self.base_dir = os.path.dirname(script_dir)  # TODO: (now) Redesign it to be: This is base dir of the project (not connected to the pi_base package location)
-        self.package_dir = self.base_dir  # TODO: (now) Find pacage dir for pi_base/lib and pi_base/common assets
+        self.base_dir = args.workspace or os.getcwd() # Find client project base directory
+        self.package_dir = get_script_dir() # Find package directory
         self.stage_dir = os.path.join(self.base_dir, 'build', self.site_id, self.type)
-        logger.debug(f'base_dir    : {self.base_dir}')
-        logger.debug(f'package_dir : {self.package_dir}')
-        logger.debug(f'stage_dir   : {self.stage_dir}')
-        logger.debug(f'app_dir     : {app_dir}')
+
+        self.loggr.debug(f'base_dir    : {self.base_dir}')
+        self.loggr.debug(f'package_dir : {self.package_dir}')
+        self.loggr.debug(f'stage_dir   : {self.stage_dir}')
+        self.loggr.debug(f'app_dir     : {app_dir}')
 
     def rmdir(self, path):
         path = os.path.normpath(path)
-        logger.debug(f'removing dir {path}...')
+        self.loggr.debug(f'removing dir {path}...')
         try:
             shutil.rmtree(path)  # ignore_errors=False, onerror=None
         except OSError as exc:  # Python = 2.5
@@ -86,7 +91,7 @@ class Builder:
 
     def mkdir(self, path):
         path = os.path.normpath(path)
-        logger.debug(f'creating dir {path}...')
+        self.loggr.debug(f'creating dir {path}...')
         try:
             # p = check_output(f'mkdir {path}', shell=True, text=True)
             os.makedirs(path)
@@ -100,7 +105,7 @@ class Builder:
     def write_conf(self, filepath, conf, head='', tail=''):
         filepath = os.path.normpath(filepath)
         self.mkdir(os.path.dirname(filepath))
-        logger.debug(f'writing file {filepath}...')
+        self.loggr.debug(f'writing file {filepath}...')
         with open(filepath, "w", encoding='utf-8') as outfile:
             y = yaml.dump(conf, default_flow_style=False)
             outfile.write(head)
@@ -111,17 +116,17 @@ class Builder:
         custom = False
         try:
             yaml_file = os.path.join(base_path, self.type, 'conf.yaml')
-            logger.debug(f'opening {yaml_file}')
+            self.loggr.debug(f'opening {yaml_file}')
             file = open(yaml_file, encoding='utf-8')
             custom = True
         except:
-            yaml_file = os.path.join(script_dir, 'default_conf.yaml')
-            logger.debug(f'opening {yaml_file}')
+            yaml_file = os.path.join(script_dir, 'default_conf.yaml') # TODO: (now) Don't use script_dir
+            self.loggr.debug(f'opening {yaml_file}')
             file = open(yaml_file, encoding='utf-8')
             # TODO: (when needed) Perhaps opening default_conf.yaml is not at all what we need here. Should default be pre-loaded?
         self.conf_dat = yaml.safe_load(file)
         file.close()
-        logger.debug(json.dumps(self.conf_dat, indent=4, default="DEFAULT"))
+        self.loggr.debug(json.dumps(self.conf_dat, indent=4, default="DEFAULT"))
         self.app_info = self.conf_dat['Info']
         self.app_info['Site'] = self.site_id
         self.app_info['Type'] = self.type
@@ -133,8 +138,8 @@ class Builder:
         # If self.app_info->GoogleDrive->secrets is 'auto':
         if 'GoogleDrive' in self.app_info and 'secrets' in self.app_info['GoogleDrive'] and self.app_info['GoogleDrive']['secrets'] == 'auto':
             self.app_info['GoogleDrive']['secrets'] = site.sa_client_secrets
-            self.conf_dat['Files'].append({'src': os.path.join('secrets', site.sa_client_secrets), 'dst': 'app/'})
-            logger.info(f'  + Added {site.sa_client_secrets} file to the build and to app_conf.yaml')
+            self.conf_dat['Files'].append({'src': os.path.join(self.base_dir, 'secrets', site.sa_client_secrets), 'dst': 'app/'})
+            self.loggr.info(f'  + Added {site.sa_client_secrets} file to the build and to app_conf.yaml')
 
         if 'PostInstall' in self.conf_dat:
             self.app_info['PostInstall'] = self.conf_dat['PostInstall']
@@ -145,33 +150,33 @@ class Builder:
 
         If the list is given in config file 'Modules' section, only the listed files are copied.
         """
-        logger.info("  + Creating modules folder:")
+        self.loggr.info("  + Creating modules folder:")
         # Make target_app/modules folder (make sure it is empty first)
         target_dir = os.path.normpath(os.path.join(target_app, 'modules'))
-        logger.debug(f'Preparing {target_dir}')
+        self.loggr.debug(f'Preparing {target_dir}')
         self.rmdir(target_dir)
         self.mkdir(target_dir)
         if 'Modules' in self.conf_dat:
             for item in self.conf_dat['Modules']:
-                src = os.path.normpath(os.path.join(self.package_dir, 'pi_base', 'lib', item))
+                src = os.path.normpath(os.path.join(self.package_dir, 'lib', item))
                 dst = os.path.normpath(target_dir + os.sep)
-                logger.debug(f'Copying {src} to {dst}')
+                self.loggr.debug(f'Copying {src} to {dst}')
                 shutil.copy2(src, dst)
-                logger.info(f'    + Copied {item}')
+                self.loggr.info(f'    + Copied {item}')
         else:
             # TODO: (now) Redesign using of base_dir/common to be conditional on it's presence, not on the absence of 'Modules' section in config.
             src = os.path.normpath(os.path.join(self.base_dir, 'common'))
             dst = target_dir
-            logger.debug(f'Copying {src} to {dst}')
+            self.loggr.debug(f'Copying {src} to {dst}')
             # symlinks=False, ignore=None, copy_function=copy2, ignore_dangling_symlinks=False
             shutil.copytree(src, dst, dirs_exist_ok=True)
-            logger.info("    + Copied all files from common/")
+            self.loggr.info("    + Copied all files from common/")
 
     def make_files_per_conf(self, target_app):
         # Make individual files (copy all files to their destinations in target_app)
         if 'Files' in self.conf_dat:
-            logger.info("  + Copying additional files per conf.'Files':")
-            logger.debug(f'Preparing {target_app}')
+            self.loggr.info("  + Copying additional files per conf.'Files':")
+            self.loggr.debug(f'Preparing {target_app}')
             items = self.conf_dat["Files"]
             for item in items:
                 src_is_dir = item['src'][-1:] == '/'
@@ -179,14 +184,14 @@ class Builder:
                 dst_is_dir = item['dst'][-1:] == '/'
                 dst = os.path.normpath(os.path.join(target_app, item['dst'])) + (os.sep if dst_is_dir else '')
                 self.mkdir(dst if dst_is_dir else os.path.dirname(dst))
-                logger.debug(f'Copying "{src}" to  "{dst}"')
+                self.loggr.debug(f'Copying "{src}" to  "{dst}"')
                 if src_is_dir:
                     # symlinks=False, ignore=None, copy_function=copy2, ignore_dangling_symlinks=False
                     shutil.copytree(src, dst, dirs_exist_ok=True)
                 else:
                     shutil.copy2(src=src, dst=dst)
                 # TODO: (when needed) improve report for dst=''
-                logger.info(f'    + Copied {item["src"]} to {item["dst"]}')
+                self.loggr.info(f'    + Copied {item["src"]} to {item["dst"]}')
 
     def make_ssh_cert(self, file, passphrase=""):
         cmd = ''
@@ -207,44 +212,49 @@ class Builder:
             p = check_output(cmd, shell=True, text=True)
             return True
         except CalledProcessError as e:
-            logger.error(f'Error {e} while executing command "{cmd}"')
+            self.loggr.error(f'Error {e} while executing command "{cmd}"')
             return False
 
     def make_files_from_template(self, target_dir):
         # Make files staged in the templates
         if True:  # pylint: disable=using-constant-test
-            logger.info('  + Copying template files:')
-            logger.debug(f'Preparing {target_dir}')
+            self.loggr.info('  + Copying template files:')
+            self.loggr.debug(f'Preparing {target_dir}')
             # Fixed items: (shall we require them in each _conf.yaml instead?)
+            # Note: Trailing slash in "src" and "dst" is important:
+            #  - slash denotes directory,
+            #  - no slash in "src" means its a file,
+            #  - no slash in "dst" for directory in "src" means the name of the target directory.
             items = [
                 # Common files / dirs:
-                # TODO: (now) Use self.package_dir instead of self.base_dir:
-                {'src': 'pi_base/common/pkg/',                     'dst': './pkg'},
-                {'src': 'pi_base/common/common_requirements.txt',  'dst': './'},
-                {'src': 'pi_base/common/common_install.sh',        'dst': './'},
+                {"src": os.path.join(self.package_dir, "common", "pkg/"),                     "dst": "./pkg"},
+                {"src": os.path.join(self.package_dir, "common", "common_requirements.txt"),  "dst": "./"},
+                {"src": os.path.join(self.package_dir, "common", "common_install.sh"),        "dst": "./"},
+                {"src": os.path.join(self.package_dir, "modpath.py"),                         "dst": os.path.join("pkg", app_dir, "app/") },
+                {"src": os.path.join(self.package_dir, "modpath.py"),                         "dst": os.path.join("pkg", app_dir, "modules/") },
 
                 # App files:
-                {'src': f'{self.type}/pkg/',             'dst': './pkg'},
-                {'src': f'{self.type}/requirements.txt', 'dst': './'},
-                {'src': f'{self.type}/install.sh',       'dst': './'},
+                {"src": os.path.join(self.base_dir, self.type, "pkg/"),             'dst': "./pkg"},
+                {"src": os.path.join(self.base_dir, self.type, "requirements.txt"), 'dst': "./"},
+                {"src": os.path.join(self.base_dir, self.type, "install.sh"),       'dst': "./"},
             ]
             for item in items:
                 src_is_dir = item['src'][-1:] == '/'
-                src = os.path.normpath(os.path.join(self.base_dir, item['src']))
+                src = os.path.normpath(item['src'])
                 dst_is_dir = item['dst'][-1:] == '/'
                 dst = os.path.normpath(os.path.join(target_dir, item['dst'])) + (os.sep if dst_is_dir else '')
                 self.mkdir(dst if dst_is_dir else os.path.dirname(dst))
-                logger.debug(f'Copying "{src}" to  "{dst}"')
+                self.loggr.debug(f'Copying "{src}" to  "{dst}"')
                 if src_is_dir:
                     # symlinks=False, ignore=None, copy_function=copy2, ignore_dangling_symlinks=False
                     shutil.copytree(src, dst, dirs_exist_ok=True)
                 else:
                     shutil.copy2(src=src, dst=dst)
                 # TODO: (when needed) improve report for dst=''
-                logger.info(f'    + Copied {item["src"]} to {item["dst"]}')
+                self.loggr.info(f'    + Copied {item["src"]} to {item["dst"]}')
 
     def make(self):
-        logger.info(f'Making build of {self.site_id}/{self.type}:')
+        self.loggr.info(f'Making build of {self.site_id}/{self.type}:')
         custom = self.config()
         self.rmdir(self.stage_dir)
         self.mkdir(self.stage_dir)
@@ -254,19 +264,19 @@ class Builder:
                 filepath=f'{self.stage_dir}/pkg/{etc_dir}/manager_conf.yaml',
                 conf=self.conf_dat['Conf']
             )
-            logger.info("  + Created manager_conf.yaml")
+            self.loggr.info("  + Created manager_conf.yaml")
         # app_info
         self.write_conf(
             filepath=f'{self.stage_dir}/pkg/{app_dir}/app_conf.yaml',
             conf=self.app_info,
             head=f'# Auto-generated by make.py on: {str(self.now)[:19]}\n\n'
         )
-        logger.info("  + Created app_conf.yaml")
+        self.loggr.info("  + Created app_conf.yaml")
         target_app = f'{self.stage_dir}/pkg/{app_dir}'
         self.make_modules(target_app)
         self.make_files_per_conf(target_app)
         self.make_files_from_template(self.stage_dir)
-        logger.info(f'Done Making build of {self.type}.\n')
+        self.loggr.info(f'Done Making build of {self.type}.\n')
 
 
 def find_package_dir():
@@ -296,19 +306,19 @@ def find_package_dir2():
         # or for a file-like stream:
         template = impresources.open_text(common, 'temp_file')
 
-def main() -> int:
+def main(loggr=logger) -> int:
     start_time = timer()
     system = platform.system()
     rel = platform.release()
-    logger.info(f'Running on {system}, release {rel}')
+    if loggr:
+        loggr.info(f'Running on {system}, release {rel}')
     parser = argparse.ArgumentParser()
-
-    db = DeploySiteDB()
 
     # first element is the default choice
     types_list = ['blank']  # TODO: (now) implement automatic list of projects generation, #TODO: (soon) Implement blank project special handling
     type_help_text = "Must be one of: all, " + ', '.join(types_list)
 
+    db = DeploySiteDB(loggr=loggr)
     # first element is the default choice
     sites_list = [site.site_id for site in db.sites]
     site_help_text = "Must be one of: " + ', '.join(sites_list)
@@ -316,11 +326,12 @@ def main() -> int:
     parser.add_argument('-D', '--debug', help='Enable debugging log', action='store_true')
     parser.add_argument('-t', '--type', default=types_list[0], help=type_help_text, choices=types_list+["all"])
     parser.add_argument('-s', '--site', default=sites_list[0], help=site_help_text, choices=sites_list)
+    parser.add_argument('-w', '--workspace', help="Workspace directory, defaults to current working directory")
 
     args = parser.parse_args()
 
-    if args.debug:
-        logger.setLevel(logging.DEBUG)
+    if args.debug and loggr:
+        loggr.setLevel(logging.DEBUG)
 
     if args.type == "all":
         for item in types_list:
@@ -336,7 +347,8 @@ def main() -> int:
             return build.error
         build.make()
     end_time = timer()
-    print(f'Elapsed time {end_time - start_time:0.2f}s')
+    if loggr:
+        loggr.info(f'Elapsed time {end_time - start_time:0.2f}s')
     return 0
 
 

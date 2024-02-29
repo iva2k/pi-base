@@ -21,8 +21,6 @@ Modules:
     - tput.py
     - winserial.py
 Files:
-    - { src: 'pi_base/modpath.py', dst: 'app/' }
-    - { src: 'pi_base/modpath.py', dst: 'modules/' }
     - { src: 'secrets/remote_secrets.yaml', dst: 'app/' }
     - { src: 'blank/blank.py', dst: 'app/' }
     # - { src: 'pi_base/common/a.py', dst: 'modules/renamed.b.py' }
