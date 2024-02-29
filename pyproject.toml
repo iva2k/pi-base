@@ -36,6 +36,7 @@ dependencies = [
   "pydrive2~=1.14.0",
   # "click~=8.1.7",
   # "cliff~=4.6.0",
+  # "pyserial~=3.5",
 ]
 
 # [project.optional-dependencies]
@@ -135,15 +136,18 @@ lint.ignore = [
 
   ## Temporary disable all violating rules. # TODO: (soon) Re-enable and fix violations:
   "ANN001",
+  "ANN102",
   "ANN201",
   "ANN202",
   "ANN204",
+  "ANN206",
   "ARG001",
   "BLE001",
   "D100",
   "D101",
   "D102",
   "D103",
+  "D105",
   "D107",
   "D210",
   "DTZ005",
@@ -164,6 +168,7 @@ lint.ignore = [
   "PTH109",
   "PTH112",
   "PTH118",
+  "PTH119",
   "PTH120",
   "PTH123",
   "S602",

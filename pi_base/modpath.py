@@ -55,13 +55,13 @@ import sys
 
 
 debug = False
-#debug = True
+# debug = True
 
 
 def is_raspberrypi():
     try:
-        with open('/sys/firmware/devicetree/base/model', encoding='utf-8') as m:
-            if 'raspberry pi' in m.read().lower():
+        with open("/sys/firmware/devicetree/base/model", encoding="utf-8") as m:
+            if "raspberry pi" in m.read().lower():
                 return True
     except Exception:  # noqa: S110
         pass
@@ -69,15 +69,15 @@ def is_raspberrypi():
 
 
 def is_posix():
-    return os.name == 'posix'
+    return os.name == "posix"
 
 
 def is_mac():
-    return sys.platform == 'darwin'
+    return sys.platform == "darwin"
 
 
 def is_win():
-    return os.name == 'nt'
+    return os.name == "nt"
 
 
 # def get_workspace_dir(file_or_object_or_func=None):
@@ -90,7 +90,7 @@ def get_workspace_dir():
 def get_script_dir(file_or_object_or_func, follow_symlinks=True):
     if not file_or_object_or_func:
         raise ValueError("Please provide file_or_object_or_func argument (can be __file__).")
-    if getattr(sys, 'frozen', False):  # py2exe, PyInstaller, cx_Freeze
+    if getattr(sys, "frozen", False):  # py2exe, PyInstaller, cx_Freeze
         path = os.path.abspath(sys.executable)
     elif isinstance(file_or_object_or_func, str):
         path = file_or_object_or_func
@@ -105,14 +105,14 @@ def get_developer_setup(filename, default_site_id, default_project):
     if os.path.isfile(filename):
         my_site_id, my_project, line = None, None, None
         try:
-            with open(filename, 'r', encoding='utf-8') as fd:
-                for line in fd:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
+            with open(filename, encoding="utf-8") as fd:
+                for line_in in fd:
+                    line = line_in.strip()
+                    if not line or line.startswith("#"):
                         continue
-                    my_site_id, my_project = line.split(',')[:2]
+                    my_site_id, my_project = line.split(",")[:2]
         except Exception as err:
-            print(f'Error "{err}" reading develop file "{filename}"' + f', parsing line "{line}"' if line else '')
+            print(f'Error "{err}" reading develop file "{filename}"' + f', parsing line "{line}"' if line else "")
         if my_site_id and my_project:
             default_site_id, default_project = my_site_id.strip(), my_project.strip()
             print(f'DEBUG Read develop file "{filename}", site_id={default_site_id}, project={default_project}')
@@ -121,45 +121,47 @@ def get_developer_setup(filename, default_site_id, default_project):
 
 # When:                                     __file__     # {workspace}/pi_base/modpath.py # /home/pi/pi_base/ # /home/pi/app/modpath.py  #
 file_path = os.path.dirname(os.path.realpath(__file__))  # {workspace}/pi_base            # /home/pi/pi_base/ # /home/pi/app             #
-file_dir = os.path.basename(file_path)                   # pi_base                        # /home/pi/pi_base/ # app                      #
-base_path = os.path.dirname(file_path)                   # {workspace}                    # /home/pi/pi_base/ # /home/pi                 #
+file_dir = os.path.basename(file_path)  # pi_base                        # /home/pi/pi_base/ # app                      #
+base_path = os.path.dirname(file_path)  # {workspace}                    # /home/pi/pi_base/ # /home/pi                 #
 script_dir = get_script_dir(__file__)
 caller_dir = get_workspace_dir()
 
 # Detect developer setup
 
 # If present, 'develop.txt' file (see 'develop.SAMPLE.txt') defines which app is running and choose where to find .yaml file
-develop_filename = os.path.realpath(os.path.join(base_path, 'develop.txt'))
-site_id, project = get_developer_setup(develop_filename, 'BASE', 'blank')
-project_dir = os.path.join(base_path, f'build/{site_id}/{project}/pkg/home/pi')
+develop_filename = os.path.realpath(os.path.join(base_path, "develop.txt"))
+site_id, project = get_developer_setup(develop_filename, "BASE", "blank")
+project_dir = os.path.join(base_path, f"build/{site_id}/{project}/pkg/home/pi")
 
-if file_dir == 'pi_base':
+if file_dir == "pi_base":
     # Running sources or dev in IDE
     debug = True
-    running_on = 'sources'
+    running_on = "sources"
     app_dir = project_dir
-    modules_dir = os.path.join(base_path, 'common')
-    pibase_lib_dir = os.path.join(base_path, 'pi_base', 'lib')
-    scripts_dir = os.path.join(project_dir, 'modules')  # scripts is not copied to the Pi, but build modules directory has required files from scripts/
-elif file_dir == 'app' and not is_raspberrypi():
+    modules_dir = os.path.join(base_path, "common")
+    pibase_lib_dir = os.path.join(base_path, "pi_base", "lib")
+    scripts_dir = os.path.join(project_dir, "modules")  # scripts is not copied to the Pi, but build modules directory has required files from scripts/
+elif file_dir == "app" and not is_raspberrypi():
     # Running build but not on target
     debug = True
-    running_on = 'build'
+    running_on = "build"
     project_dir = base_path
     app_dir = project_dir
-    modules_dir = os.path.join(base_path, 'modules')
-    pibase_lib_dir = os.path.join(base_path, 'modules')
+    modules_dir = os.path.join(base_path, "modules")
+    pibase_lib_dir = os.path.join(base_path, "modules")
     scripts_dir = modules_dir  # scripts is not copied to the Pi, but build modules directory has required files from scripts/
 else:
     # Defaults for 'target'
-    running_on = 'target'
-    app_dir = '/home/pi'  # path where to look for app_conf.yaml
-    modules_dir = '/home/pi/modules'  # path where to look for modules
-    pibase_lib_dir = '/home/pi/modules'  # path where to look for modules
+    running_on = "target"
+    app_dir = "/home/pi"  # path where to look for app_conf.yaml
+    modules_dir = "/home/pi/modules"  # path where to look for modules
+    pibase_lib_dir = "/home/pi/modules"  # path where to look for modules
     scripts_dir = modules_dir  # scripts is not copied to the Pi, but build directory has required files from scripts/
 
 if debug:
-    print(f'DEBUG modpath.py\n  __file__="{__file__}"\n  __name__="{__name__}"\n  running_on={running_on}\n  base_path="{base_path}"\n  file_path="{file_path}"\n  file_dir="{file_dir}"\n  project_dir="{project_dir}"\n  script_dir="{script_dir}"\n  caller_dir="{caller_dir}"\n  app_dir="{app_dir}"\n  modules_dir="{modules_dir}"\n  pibase_lib_dir="{pibase_lib_dir}"\n  scripts_dir="{scripts_dir}"\n  is_raspberrypi={is_raspberrypi()}\n  is_posix={is_posix()}\n  is_mac={is_mac()}\n  is_win={is_win()}')
+    print(
+        f'DEBUG modpath.py\n  __file__="{__file__}"\n  __name__="{__name__}"\n  running_on={running_on}\n  base_path="{base_path}"\n  file_path="{file_path}"\n  file_dir="{file_dir}"\n  project_dir="{project_dir}"\n  script_dir="{script_dir}"\n  caller_dir="{caller_dir}"\n  app_dir="{app_dir}"\n  modules_dir="{modules_dir}"\n  pibase_lib_dir="{pibase_lib_dir}"\n  scripts_dir="{scripts_dir}"\n  is_raspberrypi={is_raspberrypi()}\n  is_posix={is_posix()}\n  is_mac={is_mac()}\n  is_win={is_win()}'
+    )
 
 # Path where to look for modules:
 sys.path.append(modules_dir)
@@ -167,7 +169,7 @@ if debug:
     print(f'DEBUG: appended path modules_dir "{modules_dir}"')
 
 # For development, add relative paths:
-if running_on != 'target':
+if running_on != "target":
     sys.path.append(scripts_dir)
     if debug:
         print(f'DEBUG: appended path scripts_dir "{scripts_dir}"')

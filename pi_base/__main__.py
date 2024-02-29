@@ -21,10 +21,9 @@ except:
     from make import main as make_main
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__ if __name__ != '__main__' else None)
+logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 # logger.setLevel(logging.DEBUG)
 
-# caller_dir = os.getcwd()
 
 def make_command(args):
     try:
@@ -41,6 +40,7 @@ def make_command(args):
         return 1
     return 0
 
+
 def upload_command(args):
     script_dir = get_script_dir(__file__)
     prog = os.path.join(script_dir, "upload.sh")
@@ -53,15 +53,15 @@ def upload_command(args):
 
 def main(loggr=logger) -> int:
     commands = {
-        "make"    : make_command    ,
-        "upload"  : upload_command  ,
+        "make": make_command,
+        "upload": upload_command,
     }
     commands_list = commands.keys()
-    command_help_text = "Must be one of: " + ', '.join(commands_list)
+    command_help_text = "Must be one of: " + ", ".join(commands_list)
 
     parser = argparse.ArgumentParser(description="PI-BASE CLI")
-    parser.add_argument('-D', '--debug', help='Enable debugging log', action='store_true')
-    parser.add_argument("command", choices=commands_list, help=command_help_text) # , help="Arguments for command")
+    parser.add_argument("-D", "--debug", help="Enable debugging log", action="store_true")
+    parser.add_argument("command", choices=commands_list, help=command_help_text)  # , help="Arguments for command")
     parser.add_argument("args", nargs=argparse.REMAINDER, help="Arguments for command")
 
     args = parser.parse_args()
@@ -76,6 +76,7 @@ def main(loggr=logger) -> int:
         return 1
 
     return res
+
 
 if __name__ == "__main__":
     rc = main()

@@ -3,31 +3,39 @@
 import os
 from serial import Serial, SerialException
 
-if os.name == 'nt':
+if os.name == "nt":
+    import contextlib
     from serial import win32
     import ctypes
     import msvcrt
 
+    WIN_MAX_COMPORT = 8
+
     class WinSerial(Serial):
-        """\
-        Override of pyserial Serial class for non-posix (Windows)
+        """Override of pyserial Serial class for non-posix (Windows).
+
         We only need fileno() method in this class, so we can make it work in pexpect / fdpexpect
         """
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            self.is_open = False
             self._fd_port_handle = None
             self._orgTimeouts = None
-            super(WinSerial, self).__init__(*args, **kwargs)
+            self._port_handle = None
+            self._overlapped_read = None
+            self._overlapped_write = None
+            self._rts_state = None
+            self._dtr_state = None
+
+            super().__init__(*args, **kwargs)
 
         def open(self):
-            """\
-            Open port with current settings. This may throw a SerialException
-            if the port cannot be opened.
+            """Open port with current settings. This may throw a SerialException if the port cannot be opened.
+
             Overriding Serial class method to extract _fd_port_handle for fileno() method.
             """
             if self._port is None:
-                raise SerialException(
-                    "Port must be configured before it can be used.")
+                raise SerialException("Port must be configured before it can be used.")
             if self.is_open:
                 raise SerialException("Port is already open.")
             # the "\\.\COMx" format is required for devices other than COM1-COM8
@@ -35,21 +43,23 @@ if os.name == 'nt':
             # so that the first few ports are used with the DOS device name
             port = self.name
             try:
-                if port.upper().startswith('COM') and int(port[3:]) > 8:
-                    port = '\\\\.\\' + port
+                if port.upper().startswith("COM") and int(port[3:]) > WIN_MAX_COMPORT:
+                    port = "\\\\.\\" + port
             except ValueError:
                 # for like COMnotanumber
                 pass
 
             # A hackish way to get both self._fd_port_handle (which can be used in fdpexpect)
             # and a Windows handle for all existing Serial functionality
-            self._fd_port_handle = os.open(port, os.O_RDWR
-                                           # On Windows - keep file in binary mode (no CRLF translations).
-                                           | getattr(os, 'O_BINARY', 0)
-                                           # On Linux - don't make the file controlling TTY for the process.
-                                           | getattr(os, 'O_NOCTTY', 0)
-                                           | getattr(os, 'O_NONBLOCK', 0)
-                                           )
+            self._fd_port_handle = os.open(
+                port,
+                os.O_RDWR
+                # On Windows - keep file in binary mode (no CRLF translations).
+                | getattr(os, "O_BINARY", 0)
+                # On Linux - don't make the file controlling TTY for the process.
+                | getattr(os, "O_NOCTTY", 0)
+                | getattr(os, "O_NONBLOCK", 0),
+            )
             self._port_handle = msvcrt.get_osfhandle(self._fd_port_handle)
             # See also win32file._get_osfhandle from the PyWin32 lib
 
@@ -62,8 +72,8 @@ if os.name == 'nt':
             #         win32.FILE_ATTRIBUTE_NORMAL | win32.FILE_FLAG_OVERLAPPED,
             #         0)
             if self._port_handle == win32.INVALID_HANDLE_VALUE:
-                self._port_handle = None    # 'cause __del__ is called anyway
-                raise SerialException(f'could not open port {self.portstr!r}: {ctypes.WinError()!r}')
+                self._port_handle = None  # 'cause __del__ is called anyway
+                raise SerialException(f"could not open port {self.portstr!r}: {ctypes.WinError()!r}")
 
             try:
                 self._overlapped_read = win32.OVERLAPPED()
@@ -83,17 +93,15 @@ if os.name == 'nt':
 
                 # Clear buffers:
                 # Remove anything that was there
-                win32.PurgeComm(
-                    self._port_handle,
-                    win32.PURGE_TXCLEAR | win32.PURGE_TXABORT |
-                    win32.PURGE_RXCLEAR | win32.PURGE_RXABORT)
+                win32.PurgeComm(self._port_handle, win32.PURGE_TXCLEAR | win32.PURGE_TXABORT | win32.PURGE_RXCLEAR | win32.PURGE_RXABORT)
             except:
-                try:
+                # try:
+                with contextlib.suppress(Exception):
                     self._close()
-                except:
-                    # ignore any exception when closing the port
-                    # also to keep original exception that happened when setting up
-                    pass
+                # except:
+                #     # ignore any exception when closing the port
+                #     # also to keep original exception that happened when setting up
+                #     pass
                 self._port_handle = None
                 raise
             else:
@@ -102,8 +110,8 @@ if os.name == 'nt':
         def fileno(self):
             return self._fd_port_handle
 
-        def setDTRAndRTS(self, dtr, rts):
-            comDCB = win32.DCB()
+        def setDTRAndRTS(self, dtr, rts):  # noqa: N802
+            comDCB = win32.DCB()  # noqa: N806
             win32.GetCommState(self._port_handle, ctypes.byref(comDCB))
             comDCB.fRtsControl = win32.RTS_CONTROL_ENABLE if rts else win32.RTS_CONTROL_DISABLE
             comDCB.fDtrControl = win32.DTR_CONTROL_ENABLE if dtr else win32.DTR_CONTROL_DISABLE
@@ -111,25 +119,24 @@ if os.name == 'nt':
             self._rts_state = rts
             self._dtr_state = dtr
 
-    def GetSerial():
+    def GetSerial():  # noqa: N802
         return WinSerial
 
 else:
-    import fcntl    # pylint: disable=import-error
-    import struct   # pylint: disable=import-error
+    import fcntl  # pylint: disable=import-error
+    import struct  # pylint: disable=import-error
     import termios  # pylint: disable=import-error
 
     class LinSerial(Serial):
-        def __init__(self, *args, **kwargs):
-            self.TIOCMSET = getattr(termios, 'TIOCMSET', 0x5418)
-            self.TIOCMGET = getattr(termios, 'TIOCMGET', 0x5415)
-            self.TIOCM_DTR = getattr(termios, 'TIOCM_DTR', 0x002)
-            self.TIOCM_RTS = getattr(termios, 'TIOCM_RTS', 0x004)
-            super(LinSerial, self).__init__(*args, **kwargs)
+        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            self.TIOCMSET = getattr(termios, "TIOCMSET", 0x5418)
+            self.TIOCMGET = getattr(termios, "TIOCMGET", 0x5415)
+            self.TIOCM_DTR = getattr(termios, "TIOCM_DTR", 0x002)
+            self.TIOCM_RTS = getattr(termios, "TIOCM_RTS", 0x004)
+            super().__init__(*args, **kwargs)
 
-        def setDTRAndRTS(self, dtr, rts):
-            status = struct.unpack('I', fcntl.ioctl(
-                self.fileno(), self.TIOCMGET, struct.pack('I', 0)))[0]
+        def setDTRAndRTS(self, dtr, rts):  # noqa: N802
+            status = struct.unpack("I", fcntl.ioctl(self.fileno(), self.TIOCMGET, struct.pack("I", 0)))[0]
             if dtr:
                 status |= self.TIOCM_DTR
             else:
@@ -139,7 +146,7 @@ else:
             else:
                 status &= ~self.TIOCM_RTS
             # print(status)
-            fcntl.ioctl(self.fileno(), self.TIOCMSET, struct.pack('I', status))
+            fcntl.ioctl(self.fileno(), self.TIOCMSET, struct.pack("I", status))
 
-    def GetSerial():
+    def GetSerial():  # noqa: N802
         return LinSerial

@@ -12,9 +12,8 @@ os.system("")  # Enable ANSI color codes
 
 
 class ColorCodes(Enum):
-    """
-    The color codes for command line output
-    """
+    """The color codes for command line output."""
+
     RED = "\u001b[31m"
     GREEN = "\u001b[32m"
     YELLOW = "\u001b[33m"
@@ -47,9 +46,8 @@ if platform.system() not in ("Darwin", "Windows"):
 #     log.debug("loggr debug")
 
 
-class Vt():
-    """Helper logger class for VT
-    """
+class Vt:
+    """Helper logger class for VT."""
 
     def __init__(self, vt_number, use_sudo=False, loggr=None):
         self.vt_term = None
@@ -60,26 +58,26 @@ class Vt():
         if vt_number is None or vt_number == 0:
             return
         self.term = None
-        if os.name == 'nt':  # TODO: (when needed) include MacOS
+        if os.name == "nt":  # TODO: (when needed) include MacOS
             pass
         else:
-            self.term = f'/dev/tty{vt_number:d}'
+            self.term = f"/dev/tty{vt_number:d}"
         if self.term:
             if self.use_sudo:
                 pass
             else:
                 try:
                     if self.loggr:
-                        self.loggr.debug(f'VT({self.vt_number}) vt.opening {self.term}')
-                    self.vt = open(self.term, "w", encoding='utf-8')
+                        self.loggr.debug(f"VT({self.vt_number}) vt.opening {self.term}")
+                    self.vt = open(self.term, "w", encoding="utf-8")
                 except Exception as err:
                     if self.loggr:
-                        self.loggr.error(f'VT({self.vt_number}) Open failed, error {type(err)} {err}, VT output disabled.')
+                        self.loggr.error(f"VT({self.vt_number}) Open failed, error {type(err)} {err}, VT output disabled.")
                     self.vt = None
                     self.vt_number = 0
         # self.tput_clear = tput.tput('clear', (), self.vt_term)
-        self.tput_cnorm = tput.tput('cnorm', (), self.vt_term)
-        self.tput_civis = tput.tput('civis', (), self.vt_term)
+        self.tput_cnorm = tput.tput("cnorm", (), self.vt_term)
+        self.tput_civis = tput.tput("civis", (), self.vt_term)
 
     def __del__(self):
         if self.vt:
@@ -88,7 +86,7 @@ class Vt():
             self.flush()
             self.vt.close()
             if self.loggr:
-                self.loggr.debug(f'VT({self.vt_number}) vt.closed')
+                self.loggr.debug(f"VT({self.vt_number}) vt.closed")
 
     # def clear(self):
     #     if self.vt:
@@ -96,27 +94,27 @@ class Vt():
     #         self.vt.write(self.tput_clear)
     #         self.flush()
 
-    def print(self, *tstr, end='\n', sep=' '):
+    def print(self, *tstr, end="\n", sep=" "):
         proc = None
         file = None
         if self.use_sudo and self.term:
             try:
                 # cmd = ['sudo', 'tee', self.term, '>', '/dev/null']
-                cmd = ['sudo', 'tee', self.term]
+                cmd = ["sudo", "tee", self.term]
                 if self.loggr:
                     self.loggr.debug(f'VT({self.vt_number}) Popen({" ".join(cmd)})')
                 proc = Popen(cmd, stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL, text=True)
                 file = proc.stdin
             except Exception as err:
                 if self.loggr:
-                    self.loggr.error(f'VT({self.vt_number}) Popen() failed, error {type(err)} {err}, VT output disabled.')
+                    self.loggr.error(f"VT({self.vt_number}) Popen() failed, error {type(err)} {err}, VT output disabled.")
                 proc = None
                 file = None
                 self.use_sudo = False  # Disable future tries
         elif self.vt:
             file = self.vt
             if self.loggr:
-                self.loggr.debug(f'VT({self.vt_number}) vt.print()')
+                self.loggr.debug(f"VT({self.vt_number}) vt.print()")
 
         if file:
             try:
@@ -131,7 +129,7 @@ class Vt():
                 file.flush()
             except Exception as err:
                 if self.loggr:
-                    self.loggr.error(f'VT({self.vt_number}) file.write() failed, error {type(err)} {err}')
+                    self.loggr.error(f"VT({self.vt_number}) file.write() failed, error {type(err)} {err}")
 
         if self.use_sudo and proc:
             if self.loggr:
@@ -142,7 +140,7 @@ class Vt():
     def flush(self):
         if self.vt:
             if self.loggr:
-                self.loggr.debug(f'VT({self.vt_number}) vt.flush()')
+                self.loggr.debug(f"VT({self.vt_number}) vt.flush()")
             self.vt.flush()
 
 
@@ -164,7 +162,7 @@ class Loggr:
         self.use_stdout = use_stdout
         self.use_journal_name = use_journal_name
         self.journal = None
-        if use_journal_name and os.name != 'nt':
+        if use_journal_name and os.name != "nt":
             self.journal = logging.getLogger(use_journal_name)
             self.journal.propagate = False  # Important to disallow sending the logs to the parent.
             log_fmt = logging.Formatter("%(levelname)s %(message)s")
@@ -189,7 +187,7 @@ class Loggr:
         """
         Clear screen, and optionally print.
         """
-        self.tput_print('clear', ())
+        self.tput_print("clear", ())
         if len(tstr) > 0:
             self.print(*tstr)
 
@@ -200,7 +198,7 @@ class Loggr:
         if not level:
             level = logging.NOTSET
         if level >= self.level:
-            level_str = f'{logging.getLevelName(level):8s}'
+            level_str = f"{logging.getLevelName(level):8s}"
             if self.vt:
                 self.vt.print(level_str, *tstr)
             if self.use_stdout:
@@ -223,7 +221,7 @@ class Loggr:
     def debug(self, *tstr):
         self.log(logging.DEBUG, ColorCodes.DEFAULT, *tstr)
 
-    def print(self, *tstr, end: str = '\n', sep=' ', **kwargs):
+    def print(self, *tstr, end: str = "\n", sep=" ", **kwargs):
         """
         Print message(s), unmasked
         """
@@ -249,11 +247,11 @@ class Loggr:
         """
         if width is None:
             width = len(text) * 2
-        self.color_print("┏" + "━"*width + "┓")
-        self.color_print("┃", end='')
-        self.color_print(f"{text:^{width}}", color_code=color_code, end='')
+        self.color_print("┏" + "━" * width + "┓")
+        self.color_print("┃", end="")
+        self.color_print(f"{text:^{width}}", color_code=color_code, end="")
         self.color_print("┃")
-        self.color_print("┗" + "━"*width + "┛")
+        self.color_print("┗" + "━" * width + "┛")
 
     def get_user_input(self, text: str, color_code: str = ColorCodes.YELLOW) -> str:
         """
@@ -266,7 +264,7 @@ class Loggr:
         Returns:
             str : User input
         """
-        self.color_print(text, color_code=color_code, end=' ')
+        self.color_print(text, color_code=color_code, end=" ")
         return input()
 
     def get_user_yes_no_input(self, text: str, color_code: str = ColorCodes.YELLOW) -> bool:
@@ -283,17 +281,17 @@ class Loggr:
         result = False
         while True:
             response = self.get_user_input(text, color_code)
-            if response.lower() in ("yes", 'y'):
+            if response.lower() in ("yes", "y"):
                 result = True
                 break
-            elif response.lower() in ("no", 'n'):
+            elif response.lower() in ("no", "n"):
                 result = False
                 break
             else:
                 self.color_print("Response must be [Y]es or [N]o.", ColorCodes.RED)
         return result
 
-    def color_print(self, text: str, color_code: str = ColorCodes.DEFAULT, end: str = '\n', filter_text: str = "") -> None:
+    def color_print(self, text: str, color_code: str = ColorCodes.DEFAULT, end: str = "\n", filter_text: str = "") -> None:
         """
         Prints the text as both an std output using the given color code
 
@@ -311,14 +309,14 @@ class Loggr:
             filter_text = text
         index = text.find(filter_text)
         strlen = len(filter_text)
-        self.print(text[:index] + color_code + text[index:index+strlen] + ColorCodes.DEFAULT.value + text[index+strlen:], end=end)
+        self.print(text[:index] + color_code + text[index : index + strlen] + ColorCodes.DEFAULT.value + text[index + strlen :], end=end)
 
     def position(self, x, y, *tstr):
         """
         Move cursor to position on screen, and optionally print.
         0,0 is top left, x is horizontal, y is vertical.
         """
-        self.tput_print('cup', (y, x))
+        self.tput_print("cup", (y, x))
         if len(tstr) > 0:
             self.print(*tstr)
 
@@ -326,7 +324,7 @@ class Loggr:
         """
         Clear to end of line, and optionally print.
         """
-        self.tput_print('el', ())
+        self.tput_print("el", ())
         if len(tstr) > 0:
             self.print(*tstr)
 
@@ -334,7 +332,7 @@ class Loggr:
         """
         Clear to end of display, and optionally print.
         """
-        self.tput_print('ed', ())
+        self.tput_print("ed", ())
         if len(tstr) > 0:
             self.print(*tstr)
 
@@ -343,38 +341,38 @@ class Loggr:
         Delete <num> lines.
             ('dl'   , ( 2,   )),   #  DL      Delete #1 lines (P*)
         """
-        self.tput_print('dl', (num, ))
+        self.tput_print("dl", (num,))
 
     def ech(self, num=1):
         """
         Delete <num> characters.
         """
-        self.tput_print('ech', (num, ))
+        self.tput_print("ech", (num,))
 
     def cnorm(self):
         """
         Cursor normal.
         """
-        self.tput_print('cnorm', ())
+        self.tput_print("cnorm", ())
 
     def cblock(self):
         """
         Cursor block.
         """
-        self.tput_print('cvvis', ())
+        self.tput_print("cvvis", ())
 
     def civis(self):
         """
         Cursor invisible.
         """
-        self.tput_print('civis', ())
+        self.tput_print("civis", ())
 
     def cols(self, term=None):
-        str_val = self.tput('cols', (), term)
+        str_val = self.tput("cols", (), term)
         return int(str_val)
 
     def lines(self, term=None):
-        str_val = self.tput('lines', (), term)
+        str_val = self.tput("lines", (), term)
         return int(str_val)
 
     # TODO: (soon) Use tput.tput for Escape sequences, e.g.:
@@ -392,10 +390,10 @@ class Loggr:
     def tput_print(self, code, args=()):
         str_val = self.tput(code, args, self.vt_term)
         if self.vt:
-            self.vt.print(str_val, end='')
+            self.vt.print(str_val, end="")
         if self.use_stdout:
             str_val = self.tput(code, args, self.stdout_term)
-            print(str_val, end='')
+            print(str_val, end="")
 
     # TODO: (when needed) Implement color text codes
     # TODO: (when needed) Implement bold text codes
@@ -403,52 +401,52 @@ class Loggr:
 
 # Quick unit check
 def quick_check():
-    l = Loggr(use_vt_number=2, use_journal_name='testloggr', use_stdout=True)
+    l = Loggr(use_vt_number=2, use_journal_name="testloggr", use_stdout=True)
     print("sleeping 3")
     time.sleep(3)
-    l.cls('cleared!')
-    l.log(logging.INFO, 'voila1')
-    l.log(logging.INFO, 'voila2')
+    l.cls("cleared!")
+    l.log(logging.INFO, "voila1")
+    l.log(logging.INFO, "voila2")
     l.position(10, 40)
-    l.log(logging.INFO, 'position 10,42')
+    l.log(logging.INFO, "position 10,42")
     print("sleeping 3")
     time.sleep(3)
-    l.print('DONE')
+    l.print("DONE")
     # print("DONE")
 
 
 def position_check():
-    l = Loggr(use_vt_number=2, use_journal_name='testloggr', use_stdout=True)
+    l = Loggr(use_vt_number=2, use_journal_name="testloggr", use_stdout=True)
     print("sleeping 3")
     time.sleep(5)
-    l.cls('0,0')
-    l.position(10, 10, '10,10')
-    l.position(0, 10, '0,10')
-    l.position(30, 3, '30,3')
-    l.position(20, 2, '20,2')
-    l.position(10, 1, '10,1')
-    l.position(20, 10, '20,10')
-    l.position(1, 9, '1,9')
-    l.position(0, 11, '0,11')
+    l.cls("0,0")
+    l.position(10, 10, "10,10")
+    l.position(0, 10, "0,10")
+    l.position(30, 3, "30,3")
+    l.position(20, 2, "20,2")
+    l.position(10, 1, "10,1")
+    l.position(20, 10, "20,10")
+    l.position(1, 9, "1,9")
+    l.position(0, 11, "0,11")
 
     print("sleeping 3")
     time.sleep(3)
-    l.print('DONE')
+    l.print("DONE")
     # print("DONE")
 
 
 def vt_check():
     l = Loggr(use_vt_number=4, use_journal_name=None, use_stdout=None, use_sudo=True)
-    l.cls('0,0')
-    l.position(10, 10, '10,10')
-    l.position(0, 10, '0,10')
-    l.position(30, 3, '30,3')
-    l.position(20, 2, '20,2')
-    l.position(10, 1, '10,1')
-    l.position(20, 10, '20,10')
-    l.position(1, 9, '1,9')
-    l.position(0, 11, '0,11')
-    l.print('DONE')
+    l.cls("0,0")
+    l.position(10, 10, "10,10")
+    l.position(0, 10, "0,10")
+    l.position(30, 3, "30,3")
+    l.position(20, 2, "20,2")
+    l.position(10, 1, "10,1")
+    l.position(20, 10, "20,10")
+    l.position(1, 9, "1,9")
+    l.position(0, 11, "0,11")
+    l.print("DONE")
     # print("DONE")
 
 
@@ -456,17 +454,17 @@ def journal_check():
     # Trying to screw up journal
     # Creating a root logger may break the journal logger (it will also log to the console through it's parent).
     logging.basicConfig(level=logging.INFO)
-    g_logger = logging.getLogger(__name__ if __name__ != '__main__' else None)
+    g_logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
     g_logger.setLevel(logging.DEBUG)
 
-    l = Loggr(use_vt_number=None, use_journal_name='testloggrjournal', use_stdout=None)
+    l = Loggr(use_vt_number=None, use_journal_name="testloggrjournal", use_stdout=None)
     # These should appear only in journal, not on the console:
     # l.critical("loggr critical")
     l.error("loggr error")
     l.warning("loggr warn")
     l.info("loggr info")
     l.debug("loggr debug")
-    l.print('DONE')
+    l.print("DONE")
     # print("DONE")
 
 

@@ -25,7 +25,8 @@
 # Latest trend is use IPP / everywhere / driverless
 # ippeveprinter -D file:///Users/Shared/Print/ -c /usr/libexec/cups/command/ippeveps -F application/pdf  -P /private/etc/cups/ppd/Direct_PDF.ppd Qwe
 # ippeveprinter -D printer_uri -c /usr/libexec/cups/command/ippeveps -F application/pdf  -P ppd_file printer_name
-# ippeveprinter -D printer_uri -c /usr/libexec/cups/command/ippeveps -F application/pdf,application/postscript,image/jpeg,image/pwg-raster,image/urf -P ppd_file -r _print,_universal -i IMAGEPNG -l LOCATION printer_name
+# ippeveprinter -D printer_uri -c /usr/libexec/cups/command/ippeveps -F application/pdf,application/postscript,image/jpeg,image/pwg-raster,image/urf \
+#   -P ppd_file -r _print,_universal -i IMAGEPNG -l LOCATION printer_name
 # Investigated ippeveprinter and ZPL:
 # Where is 'ippeveps' command file (needed for ippeventprinter to work with ZPL)?
 # - source exists in apple repo https://github.com/apple/cups/blob/master/tools/ippeveps.c
@@ -41,13 +42,13 @@ import os
 import platform
 import subprocess
 import sys
-from typing import List, Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 from abc import ABC, abstractmethod
 
 from os_utils import which
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__ if __name__ != '__main__' else None)
+logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 logger.setLevel(logging.DEBUG)
 
 # conn = cups.Connection()
@@ -56,18 +57,18 @@ logger.setLevel(logging.DEBUG)
 # conn.printFile(printer_name,'/home/pi/Desktop/a.pdf',"",{})
 
 
-class atdict(dict):
+class AtDict(dict):
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
 
-def eprint(*args, **kwargs):
+def eprint(*args, **kwargs):  # noqa: ANN002, ANN003
     print(*args, file=sys.stderr, **kwargs)
 
 
 def shell(cmd):
-    """Shell command utility
+    """Shell command utility.
 
     Args:
         cmd ([str]): command and arguments list
@@ -88,20 +89,20 @@ def is_ext(ext, filename):
 
 def convert_to_png(file, outfile=None):
     if not outfile:
-        outfile = file + '.png'
-    magick = which(['magick', 'C:/Program Files/ImageMagick-7.1.0-Q16/magick.exe'])
+        outfile = file + ".png"
+    magick = which(["magick", "C:/Program Files/ImageMagick-7.1.0-Q16/magick.exe"])
     if not os.access(magick, os.X_OK):
         raise Exception('"magick" command is not found. Is ImageMagick installed and added to PATH?')
-    else:
-        logger.debug(f'Converting {file} to {outfile} ...')
-        out = subprocess.check_output(
-            # TODO: (when needed) Implement scaling to dpi etc.: convert -density 320 "$_input_pdf" -scale 926x1463 -type grayscale -depth 8 -crop 812x1218+52+166 "$_output_png"
-            f'"{magick}" convert {file} {outfile}',
-            shell=True,
-            text=True)
-        logger.debug(f'{out}')
+    logger.debug(f"Converting {file} to {outfile} ...")
+    out = subprocess.check_output(
+        # TODO: (when needed) Implement scaling to dpi etc.: convert -density 320 "$_input_pdf" -scale 926x1463 -type grayscale -depth 8 -crop 812x1218+52+166 "$_output_png"
+        f'"{magick}" convert {file} {outfile}',
+        shell=True,
+        text=True,
+    )
+    logger.debug(f"{out}")
     if not os.path.isfile(outfile):
-        raise Exception(f'Failed converting {file}, result file {outfile} not created.')
+        raise Exception(f"Failed converting {file}, result file {outfile} not created.")
     return outfile
 
 
@@ -110,24 +111,21 @@ class PrintError(Exception):
 
 
 class PrinterInterface(ABC):
-    """Abstract interface for Printer implementations
-    """
+    """Abstract interface for Printer implementations."""
 
     @abstractmethod
     def install(self) -> bool:
-        """Install required dependencies on the OS
-        """
+        """Install required dependencies on the OS."""
         return False
 
     @abstractmethod
     def uninstall(self) -> bool:
-        """Uninstall all OS components that self.install() installed
-        """
+        """Uninstall all OS components that self.install() installed."""
         return False
 
     @abstractmethod
     def get_devices(self) -> List[str]:
-        """Get list of available devices
+        """Get list of available devices.
 
         Returns:
             list[Dict[str, str]]: _description_
@@ -136,7 +134,7 @@ class PrinterInterface(ABC):
 
     @abstractmethod
     def get_printers(self) -> List[Dict[str, str]]:
-        """Get list of added printers
+        """Get list of added printers.
 
         Returns:
             list[Dict[str, str]]: _description_
@@ -144,42 +142,36 @@ class PrinterInterface(ABC):
         return []
 
     @abstractmethod
-    def print_test(self, printer_name: str, options: Dict[str, str] = None) -> int:
-        """Print test page
-        """
+    def print_test(self, printer_name: str, options: Optional[Dict[str, str]] = None) -> int:
+        """Print test page."""
         return -1
 
     @abstractmethod
-    def print_file(self, printer_name: str, file_name: str, doc_name: str = '', options: Dict[str, str] = None) -> int:
-        """Print given file
-        """
+    def print_file(self, printer_name: str, file_name: str, doc_name: str = "", options: Optional[Dict[str, str]] = None) -> int:
+        """Print given file."""
         return -1
 
-    def autoadd_printers(self, options: Dict[str, str] = None) -> Tuple[int, List[Dict[str, str]]]:
-        """Add all found compatible printers
-        """
+    def autoadd_printers(self, options: Optional[Dict[str, str]] = None) -> Tuple[int, List[Dict[str, str]]]:  # noqa: ARG002
+        """Add all found compatible printers."""
         return (-1, [])
 
     def autoadd_zebra(self) -> int:
-        """Attempts to add the Zebra ZT411 printer
-        """
+        """Attempts to add the Zebra ZT411 printer."""
         return -1
 
     @abstractmethod
-    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Dict[str, str] = None) -> int:
-        """Add given printer
-        """
+    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[Dict[str, str]] = None) -> int:
+        """Add given printer."""
         return -1
 
     @abstractmethod
-    def delete_printer(self, printer_name: str, options: Dict[str, str] = None) -> int:
-        """Delete previously added printer
-        """
+    def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None) -> int:
+        """Delete previously added printer."""
         return -1
 
 
 class CupsPrinter(PrinterInterface):
-    """Printer using CUPS
+    """Printer using CUPS.
 
     Other commands:
       * cupsctl --debug-logging
@@ -192,6 +184,7 @@ class CupsPrinter(PrinterInterface):
     def __init__(self) -> None:
         # `pip3 install pycups``
         import cups  # pylint: disable=import-outside-toplevel
+
         self.cups = cups
         self.conn = cups.Connection()
 
@@ -217,24 +210,22 @@ class CupsPrinter(PrinterInterface):
         return returncode == 1 and returncode2 == 1
 
     def get_devices(self):
-        devices = self.conn.getDevices()  # Takes a bit of time. Is there a timeout param?
-        return devices
+        return self.conn.getDevices()  # Takes a bit of time. Is there a timeout param?
 
     def get_printers(self):
-        printers = self.conn.getPrinters()
-        return printers
+        return self.conn.getPrinters()
 
-    def print_test(self, printer_name: str, options: Dict[str, str] = None) -> int:
+    def print_test(self, printer_name: str, options: Optional[Dict[str, str]] = None) -> int:
         file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "printer-test-label.png"))
         return self.print_file(printer_name, file_path, options=options)
 
-    def print_file(self, printer_name, file_name, doc_name='', options=None) -> int:
+    def print_file(self, printer_name, file_name, doc_name="", options=None) -> int:
         returncode = -1
         if os.path.isfile(file_name):
             options = options if options else {}
             # SVG files don't print on Zebra with Peninsula Group driver (missing CUPS filter?)
             # https://unix.stackexchange.com/questions/372379/what-file-formats-does-cups-support
-            if os.path.splitext(file_name)[1].lower() == '.svg':
+            if os.path.splitext(file_name)[1].lower() == ".svg":
                 logger.warning(f'Got "{file_name}" file to print which has SVG extension. SVG files are (typically) not supported by label printers. Please use PDF. Will try anyway...')
 
             # TODO: (when needed) self.cups.setUser('pi')
@@ -246,33 +237,31 @@ class CupsPrinter(PrinterInterface):
             logger.warning(f'File "{file_name}" does not exit.')
         return returncode
 
-    def delete_printer(self, printer_name: str, options: Dict[str, str] = None):
+    def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None):  # noqa: ARG002
         cmd = ["lpadmin", "-x", printer_name]
         res, out, err = shell(cmd)
         return res
 
     def autoadd_zebra(self, default_name="ZT411") -> int:
-        """
-        Attempts to automatically detect and add the Zebra ZT411 under the name 'ZT411'
-        """
+        """Attempts to automatically detect and add the Zebra ZT411 under the name 'ZT411'."""
         returncode = -1
         devices = self.get_devices()
         for device in devices:
             if "zebra" in device.lower():
                 uri = device
                 default_options = {
-                    'PageSize': 'w144h72',
-                    'MediaSize': 'w144h72',
+                    "PageSize": "w144h72",
+                    "MediaSize": "w144h72",
                     # TODO: (when needed): 'Resolution'        : '302dpi', # Zebra ZT411 has different resolutions (print head options). Ours is 302dpi.
-                    'Resolution': '203dpi',
-                    'zeMediaTracking': 'Web',
-                    'MediaType': 'Thermal',
-                    'Darkness': '30',
-                    'zePrintRate': '1',
-                    'zeLabelTop': '200',
-                    'zePrintMode': 'Applicator',
-                    'zeTearOffPosition': '1000',
-                    'zeErrorReprint': 'Saved'
+                    "Resolution": "203dpi",
+                    "zeMediaTracking": "Web",
+                    "MediaType": "Thermal",
+                    "Darkness": "30",
+                    "zePrintRate": "1",
+                    "zeLabelTop": "200",
+                    "zePrintMode": "Applicator",
+                    "zeTearOffPosition": "1000",
+                    "zeErrorReprint": "Saved",
                 }
                 options = []
                 for opt, val in default_options.items():
@@ -283,8 +272,9 @@ class CupsPrinter(PrinterInterface):
 
         return returncode
 
-    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Dict[str, str] = None):
-        """Install a printer
+    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[Dict[str, str]] = None):  # noqa: ARG002
+        """Install a printer.
+
         CUPS: @see https://www.cups.org/doc/admin.html
         Currently broken.
         PPD files are on deprecation notice, will be removed in CUPS 3.0, release imminent.
@@ -300,17 +290,21 @@ class CupsPrinter(PrinterInterface):
         """
         cmd = [
             "lpadmin",
-            "-p", printer_name,
+            "-p",
+            printer_name,
             "-E",  # Enable printer
-            "-v", printer_uri,
+            "-v",
+            printer_uri,
             # TODO: (when needed) # "-m", ppd_file,
-            "-m", "everywhere",  # TODO: (when needed) ppd file created in /etc/cups/ppd/,
-            "-o", "printer-is-shared=false",
+            "-m",
+            "everywhere",  # TODO: (when needed) ppd file created in /etc/cups/ppd/,
+            "-o",
+            "printer-is-shared=false",
         ]
-        if 'description' in options:
-            cmd += ["-D", options['description']]
-        if 'location' in options:
-            cmd += ["-L", options['location']]
+        if "description" in options:
+            cmd += ["-D", options["description"]]
+        if "location" in options:
+            cmd += ["-L", options["location"]]
         res, out, err = shell(cmd)
         # TODO: (when needed) lpadmin: Printer drivers are deprecated and will stop working in a future version of CUPS.
         # lpadmin: System V interface scripts are no longer supported for security reasons. -> don't use '-i' options
@@ -326,7 +320,7 @@ class CupsPrinter(PrinterInterface):
         return res
 
     # to install CUPS on Linux:
-    # sudo apt-get install cups –y.
+    # sudo apt-get install cups -y.
     # sudo systemctl start cups.
     # sudo systemctl enable cups.
     # sudo nano /etc/cups/cupsd.conf.
@@ -339,7 +333,7 @@ class CupsPrinter(PrinterInterface):
 
 
 class LprintPrinter(PrinterInterface):
-    """Printer using LPrint
+    """Printer using LPrint.
 
     # Investigated lprint and ZPL
     * https://www.msweet.org/lprint/lprint.html
@@ -361,7 +355,8 @@ class LprintPrinter(PrinterInterface):
     Installation:
     # sudo apt-get install lprint ;# gets v1.0 on Debian/Ubuntu/RPi
     sudo apt-get install snapd
-    Note: snap uncovers a problem with /etc/ld.so.preload file on RPi - comment out the line in  /etc/ld.so.preload. Offending package is raspi-copies-and-fills v0.13. `sudo apt-get remove --purge raspi-copies-and-fills`
+    Note: snap uncovers a problem with /etc/ld.so.preload file on RPi - comment out the line in  /etc/ld.so.preload. Offending package is
+    raspi-copies-and-fills v0.13. `sudo apt-get remove --purge raspi-copies-and-fills`
     sudo snap install core
     sudo snap install lprint ;# gets v1.2.0
     sudo snap connect lprint:raw-usb
@@ -378,7 +373,6 @@ class LprintPrinter(PrinterInterface):
     """
 
     def __init__(self) -> None:
-
         # lprint --version
         # RPi:
         # lprint v1.0
@@ -390,16 +384,22 @@ class LprintPrinter(PrinterInterface):
     def install(self):
         # TODO: (when needed) Improve installing OS packages - live stdio/stderr, handle errors (and recover/continue)
         for cmd in [
-            ["sudo", "apt-get",  "update"],
-            ["sudo", "apt-get",  "install", "-y", "snapd"],
-            ["sudo", "snap",  "install", "core"],
-            ["sudo", "snap",  "install", "lprint"],
-            ["sudo", "snap",  "connect", "lprint:raw-usb"],  # Must for USB-connected printer
-            #["sudo", "snap",  "set", "lprint", "auth-service=cups",],
-            ["sudo", "snap",  "set", "lprint", "server-port=32101", ],
-            ["sudo", "snap",  "start", "lprint.lprint-server"],
+            ["sudo", "apt-get", "update"],
+            ["sudo", "apt-get", "install", "-y", "snapd"],
+            ["sudo", "snap", "install", "core"],
+            ["sudo", "snap", "install", "lprint"],
+            ["sudo", "snap", "connect", "lprint:raw-usb"],  # Must for USB-connected printer
+            # ["sudo", "snap",  "set", "lprint", "auth-service=cups",],
+            [
+                "sudo",
+                "snap",
+                "set",
+                "lprint",
+                "server-port=32101",
+            ],
+            ["sudo", "snap", "start", "lprint.lprint-server"],
         ]:
-            logger.debug(f'cmd={cmd}')
+            logger.debug(f"cmd={cmd}")
             res, out, err = shell(cmd)
             print(out)
             eprint(err)
@@ -423,9 +423,9 @@ class LprintPrinter(PrinterInterface):
     def get_devices(self):
         cmd = ["lprint", "devices"]
         res, out, err = shell(cmd)
-        l = out.split('\n')
+        lines = out.split("\n")
         # TODO: (when needed) implement format parsing, normalize to same format as CupsPrinter
-        devices = [p for p in l]
+        devices = [p for p in lines]
         # for printer in printers:
         #     print(printer, printers[printer]["device-uri"])
         return devices
@@ -433,32 +433,29 @@ class LprintPrinter(PrinterInterface):
     def get_printers(self):
         cmd = ["lprint", "printers"]
         res, out, err = shell(cmd)
-        l = out.split('\n')
-        # TODO: (when needed) implement format parsing, normalize to same format as CupsPrinter
-        printers = [p for p in l]
-        # for printer in printers:
-        #     print(printer, printers[printer]["device-uri"])
-        return printers
+        return out.split("\n")
+        # TODO: (when needed) implement format parsing, normalize to the same format as CupsPrinter
+        # printers = [self.parse_printer(p) for p in out.split("\n")]
+        # for name, printer in printers.items():
+        #     self.loggr.info(name, printer["device-uri"])
+        # return printers
 
     def print_test(self, printer_name: str, options=None):
         options = options if options else {}
         # TODO: (when needed) Implement
 
-    def print_file(self, printer_name, file_name, doc_name='', options=None):
+    def print_file(self, printer_name, file_name, doc_name="", options=None):
         # TODO: (when needed) Implement lprint options for printing
         # Example for 4x6inch label
-        #  lprint -o media-top-offset=3.5mm -o print-color-mode=bi-level -o media-tracking=continuous -o media-type=labels-continuous -o media=oe_4x6-label_4x6in -o orientation-requested=portrait "$_output_png"
+        #  lprint -o media-top-offset=3.5mm -o print-color-mode=bi-level -o media-tracking=continuous -o media-type=labels-continuous \
+        #    -o media=oe_4x6-label_4x6in -o orientation-requested=portrait "$_output_png"
         options = options if options else {}
 
         file_to_print = file_name
-        if is_ext('.pdf', file_name):
+        if is_ext(".pdf", file_name):
             file_to_print = convert_to_png(file_name)
 
-        cmd = [
-            "lprint",
-            "-d", printer_name,
-            file_to_print
-        ]
+        cmd = ["lprint", "-d", printer_name, file_to_print]
         # TODO: (when needed) Explore available options: `lprint options -d PRINTER`
         res, out, err = shell(cmd)
         return res
@@ -466,20 +463,21 @@ class LprintPrinter(PrinterInterface):
     def print_file_lp(self, printer_name, file_name):
         # TODO: (when needed) implement
         # Without CUPS, use lp:
-        os.system(f'lp -d {printer_name} {file_name}')
+        os.system(f"lp -d {printer_name} {file_name}")
         # os.system(f'lpr -P  {printer_name} {file_name}')
         return 0
 
-    def delete_printer(self, printer_name: str, options: Dict[str, str] = None):
+    def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None):
         # TODO: (when needed) check if it works:
         cmd = ["lprint", "delete", "-d", printer_name]
         res, out, err = shell(cmd)
         return res
 
-    def autoadd_printers(self, options: Dict[str, str] = None):
+    def autoadd_printers(self, options: Optional[Dict[str, str]] = None):
         # had_printers = self.get_printers()
         cmd = [
-            "lprint", "autoadd",
+            "lprint",
+            "autoadd",
             # "-d", printer_name,
             # "-v", printer_uri,
             # "-m", ppd_file,  # from "lprint drives", e.g. "zpl_2inch-203dpi-tt"
@@ -487,7 +485,7 @@ class LprintPrinter(PrinterInterface):
         ]
         # if 'description' in options:
         #     cmd += ["-o", f'??printer-description={options["description"]}']
-        if 'location' in options:
+        if "location" in options:
             cmd += ["-o", f'printer-location={options["location"]}']
         res, out, err = shell(cmd)
         if res:
@@ -501,8 +499,8 @@ class LprintPrinter(PrinterInterface):
         # TODO: (when needed) printers -= had_printers
         return res, printers
 
-    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Dict[str, str] = None):
-        """Install a printer
+    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[Dict[str, str]] = None):
+        """Install a printer.
 
         Args:
             printer_name (str): _description_
@@ -522,15 +520,19 @@ class LprintPrinter(PrinterInterface):
         # lprint add -d printer_name -v printer_uri -m
         # man lprint-add
         cmd = [
-            "lprint", "add",
-            "-d", printer_name,
-            "-v", printer_uri,
-            "-m", ppd_file,  # from "lprint drives", e.g. "zpl_2inch-203dpi-tt"
+            "lprint",
+            "add",
+            "-d",
+            printer_name,
+            "-v",
+            printer_uri,
+            "-m",
+            ppd_file,  # from "lprint drives", e.g. "zpl_2inch-203dpi-tt"
             # "-o", "printer-is-shared=false",
         ]
         # if 'description' in options:
         #     cmd += ["-o", f'??printer-description={options["description"]}']
-        if 'location' in options:
+        if "location" in options:
             cmd += ["-o", f'printer-location={options["location"]}']
         res, out, err = shell(cmd)
         if res:
@@ -546,7 +548,8 @@ class LprintPrinter(PrinterInterface):
 # on Windows:
 def winPrint1():
     # `pip3 install pywin32`
-    import win32.win32print as win32print  # pylint: disable=import-outside-toplevel
+    from win32 import win32print  # pylint: disable=import-outside-toplevel
+
     printer_name = win32print.GetDefaultPrinter()
     file_name = "document.pdf"
     printer_handle = win32print.OpenPrinter(printer_name)
@@ -562,25 +565,26 @@ def winPrint1():
 
 def winPrint2():
     import win32ui  # pylint: disable=import-outside-toplevel
+
     dc = win32ui.CreateDC()
     dc.CreatePrinterDC()
-    dc.StartDoc('Label Document')
+    dc.StartDoc("Label Document")
     dc.StartPage()
-    fontdata = {'height': 80}
+    fontdata = {"height": 80}
     font = win32ui.CreateFont(fontdata)
     dc.SelectObject(font)
-    dc.TextOut(0, 10, 'Sample: 3174')
-    dc.TextOut(0, 90, 'Date:26/02/21')
-    dc.TextOut(0, 180, 'sample_name')
+    dc.TextOut(0, 10, "Sample: 3174")
+    dc.TextOut(0, 90, "Date:26/02/21")
+    dc.TextOut(0, 180, "sample_name")
     dc.EndPage()
     dc.EndDoc()
 
 
-def Printer(driver_type: str, *args, **kwargs) -> PrinterInterface:
+def Printer(driver_type: str, *args, **kwargs) -> PrinterInterface:  # noqa: ANN002, ANN003
     inst = None
-    if driver_type.lower() == 'cups':
+    if driver_type.lower() == "cups":
         inst = CupsPrinter(*args, **kwargs)
-    if driver_type.lower() == 'lprint':
+    if driver_type.lower() == "lprint":
         inst = LprintPrinter(*args, **kwargs)
     # TODO: (when needed): Implement Windows printer class 'WinPrinter'
     # if driver_type.lower() == 'win':
@@ -588,20 +592,20 @@ def Printer(driver_type: str, *args, **kwargs) -> PrinterInterface:
     return inst
 
 
-def OsPrinter(*args, **kwargs) -> PrinterInterface:
-    if os.name == 'nt':  # Windows
-        driver_type = 'Win'
+def OsPrinter(*args, **kwargs) -> PrinterInterface:  # noqa: ANN002, ANN003
+    if os.name == "nt":  # Windows
+        driver_type = "Win"
         # driver_type = 'LPrint'  # for debugging LPrint piping on Windows. Can try LPrint on Windows some day.
-    elif platform.system() == 'Darwin':  # MacOS
-        driver_type = 'CUPS'
-    elif os.name == 'posix':  # Linux, MacOS
-        driver_type = 'CUPS'
+    elif platform.system() == "Darwin":  # MacOS
+        driver_type = "CUPS"
+    elif os.name == "posix":  # Linux, MacOS
+        driver_type = "CUPS"
     else:
-        raise Exception(f'Unsupported OS {os.name}')
+        raise Exception(f"Unsupported OS {os.name}")
 
     printer = Printer(driver_type)
     if not printer:
-        raise ValueError(f'Error getting printer class for {driver_type}')
+        raise ValueError(f"Error getting printer class for {driver_type}")
     return printer
 
 
@@ -619,7 +623,7 @@ def cmd_devices(options=None):
     printer = OsPrinter()
     devices = printer.get_devices()
     for device in devices:
-        print(device, devices[device]['device-id'])
+        print(device, devices[device]["device-id"])
         # 'pusb://Zebra%20Technologies/ZTC%20ZT411-300dpi%20ZPL?serial=99J204300180': {'device-class': 'direct', 'device-info': 'Zebra Technologies ZTC ZT411-300dpi ZPL', 'device-make-and-model': 'Zebra Technologies ZTC ZT411-300dpi ZPL', 'device-id': 'SERN:99J204300180;MANUFACTURER:Zebra Technologies ;COMMAND SET:ZPL;MODEL:ZTC ZT411-300dpi ZPL;CLASS:PRINTER;OPTIONS:XML;', 'device-location': ''}
         # 'https': {'device-class': 'network', 'device-info': 'Internet Printing Protocol (https)', 'device-make-and-model': 'Unknown', 'device-id': '', 'device-location': ''}
     return 0
@@ -629,10 +633,7 @@ def _print_printers(printers):
     for printer in printers:
         # {'ZT411': {'printer-is-shared': False, 'printer-state': 3, 'printer-state-message': '', 'printer-state-reasons': ['none'], 'printer-type': 2134092, 'printer-uri-supported': 'ipp://localhost/printers/ZT411', 'printer-location': 'Travelling Zebra', 'printer-info': 'ZT411', 'device-uri': 'pusb://Zebra%20Technologies/ZTC%20ZT411-300dpi%20ZPL?serial=99J204300180&Opt=BXVG',
         # 'printer-make-and-model': 'Zebra ZT411-300dpi Driver (peninsula-group.com)' }}
-        print(printer,
-              printers[printer]["device-uri"],
-              printers[printer]["printer-make-and-model"]
-              )
+        print(printer, printers[printer]["device-uri"], printers[printer]["printer-make-and-model"])
 
 
 def cmd_printers(options=None):
@@ -665,106 +666,110 @@ def cmd_delete_printer(printer_name, options=None):
     return printer.delete_printer(printer_name, options)
 
 
-def cmd_print_test(printer_name, options={}):
+def cmd_print_test(printer_name, options=None):
+    if options is None:
+        options = {}
     printer = OsPrinter()
     return printer.print_test(printer_name, options)
 
 
-def cmd_print_file(printer_name, file_name, options={}):
+def cmd_print_file(printer_name, file_name, options=None):
+    if options is None:
+        options = {}
     printer = OsPrinter()
     doc_name = os.path.basename(file_name)
     return printer.print_file(printer_name, file_name, doc_name, options)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Manage printers (add,delete) or print a PDF/PNG file')
+    parser = argparse.ArgumentParser(description="Manage printers (add,delete) or print a PDF/PNG file")
 
     # Common optional arguments
-    parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
+    parser.add_argument("-v", "--verbose", help="Verbose output", action="store_true")
 
     # Positional argument for the command
-    subparsers = parser.add_subparsers(title='Commands', dest='command')
+    subparsers = parser.add_subparsers(title="Commands", dest="command")
 
     # Parsers for commands
-    install_parser = subparsers.add_parser('install', help='Install required dependencies on the OS')
-    uninstall_parser = subparsers.add_parser('uninstall', help='Uninstall all OS components that "install" command installed')
-    devices_parser = subparsers.add_parser('devices', help='Get list of available devices')
-    printers_parser = subparsers.add_parser('printers', help='Get list of added printers')
+    install_parser = subparsers.add_parser("install", help="Install required dependencies on the OS")
+    uninstall_parser = subparsers.add_parser("uninstall", help='Uninstall all OS components that "install" command installed')
+    devices_parser = subparsers.add_parser("devices", help="Get list of available devices")
+    printers_parser = subparsers.add_parser("printers", help="Get list of added printers")
 
     # Additional args for "add" command
-    add_parser = subparsers.add_parser('add', help='Add a new printer')
-    add_parser.add_argument('printer_name', type=str, help='Printer name')
-    add_parser.add_argument('printer_uri', type=str, help='Printer URI')
-    add_parser.add_argument('ppd_file', type=str, help='Printer driver PPD file')
-    add_parser.add_argument('-L', '--location', dest='location', help='Printer location')
-    add_parser.add_argument('-D', '--description', dest='description', help='Printer description')
+    add_parser = subparsers.add_parser("add", help="Add a new printer")
+    add_parser.add_argument("printer_name", type=str, help="Printer name")
+    add_parser.add_argument("printer_uri", type=str, help="Printer URI")
+    add_parser.add_argument("ppd_file", type=str, help="Printer driver PPD file")
+    add_parser.add_argument("-L", "--location", dest="location", help="Printer location")
+    add_parser.add_argument("-D", "--description", dest="description", help="Printer description")
     # add_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     # Additional args for "autoadd" command
-    autoadd_parser = subparsers.add_parser('autoadd', help='Auto add all printers')
+    autoadd_parser = subparsers.add_parser("autoadd", help="Auto add all printers")
     # ? autoadd_parser.add_argument('printer_name', type=str, help='Printer name')
 
     # Additional args for "delete" command
-    delete_parser = subparsers.add_parser('delete', help='Delete printer')
-    delete_parser.add_argument('printer_name', type=str, help='Printer name')
+    delete_parser = subparsers.add_parser("delete", help="Delete printer")
+    delete_parser.add_argument("printer_name", type=str, help="Printer name")
 
     # Additional args for "test" command
-    test_parser = subparsers.add_parser('test', help='Print test page')
-    test_parser.add_argument('printer_name', type=str, help='Printer name')
+    test_parser = subparsers.add_parser("test", help="Print test page")
+    test_parser.add_argument("printer_name", type=str, help="Printer name")
 
     # Additional args for "print" command
-    print_parser = subparsers.add_parser('print', help='Print PDF file')
-    print_parser.add_argument('printer_name', type=str, help='Printer name')
-    print_parser.add_argument('file_name', type=str, help='The name of the PDF file')
-    print_parser.add_argument('rest', nargs=argparse.REMAINDER)
+    print_parser = subparsers.add_parser("print", help="Print PDF file")
+    print_parser.add_argument("printer_name", type=str, help="Printer name")
+    print_parser.add_argument("file_name", type=str, help="The name of the PDF file")
+    print_parser.add_argument("rest", nargs=argparse.REMAINDER)
 
     # Parse the command line arguments
     args = parser.parse_args()
     return args, parser
 
 
-def main():
+def main():  # noqa: PLR0912, PLR0911, C901
     args, parser = parse_args()
-    logger.debug(f'DEBUG {vars(args)}')
+    logger.debug(f"DEBUG {vars(args)}")
 
     try:
-        if args.command == 'install':
-            options = atdict()
+        if args.command == "install":
+            options = AtDict()
             return cmd_install(options)
 
-        if args.command == 'uninstall':
-            options = atdict()
+        if args.command == "uninstall":
+            options = AtDict()
             return cmd_uninstall(options)
 
-        if args.command == 'devices':
-            options = atdict()
+        if args.command == "devices":
+            options = AtDict()
             return cmd_devices(options)
 
-        if args.command == 'printers':
-            options = atdict()
+        if args.command == "printers":
+            options = AtDict()
             return cmd_printers(options)
 
-        if args.command == 'add':
-            options = atdict()
+        if args.command == "add":
+            options = AtDict()
             if args.location:
-                options['location'] = args.location
+                options["location"] = args.location
             if args.description:
-                options['description'] = args.description
+                options["description"] = args.description
             return cmd_add_printer(args.printer_name, args.printer_uri, args.ppd_file, options)
 
-        if args.command == 'autoadd':
-            options = atdict()
+        if args.command == "autoadd":
+            options = AtDict()
             return cmd_autoadd_printers(options)
 
-        if args.command == 'delete':
-            options = atdict()
+        if args.command == "delete":
+            options = AtDict()
             return cmd_delete_printer(args.printer_name, options)
 
-        if args.command == 'test':
-            options = atdict()
+        if args.command == "test":
+            options = AtDict()
             return cmd_print_test(args.printer_name, options)
 
-        if args.command == 'print':
+        if args.command == "print":
             return cmd_print_file(args.printer_name, args.file_name, options=args.rest)
 
     except Exception as e:
@@ -775,7 +780,7 @@ def main():
     return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     rc = main()
     if rc:
         sys.exit(rc)
