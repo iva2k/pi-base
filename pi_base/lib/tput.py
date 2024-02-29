@@ -42,7 +42,7 @@ def tput(code, args=(), term=None):
         return ""
     if term is None:
         term = tput_term
-    if code == "setaf" or code == "setab":
+    if code in ["setaf", "setab"]:
         args = tput_color(args)
     cmd = f'tput {code} {" ".join(map(str, args))} 2>/dev/null'
     # print("DEBUG: tput('%s', term='%s') cmd='%s'" % (code, term, cmd) )

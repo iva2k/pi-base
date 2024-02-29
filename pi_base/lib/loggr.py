@@ -191,7 +191,7 @@ class Loggr:
             self.print(*tstr)
 
     def log(self, level, color_code, *tstr):
-        """Print message(s), with log level that can be masked"""
+        """Print message(s), with log level that can be masked."""
         if not level:
             level = logging.NOTSET
         if level >= self.level:
@@ -219,7 +219,7 @@ class Loggr:
         self.log(logging.DEBUG, ColorCodes.DEFAULT, *tstr)
 
     def print(self, *tstr, end: str = "\n", sep=" ", **kwargs):
-        """Print message(s), unmasked"""
+        """Print message(s), unmasked."""
         if self.vt:
             self.vt.print(*tstr, end=end, sep=sep, **kwargs)
         if self.use_stdout:

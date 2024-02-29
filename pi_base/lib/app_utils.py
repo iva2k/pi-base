@@ -306,13 +306,13 @@ def open_vt(vt_number, app_path, user=None, do_sudo=True, do_chvt=True, do_nohup
     # if y: options += '-l '
     # cmd = 'sudo /bin/openvt -c 1 -f -- %s' % (app_path)
     # cmd = 'sudo /bin/openvt -c 1 -f -s -u -l -- %s' % (app_path)
-    openvt_cmd = f'{"sudo " if do_sudo else ""}/usr/bin/openvt -c {vt_number} {options}-- {command}'
+    openvt_cmd = f'{"sudo " if do_sudo else ""}/usr/bin/openvt -c {vt_number} {options}-- {command}'.replace('"', '\\"')
 
     if do_nohup:
         # Wrap openvt_cmd in `nohup`.
-        cmd = '/usr/bin/nohup /usr/bin/bash -c "%(cmd)s" >&2' % {"cmd": openvt_cmd.replace('"', '\\"')}
+        cmd = f'/usr/bin/nohup /usr/bin/bash -c "{openvt_cmd}" >&2'
     else:
-        cmd = '/usr/bin/bash -c "%(cmd)s" ' % {"cmd": openvt_cmd.replace('"', '\\"')}
+        cmd = f'/usr/bin/bash -c "{openvt_cmd}" '
     # cmd = openvt_cmd
 
     result = check_output(cmd, shell=True, text=True)

@@ -425,10 +425,9 @@ class LprintPrinter(PrinterInterface):
         res, out, err = shell(cmd)
         lines = out.split("\n")
         # TODO: (when needed) implement format parsing, normalize to same format as CupsPrinter
-        devices = [p for p in lines]
+        return list(lines)
         # for printer in printers:
         #     print(printer, printers[printer]["device-uri"])
-        return devices
 
     def get_printers(self):
         cmd = ["lprint", "printers"]
