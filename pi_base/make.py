@@ -31,9 +31,9 @@ import yaml
 
 # "modpath" must be first of our modules
 try:
-    from .modpath import get_workspace_dir, get_script_dir, base_path  # pylint: disable=wrong-import-position
+    from .modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
 except:
-    from modpath import get_workspace_dir, get_script_dir, base_path  # pylint: disable=wrong-import-position
+    from modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
 
 try:
     from .lib.deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position

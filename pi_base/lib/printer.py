@@ -596,9 +596,7 @@ def OsPrinter(*args, **kwargs) -> PrinterInterface:  # noqa: ANN002, ANN003
     if os.name == "nt":  # Windows
         driver_type = "Win"
         # driver_type = 'LPrint'  # for debugging LPrint piping on Windows. Can try LPrint on Windows some day.
-    elif platform.system() == "Darwin":  # MacOS
-        driver_type = "CUPS"
-    elif os.name == "posix":  # Linux, MacOS
+    elif platform.system() == "Darwin" or os.name == "posix":  # MacOS
         driver_type = "CUPS"
     else:
         raise Exception(f"Unsupported OS {os.name}")

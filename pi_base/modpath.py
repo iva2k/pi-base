@@ -12,7 +12,6 @@ Return:
 """
 
 import inspect
-import io
 import os
 import sys
 

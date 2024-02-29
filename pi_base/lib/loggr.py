@@ -145,11 +145,12 @@ class Vt:
 
 
 class Loggr:
-    """
-    Multi-logger, helps organize output / logs to:
-        1. VT
-        2. stdout
-        3. journal
+    """Multi-logger, helps organize output and logs.
+
+    Optionally sends logs to:
+    1. VT
+    2. stdout
+    3. journal
     """
 
     def __init__(self, use_vt_number=None, use_stdout=True, use_journal_name=None, use_sudo=False, level=logging.DEBUG, primary_loggr=None):
@@ -184,17 +185,13 @@ class Loggr:
             self.journal.setLevel(logging.DEBUG)
 
     def cls(self, *tstr):
-        """
-        Clear screen, and optionally print.
-        """
+        """Clear screen, and optionally print."""
         self.tput_print("clear", ())
         if len(tstr) > 0:
             self.print(*tstr)
 
     def log(self, level, color_code, *tstr):
-        """
-        Print message(s), with log level that can be masked
-        """
+        """Print message(s), with log level that can be masked"""
         if not level:
             level = logging.NOTSET
         if level >= self.level:
@@ -222,9 +219,7 @@ class Loggr:
         self.log(logging.DEBUG, ColorCodes.DEFAULT, *tstr)
 
     def print(self, *tstr, end: str = "\n", sep=" ", **kwargs):
-        """
-        Print message(s), unmasked
-        """
+        """Print message(s), unmasked"""
         if self.vt:
             self.vt.print(*tstr, end=end, sep=sep, **kwargs)
         if self.use_stdout:
@@ -233,8 +228,7 @@ class Loggr:
             self.journal.info(*tstr, **kwargs)
 
     def log_box(self, text: str, width: int = 50, color_code=ColorCodes.DEFAULT) -> None:
-        """
-        Log provided text in a box of given width (centered)
+        """Log provided text in a box of given width (centered).
 
         Example:
         ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -254,8 +248,7 @@ class Loggr:
         self.color_print("┗" + "━" * width + "┛")
 
     def get_user_input(self, text: str, color_code: str = ColorCodes.YELLOW) -> str:
-        """
-        Gets user input utilizing colored text
+        """Gets user input utilizing colored text.
 
         Args:
             text: The user prompt to display
@@ -268,8 +261,7 @@ class Loggr:
         return input()
 
     def get_user_yes_no_input(self, text: str, color_code: str = ColorCodes.YELLOW) -> bool:
-        """
-        Gets a yes/no user confirmation
+        """Gets a yes/no user confirmation.
 
         Args:
             text: The user prompt to display (Yes/No instructions are expected to be included here)
@@ -292,8 +284,7 @@ class Loggr:
         return result
 
     def color_print(self, text: str, color_code: str = ColorCodes.DEFAULT, end: str = "\n", filter_text: str = "") -> None:
-        """
-        Prints the text as both an std output using the given color code
+        """Prints the text as both an std output using the given color code.
 
         Args:
             text        : The text to output and save
@@ -312,8 +303,8 @@ class Loggr:
         self.print(text[:index] + color_code + text[index : index + strlen] + ColorCodes.DEFAULT.value + text[index + strlen :], end=end)
 
     def position(self, x, y, *tstr):
-        """
-        Move cursor to position on screen, and optionally print.
+        """Move cursor to position on screen, and optionally print.
+
         0,0 is top left, x is horizontal, y is vertical.
         """
         self.tput_print("cup", (y, x))
@@ -321,50 +312,38 @@ class Loggr:
             self.print(*tstr)
 
     def el(self, *tstr):
-        """
-        Clear to end of line, and optionally print.
-        """
+        """Clear to end of line, and optionally print."""
         self.tput_print("el", ())
         if len(tstr) > 0:
             self.print(*tstr)
 
     def ed(self, *tstr):
-        """
-        Clear to end of display, and optionally print.
-        """
+        """Clear to end of display, and optionally print."""
         self.tput_print("ed", ())
         if len(tstr) > 0:
             self.print(*tstr)
 
     def dl(self, num=1):
-        """
-        Delete <num> lines.
-            ('dl'   , ( 2,   )),   #  DL      Delete #1 lines (P*)
+        """Delete <num> lines.
+
+        ('dl'   , ( 2,   )),   #  DL      Delete #1 lines (P*)
         """
         self.tput_print("dl", (num,))
 
     def ech(self, num=1):
-        """
-        Delete <num> characters.
-        """
+        """Delete <num> characters."""
         self.tput_print("ech", (num,))
 
     def cnorm(self):
-        """
-        Cursor normal.
-        """
+        """Cursor normal."""
         self.tput_print("cnorm", ())
 
     def cblock(self):
-        """
-        Cursor block.
-        """
+        """Cursor block."""
         self.tput_print("cvvis", ())
 
     def civis(self):
-        """
-        Cursor invisible.
-        """
+        """Cursor invisible."""
         self.tput_print("civis", ())
 
     def cols(self, term=None):
