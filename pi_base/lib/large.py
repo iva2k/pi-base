@@ -8,12 +8,10 @@ import os
 import tput
 
 class Large:
-    """
-    Print large message(s) on terminal.
-    """
+    """Print large message(s) on terminal."""
     def __init__(self, filepath=None):
-        """
-        @filepath chooses which text file to load with strings composing large message(s).
+        """@filepath chooses which text file to load with strings composing large message(s).
+
         Messages are blocks of text, each message followed by a single line with `# <key> <color_fg> <color_bg> <name>` format, where:
          * <key> is used to select the message
          * <color_fg> is used to set the message color (using `tput setaf <color>`)
@@ -103,8 +101,8 @@ def quick_check(path):
         name = large.print(key, do_clear=False)
         print("\n\n\n\n")
 
-if __name__ == "__main__":
-    def get_script_dir(follow_symlinks=True):
+def main():
+    def get_script_dir(follow_symlinks=True, func=main):
         if getattr(sys, 'frozen', False): # py2exe, PyInstaller, cx_Freeze
             path = os.path.abspath(sys.executable)
         else:
@@ -117,3 +115,6 @@ if __name__ == "__main__":
     caller_dir=os.getcwd()
     print(f'DEBUG: script_dir={script_dir}, caller_dir={caller_dir}')
     quick_check(script_dir)
+
+if __name__ == "__main__":
+    main()

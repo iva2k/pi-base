@@ -29,14 +29,15 @@ import yaml
 
 # "modpath" must be first of our modules
 try:
-    from .modpath import get_script_dir, base_path  # pylint: disable=wrong-import-position
+    from .modpath import get_workspace_dir, get_script_dir, base_path  # pylint: disable=wrong-import-position
 except:
-    from modpath import get_script_dir, base_path  # pylint: disable=wrong-import-position
+    from modpath import get_workspace_dir, get_script_dir, base_path  # pylint: disable=wrong-import-position
 
 try:
     from .lib.deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
 except:
     from deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
+from app_utils import find_path
 
 
 logging.basicConfig(level=logging.INFO)
@@ -46,10 +47,6 @@ logger = logging.getLogger(__name__ if __name__ != '__main__' else None)
 # No root first slash (will be added as necessary):
 app_dir = "home/pi"
 etc_dir = "etc"
-
-# script_dir = get_script_dir()
-# caller_dir = os.getcwd()
-# logger.debug(f'script_dir={script_dir}, caller_dir={caller_dir}')
 
 
 class Builder:
@@ -68,8 +65,8 @@ class Builder:
         self.comment = ""
         self.type = args.type
         self.site_id = args.site
-        self.base_dir = args.workspace or os.getcwd() # Find client project base directory
-        self.package_dir = get_script_dir() # Find package directory
+        self.base_dir = args.workspace or get_workspace_dir() # Find client project base directory
+        self.package_dir = get_script_dir(__file__) # Find package directory
         self.stage_dir = os.path.join(self.base_dir, 'build', self.site_id, self.type)
 
         self.loggr.debug(f'base_dir    : {self.base_dir}')
@@ -114,23 +111,45 @@ class Builder:
 
     def config(self):
         custom = False
+
+        # Load default config, if present
+        default_conf_dat = {}
+        default_filename = "default_conf.yaml"
+        yaml_file = find_path(
+            default_filename,
+            [
+                self.package_dir,
+                self.base_dir,
+            ],
+            self.loggr,
+        )
+        if yaml_file:
+            try:
+                self.loggr.debug(f"opening default config {yaml_file}")
+                with open(yaml_file, encoding="utf-8") as file:
+                    default_conf_dat = yaml.safe_load(file)
+            except Exception as e:
+                self.loggr.error(f"Error opening default config {yaml_file}")
+
+        custom_conf_dat = {}
+        filename = "conf.yaml"
+        yaml_file = os.path.join(self.base_dir, self.type, filename)
         try:
-            yaml_file = os.path.join(base_path, self.type, 'conf.yaml')
-            self.loggr.debug(f'opening {yaml_file}')
-            file = open(yaml_file, encoding='utf-8')
-            custom = True
-        except:
-            yaml_file = os.path.join(script_dir, 'default_conf.yaml') # TODO: (now) Don't use script_dir
-            self.loggr.debug(f'opening {yaml_file}')
-            file = open(yaml_file, encoding='utf-8')
-            # TODO: (when needed) Perhaps opening default_conf.yaml is not at all what we need here. Should default be pre-loaded?
-        self.conf_dat = yaml.safe_load(file)
-        file.close()
+            self.loggr.debug(f"opening {yaml_file}")
+            with open(yaml_file, encoding="utf-8") as file:
+                custom_conf_dat = yaml.safe_load(file)
+                custom = True
+        except Exception as e:
+            self.loggr.error(f"Error opening custom config {yaml_file}")
+
+        # Merge defaults and custom
+        self.conf_dat = {**default_conf_dat, **custom_conf_dat}  # python >= 3.5
+
         self.loggr.debug(json.dumps(self.conf_dat, indent=4, default="DEFAULT"))
         self.app_info = self.conf_dat['Info']
         self.app_info['Site'] = self.site_id
         self.app_info['Type'] = self.type
-        self.app_info['Version'] = self.ver
+        self.app_info["Version"] = self.ver  # TODO: (now) Generate app version from ?? Add script/subcommand to pi_base bumping app version in conf.yaml.
         site = self.sites_db.find_site_by_id(self.site_id)
         if not site:
             raise ValueError(f'Site {self.site_id} not found or sites DB not loaded')

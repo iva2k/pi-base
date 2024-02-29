@@ -136,6 +136,7 @@ ignore = [
   ## Temporary disable all violating rules. # TODO: (soon) Re-enable and fix violations:
   "ANN001",
   "ANN201",
+  "ANN202",
   "ANN204",
   "ARG001",
   "BLE001",

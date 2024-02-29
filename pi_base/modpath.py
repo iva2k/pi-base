@@ -55,15 +55,15 @@ import sys
 
 
 debug = False
-debug = True
+#debug = True
 
 
 def is_raspberrypi():
     try:
-        with io.open('/sys/firmware/devicetree/base/model', 'r', encoding='utf-8') as m:
+        with open('/sys/firmware/devicetree/base/model', encoding='utf-8') as m:
             if 'raspberry pi' in m.read().lower():
                 return True
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return False
 
@@ -80,11 +80,22 @@ def is_win():
     return os.name == 'nt'
 
 
-def get_script_dir(follow_symlinks=True):
+# def get_workspace_dir(file_or_object_or_func=None):
+#     if not file_or_object_or_func:
+#         raise ValueError("Please provide file_or_object_or_func argument (can be __file__).")
+def get_workspace_dir():
+    return os.getcwd()
+
+
+def get_script_dir(file_or_object_or_func, follow_symlinks=True):
+    if not file_or_object_or_func:
+        raise ValueError("Please provide file_or_object_or_func argument (can be __file__).")
     if getattr(sys, 'frozen', False):  # py2exe, PyInstaller, cx_Freeze
         path = os.path.abspath(sys.executable)
+    elif isinstance(file_or_object_or_func, str):
+        path = file_or_object_or_func
     else:
-        path = inspect.getabsfile(get_script_dir)
+        path = inspect.getabsfile(file_or_object_or_func)
     if follow_symlinks:
         path = os.path.realpath(path)
     return os.path.dirname(path)
@@ -112,8 +123,8 @@ def get_developer_setup(filename, default_site_id, default_project):
 file_path = os.path.dirname(os.path.realpath(__file__))  # {workspace}/pi_base            # /home/pi/pi_base/ # /home/pi/app             #
 file_dir = os.path.basename(file_path)                   # pi_base                        # /home/pi/pi_base/ # app                      #
 base_path = os.path.dirname(file_path)                   # {workspace}                    # /home/pi/pi_base/ # /home/pi                 #
-script_dir = get_script_dir()
-caller_dir = os.getcwd()
+script_dir = get_script_dir(__file__)
+caller_dir = get_workspace_dir()
 
 # Detect developer setup
 

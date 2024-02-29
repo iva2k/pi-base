@@ -13,9 +13,11 @@ import sys
 
 try:
     from .modpath import get_script_dir  # pylint: disable=wrong-import-position
-    from .make import main as make_main
 except:
     from modpath import get_script_dir  # pylint: disable=wrong-import-position
+try:
+    from .make import main as make_main
+except:
     from make import main as make_main
 
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +42,7 @@ def make_command(args):
     return 0
 
 def upload_command(args):
-    script_dir = get_script_dir()
+    script_dir = get_script_dir(__file__)
     prog = os.path.join(script_dir, "upload.sh")
     try:
         subprocess.run(["bash", prog] + args, check=True)

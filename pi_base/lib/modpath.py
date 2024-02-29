@@ -7,7 +7,6 @@ Raises:
 
 Side Effects:
     Imports modpath module from wherever it is.
-    
 """
 
 import importlib.util
@@ -26,8 +25,8 @@ def import_module_from_locations(module_name, locations):
             globals().update(module.__dict__)
             sys.modules[module_name] = module
             return module
-        except FileNotFoundError as err:
-            pass
+        except FileNotFoundError as err:  # noqa: PERF203
+            continue
     raise ImportError(f'Module "{module_name}" not found in any of the specified locations')
 
 

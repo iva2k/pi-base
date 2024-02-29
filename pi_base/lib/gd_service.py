@@ -34,25 +34,6 @@ from pydrive2.files import FileNotUploadedError
 from app_utils import get_conf
 
 
-def get_script_dir(follow_symlinks=True):
-    if getattr(sys, 'frozen', False):  # py2exe, PyInstaller, cx_Freeze
-        path = os.path.abspath(sys.executable)
-    else:
-        path = inspect.getabsfile(get_script_dir)
-    if follow_symlinks:
-        path = os.path.realpath(path)
-    return os.path.dirname(path)
-
-
-script_dir = get_script_dir()
-caller_dir = os.getcwd()
-base_dir = os.path.dirname(os.path.dirname(script_dir))
-
-demo_secrets_file = os.path.realpath(os.path.join(base_dir, "client_secrets.json"))
-demo_sa_secrets_file = os.path.realpath(os.path.join(base_dir, "sa_client_secrets.json"))
-demo_csv_file = os.path.realpath(os.path.join(base_dir, "test.csv"))
-
-
 class GoogleDriveService:
     def __init__(self, loggr=None):
         self.loggr = loggr
@@ -438,6 +419,23 @@ def upload_file(service, dir_id, file_path, mimetype, dst_filename=None, dst_mim
 
 
 def demo(use_sa=True):
+    def get_script_dir(follow_symlinks=True):
+        if getattr(sys, "frozen", False):  # py2exe, PyInstaller, cx_Freeze
+            path = os.path.abspath(sys.executable)
+        else:
+            path = inspect.getabsfile(get_script_dir)
+        if follow_symlinks:
+            path = os.path.realpath(path)
+        return os.path.dirname(path)
+
+    script_dir = get_script_dir()
+    # caller_dir = os.getcwd()
+    base_dir = os.path.dirname(os.path.dirname(script_dir))
+
+    demo_secrets_file = os.path.realpath(os.path.join(base_dir, "client_secrets.json"))
+    demo_sa_secrets_file = os.path.realpath(os.path.join(base_dir, "sa_client_secrets.json"))
+    demo_csv_file = os.path.realpath(os.path.join(base_dir, "test.csv"))
+
     dir_ids = [
         # 'root',
         '1ps5YqAjqVO06v9C72XNUboxnHVTLKDTm',  # MyDrive(private) / Pibase / BaseAdmin
@@ -474,8 +472,9 @@ def demo(use_sa=True):
     for dir_id in dir_ids:
         try:
             check_list_files(drive, dir_id)
-        except Exception as err:
+        except Exception as err:  # noqa: PERF203
             print(f'check_list_files("{dir_id}") failed, Error {err}')
+            continue
 
     file_ids = [
         '1pKFPXp_8j0_OCNQRgX-G8MYovbvnImwm',
@@ -483,16 +482,18 @@ def demo(use_sa=True):
     for file_id in file_ids:
         try:
             drive_delete_file(drive, file_id)
-        except Exception as err:
+        except Exception as err:  # noqa: PERF203
             print(f'drive_delete_file("{file_id}") failed, Error {err}')
+            continue
 
     file_path = demo_csv_file
     mimetype = 'text/csv'
     for dir_id in dir_ids:
         try:
             file1 = upload_file(service, dir_id, file_path, mimetype)
-        except Exception as err:
+        except Exception as err:  # noqa: PERF203
             print(f'upload_file("{dir_id}, {file_path}") failed, Error {err}')
+            continue
 
 
 if __name__ == '__main__':

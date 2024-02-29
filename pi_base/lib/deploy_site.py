@@ -16,8 +16,8 @@ import sys
 from typing import List, Tuple
 
 # "modpath" must be first of our modules
-# from modpath1 import app_dir as _  # pylint: disable=wrong-import-position
-from modpath import app_dir  # pylint: disable=wrong-import-position
+# from modpath import get_workspace_dir, get_script_dir, app_dir  # pylint: disable=wrong-import-position
+from modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "common")))
 
 from gd_service import gd_connect, FileNotUploadedError
@@ -66,28 +66,30 @@ class DeploySiteDB:
 
     # TODO: (soon) DRY - move DB code into a generic class. Use here and in remoteiot.py.
 
-    def __init__(self, conf_file=None, db_file=None, loggr=logger, debug=False):
+    def __init__(self, conf_file=None, db_file=None, config_paths=None, secrets_paths=None, loggr=logger, debug=False):  # noqa: PLR0913
         self.conf_file = conf_file
         self.db_file = db_file
         self.loggr = loggr
         self.debug = debug
-
-        root = os.path.dirname(os.path.realpath(__file__))
-        base = os.path.abspath(os.path.join(root, os.pardir, os.pardir))
-        self.config_paths = [
-            root,
-            base,
+        # script_dir = os.path.dirname(os.path.realpath(__file__))
+        # workspace = os.path.abspath(os.path.dirname(os.path.dirname(script_dir)))
+        script_dir = get_script_dir(__file__)
+        workspace = get_workspace_dir()
+        self.config_paths = config_paths or [
+            script_dir,
+            os.path.join(workspace, "secrets"),
+            workspace,
             # os.path.join(app_dir, 'app'),
             # app_dir,
-            '~',
+            "~",
         ]
-        self.secrets_paths = [
-            root,
-            os.path.join(base, 'secrets'),
-            base,
+        self.secrets_paths = secrets_paths or [
+            script_dir,
+            os.path.join(workspace, "secrets"),
+            workspace,
             # os.path.join(app_dir, 'app'),
             # app_dir,
-            '~',
+            "~",
         ]
 
         # Describe columns in the sites database:
