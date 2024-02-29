@@ -158,9 +158,16 @@ else:
     scripts_dir = modules_dir  # scripts is not copied to the Pi, but build directory has required files from scripts/
 
 if debug:
-    print(
-        f'DEBUG modpath.py\n  __file__="{__file__}"\n  __name__="{__name__}"\n  running_on={running_on}\n  base_path="{base_path}"\n  file_path="{file_path}"\n  file_dir="{file_dir}"\n  project_dir="{project_dir}"\n  script_dir="{script_dir}"\n  caller_dir="{caller_dir}"\n  app_dir="{app_dir}"\n  modules_dir="{modules_dir}"\n  pibase_lib_dir="{pibase_lib_dir}"\n  scripts_dir="{scripts_dir}"\n  is_raspberrypi={is_raspberrypi()}\n  is_posix={is_posix()}\n  is_mac={is_mac()}\n  is_win={is_win()}'
-    )
+    my_vars = ["__file__", "__name__", "running_on", "base_path", "file_path", "file_dir", "project_dir", "script_dir", "caller_dir", "app_dir", "modules_dir", "pibase_lib_dir", "scripts_dir"]
+
+    def format_var(var):
+        val = globals()[var]
+        if isinstance(val, str):
+            val = f'"{val}"'
+        return f"  var={val}"
+
+    lines = [format_var(var) for var in my_vars]
+    print(f'DEBUG modpath.py\n{"n".join(lines)}"\n  is_raspberrypi={is_raspberrypi()}\n  is_posix={is_posix()}\n  is_mac={is_mac()}\n  is_win={is_win()}')
 
 # Path where to look for modules:
 sys.path.append(modules_dir)
