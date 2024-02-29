@@ -113,7 +113,7 @@ class Manager:
                     self.l.civis()  # Cursor invisible
                     if input_str.lower() in ["n", "no"]:
                         break
-                    elif input_str.lower() in ["", "y", "yes"]:
+                    if input_str.lower() in ["", "y", "yes"]:
                         # ? How can we invoke a function and run it interactively? cmd = 'sudo raspi-config nonint INTERACTIVE=True do_wifi_ssid_passphrase'
                         cmds = [
                             "sudo rfkill unblock wlan",

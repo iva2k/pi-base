@@ -115,11 +115,17 @@ build = [
 
 
 [tool.pyright]
-exclude = ["build/**"]
+exclude = [
+  "build/**",
+  "lib/cyclone/cycloneControlSDK_python*/**",
+]
 
 [tool.ruff]
 line-length = 200
 src = ["pi_base"]
+exclude = [
+  "lib/cyclone/cycloneControlSDK_python*/**",
+]
 extend-exclude = [
   "conf.py",
 ]
@@ -133,16 +139,21 @@ lint.ignore = [
   "PT004",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
   "PT005",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
   "PT023",    # https://github.com/astral-sh/ruff/issues/8796#issuecomment-1825907715
+  "TRY301",   # `raise` inside try-except block is allowed.
 
   ## Temporary disable all violating rules. # TODO: (soon) Re-enable and fix violations:
   "ANN001",
+  "ANN002",
+  "ANN003",
   "ANN102",
   "ANN201",
   "ANN202",
   "ANN204",
   "ANN206",
   "ARG001",
+  "ARG002",
   "BLE001",
+  "C901",
   "D100",
   "D101",
   "D102",
@@ -151,7 +162,9 @@ lint.ignore = [
   "D105",
   "D107",
   "D210",
+  "D417",
   "DTZ005",
+  "E501",
   "E722",
   "EM101",
   "EM102",
@@ -160,25 +173,42 @@ lint.ignore = [
   "FBT002",
   "F841",
   "FIX002",
+  "G003",
   "G004",
   "I001",
+  "N801",
+  "N802",
+  "N803",
+  "N806",
+  "N816",
   "Q000",
+  "RET505",
   "RUF005",
+  "PLR0911",
+  "PLR0912",
+  "PLR0913",
+  "PLR0915",
   "PTH100",
   "PTH103",
+  "PTH107",
   "PTH109",
+  "PTH111",
   "PTH112",
+  "PTH113",
   "PTH118",
   "PTH119",
   "PTH120",
+  "PTH122",
   "PTH123",
   "S602",
   "S603",
+  "SIM105",
   "SIM108",
   "SIM115",
   "T201",
   "TD002",
   "TD003",
+  "TRY002",
   "TRY003",
   "TRY300",
   "TRY400",
@@ -207,11 +237,25 @@ convention = "google"
 [tool.mypy]
 disallow_untyped_defs = true # Functions need to be annotated
 warn_unused_ignores = true
+#? show_error_codes = true
+#?? pass_filenames = false # To allow mmultiple files "modpath.py" across sourcetree
+disable_error_code = "misc"
 exclude = [
   "pi_base-\\d+", # Ignore temporary folder created by setuptools when building an sdist
   "venv.*/",
   "build/",
   "dist/",
+  "lib/_import/",
+  "lib/_try1/",
+  "lib/cyclone/cycloneControlSDK_python/",
+  "lib/cyclone/cycloneControlSDK_python.git/",
+  "lib/cyclone/deploy/",
+  "lib/cyclone/downloads/",
+  "lib/swd/blackmagic/",
+  "lib/swd/cables/",
+  "lib/swd/openocd/",
+  "lib/swd/probes/",
+  "lib/swd/pyocd/",
 ]
 
 [tool.pytest.ini_options]

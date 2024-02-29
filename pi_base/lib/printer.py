@@ -63,7 +63,7 @@ class AtDict(dict):
     __delattr__ = dict.__delitem__
 
 
-def eprint(*args, **kwargs):  # noqa: ANN002, ANN003
+def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
@@ -92,7 +92,7 @@ def convert_to_png(file, outfile=None):
         outfile = file + ".png"
     magick = which(["magick", "C:/Program Files/ImageMagick-7.1.0-Q16/magick.exe"])
     if not os.access(magick, os.X_OK):
-        raise Exception('"magick" command is not found. Is ImageMagick installed and added to PATH?')
+        raise FileNotFoundError('"magick" command is not found. Is ImageMagick installed and added to PATH?')
     logger.debug(f"Converting {file} to {outfile} ...")
     out = subprocess.check_output(
         # TODO: (when needed) Implement scaling to dpi etc.: convert -density 320 "$_input_pdf" -scale 926x1463 -type grayscale -depth 8 -crop 812x1218+52+166 "$_output_png"
@@ -151,7 +151,7 @@ class PrinterInterface(ABC):
         """Print given file."""
         return -1
 
-    def autoadd_printers(self, options: Optional[Dict[str, str]] = None) -> Tuple[int, List[Dict[str, str]]]:  # noqa: ARG002
+    def autoadd_printers(self, options: Optional[Dict[str, str]] = None) -> Tuple[int, List[Dict[str, str]]]:
         """Add all found compatible printers."""
         return (-1, [])
 
@@ -237,7 +237,7 @@ class CupsPrinter(PrinterInterface):
             logger.warning(f'File "{file_name}" does not exit.')
         return returncode
 
-    def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None):  # noqa: ARG002
+    def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None):
         cmd = ["lpadmin", "-x", printer_name]
         res, out, err = shell(cmd)
         return res
@@ -272,7 +272,7 @@ class CupsPrinter(PrinterInterface):
 
         return returncode
 
-    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[Dict[str, str]] = None):  # noqa: ARG002
+    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[Dict[str, str]] = None):
         """Install a printer.
 
         CUPS: @see https://www.cups.org/doc/admin.html
@@ -460,10 +460,20 @@ class LprintPrinter(PrinterInterface):
         return res
 
     def print_file_lp(self, printer_name, file_name):
-        # TODO: (when needed) implement
+        # TODO: (when needed) check if it works:
         # Without CUPS, use lp:
-        os.system(f"lp -d {printer_name} {file_name}")
-        # os.system(f'lpr -P  {printer_name} {file_name}')
+        try:
+            lp = which("lp")
+            if not lp:
+                raise FileNotFoundError
+            subprocess.run([lp, "-d", printer_name, file_name], check=True)
+            # subprocess.run([lpr, "--P", printer_name, file_name], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f'Error running "lp": {e}')
+            return e.returncode
+        except FileNotFoundError as e:
+            print('"lp" command not found.')
+            return e.errno
         return 0
 
     def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None):
@@ -579,7 +589,7 @@ def winPrint2():
     dc.EndDoc()
 
 
-def Printer(driver_type: str, *args, **kwargs) -> PrinterInterface:  # noqa: ANN002, ANN003
+def Printer(driver_type: str, *args, **kwargs) -> PrinterInterface:
     inst = None
     if driver_type.lower() == "cups":
         inst = CupsPrinter(*args, **kwargs)
@@ -591,7 +601,7 @@ def Printer(driver_type: str, *args, **kwargs) -> PrinterInterface:  # noqa: ANN
     return inst
 
 
-def OsPrinter(*args, **kwargs) -> PrinterInterface:  # noqa: ANN002, ANN003
+def OsPrinter(*args, **kwargs) -> PrinterInterface:
     if os.name == "nt":  # Windows
         driver_type = "Win"
         # driver_type = 'LPrint'  # for debugging LPrint piping on Windows. Can try LPrint on Windows some day.
@@ -645,8 +655,8 @@ def cmd_add_printer(printer_name, printer_uri, ppd_file, options=None):
     # First delete the printer if exists
     try:
         printer.delete_printer(printer_name)
-    except:
-        pass  # Ignore errors
+    except:  # noqa: S110
+        pass  # Silently ignore errors
     return printer.add_printer(printer_name, printer_uri, ppd_file, options)
 
 
@@ -725,7 +735,7 @@ def parse_args():
     return args, parser
 
 
-def main():  # noqa: PLR0912, PLR0911, C901
+def main():
     args, parser = parse_args()
     logger.debug(f"DEBUG {vars(args)}")
 

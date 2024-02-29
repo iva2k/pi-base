@@ -37,7 +37,7 @@ MAX_SN = 1000
 
 
 class Remoteiot:
-    def __init__(self, yaml_file=None, db_file=None, gd_secrets=None, loggr=logger, debug=False):  # noqa: PLR0913
+    def __init__(self, yaml_file=None, db_file=None, gd_secrets=None, loggr=logger, debug=False):
         self.yaml_file = yaml_file
         self.db_file = db_file
         self.loggr = loggr
@@ -113,7 +113,7 @@ class Remoteiot:
             self.loggr.info(f'Reading device database from "{self.db_file}" file.')
             return self.db_file_load_fd(in_file_fd)
 
-    def db_file_load_fd(self, in_file_fd):  # noqa: C901
+    def db_file_load_fd(self, in_file_fd):
         csvreader = csv.reader(in_file_fd, delimiter=",", quotechar='"')
         input_row_num = 0
         got_header = False
@@ -293,7 +293,7 @@ class Remoteiot:
 
         return True, device_id
 
-    def remoteiot_delete_device(self, device_id):  # noqa: ARG002
+    def remoteiot_delete_device(self, device_id):
         # TODO: (when implemented by remoteiot) Delete device record on remoteiot
         return 0
 
@@ -500,7 +500,7 @@ def parse_args():
     return args, parser
 
 
-def main():  # noqa: PLR0911
+def main():
     args, parser = parse_args()
     logger.debug(f"DEBUG {vars(args)}")
 

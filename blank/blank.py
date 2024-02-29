@@ -13,8 +13,8 @@ from loggr import Loggr
 
 vt_number = None
 vt_history = 4
-l = Loggr(use_vt_number=vt_number, use_stdout=True, use_journal_name="blank.py")
-h = Loggr(use_vt_number=vt_history, use_stdout=False, use_journal_name=None, use_sudo=True, primary_loggr=l)
+loggr = Loggr(use_vt_number=vt_number, use_stdout=True, use_journal_name="blank.py")
+history = Loggr(use_vt_number=vt_history, use_stdout=False, use_journal_name=None, use_sudo=True, primary_loggr=loggr)
 signal.signal(signal.SIGINT, signal.SIG_IGN)
 large = Large()
 
@@ -47,12 +47,12 @@ class Test:
             # TODO: (when needed) Implement decoding of all possible QR label formats.
             other = input_str.split(" ")[1:]
             if device_id == "":
-                l.print("  ID not recognized. Do not enter spaces.")
+                loggr.print("  ID not recognized. Do not enter spaces.")
             else:
                 break
 
         other_str = "(other entry ignored: %s)" % (" ".join(other)) if len(other) > 0 else ""
-        l.debug(f'got user entry: "{device_id}" {other_str}')
+        loggr.debug(f'got user entry: "{device_id}" {other_str}')
         filt = self.fnc_filter_input(device_id)
         if filt:
             return False, ""
@@ -63,7 +63,7 @@ class Test:
 
     def pre(self):
         """Prepare test (e.g. setup test station)."""
-        # l.debug('Test.pre()')
+        # loggr.debug('Test.pre()')
 
     def conf(self, device_id) -> str:
         return f"{self.field} {device_id}"
@@ -73,7 +73,7 @@ class Test:
 
         @return True if test passed, False if failed.
         """
-        # l.debug('Test.run(%s)' % (device_id,))
+        # loggr.debug('Test.run(%s)' % (device_id,))
         if device_id == "":
             return False
 
@@ -87,26 +87,26 @@ class Test:
 
     def post(self):
         """Prepare test (e.g. setup test station)."""
-        # l.debug('Test.post()')
+        # loggr.debug('Test.post()')
 
 
 def filter_input(entered):
     """Intercept operator input."""
     if entered == "quit":
-        l.print("  Quitting...")
-        h.print("  Quitting...")
+        loggr.print("  Quitting...")
+        history.print("  Quitting...")
         return True
 
     if entered == "reboot":
-        l.print("  Rebooting...")
-        h.print("  Rebooting...")
+        loggr.print("  Rebooting...")
+        history.print("  Rebooting...")
         reboot("r")
         return True
 
     if entered == "shutdown":
-        l.print("  Shutting down...")
-        h.print("  Shutting down...")
-        reboot("h")
+        loggr.print("  Shutting down...")
+        history.print("  Shutting down...")
+        reboot("history")
         return True
 
     return False
@@ -134,13 +134,13 @@ def main():
 
     message = f"[ {name} ]\n{app_type} v{version}\n{pi_model} {pi_revision} MAC:{pi_mac}\n"
     # Clear display
-    l.cnorm()  # Cursor normal
-    l.cls(message)
+    loggr.cnorm()  # Cursor normal
+    loggr.cls(message)
 
     # Clear history VT
     # time.sleep(3)
-    h.civis()  # Cursor invisible
-    h.cls(f"[ {name} ]\n{app_type} v{version}\n")
+    history.civis()  # Cursor invisible
+    history.cls(f"[ {name} ]\n{app_type} v{version}\n")
 
     test.pre()
     while True:
@@ -153,17 +153,17 @@ def main():
 
         # Clear previous pass/fail large result, show "busy".
         large.print("busy")
-        l.print(f"\nTesting {conf}")
+        loggr.print(f"\nTesting {conf}")
 
         result = test.run(device_id)
 
         # Clear "busy", print large result:
         result_str = "pass" if result else "fail"
         large.print(result_str)
-        l.print(f"\nDone testing {conf}\nresult: {result_str}\n")
+        loggr.print(f"\nDone testing {conf}\nresult: {result_str}\n")
 
         # Log history VT
-        h.print(f"{conf} result: {result_str}")
+        history.print(f"{conf} result: {result_str}")
 
     test.post()
     return 0

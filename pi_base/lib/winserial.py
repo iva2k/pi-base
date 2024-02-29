@@ -17,7 +17,7 @@ if os.name == "nt":
         We only need fileno() method in this class, so we can make it work in pexpect / fdpexpect
         """
 
-        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        def __init__(self, *args, **kwargs):
             self.is_open = False
             self._fd_port_handle = None
             self._orgTimeouts = None
@@ -110,8 +110,8 @@ if os.name == "nt":
         def fileno(self):
             return self._fd_port_handle
 
-        def setDTRAndRTS(self, dtr, rts):  # noqa: N802
-            comDCB = win32.DCB()  # noqa: N806
+        def setDTRAndRTS(self, dtr, rts):
+            comDCB = win32.DCB()
             win32.GetCommState(self._port_handle, ctypes.byref(comDCB))
             comDCB.fRtsControl = win32.RTS_CONTROL_ENABLE if rts else win32.RTS_CONTROL_DISABLE
             comDCB.fDtrControl = win32.DTR_CONTROL_ENABLE if dtr else win32.DTR_CONTROL_DISABLE
@@ -119,7 +119,7 @@ if os.name == "nt":
             self._rts_state = rts
             self._dtr_state = dtr
 
-    def GetSerial():  # noqa: N802
+    def GetSerial():
         return WinSerial
 
 else:
@@ -128,14 +128,14 @@ else:
     import termios  # pylint: disable=import-error
 
     class LinSerial(Serial):
-        def __init__(self, *args, **kwargs):  # noqa: ANN002, ANN003
+        def __init__(self, *args, **kwargs):
             self.TIOCMSET = getattr(termios, "TIOCMSET", 0x5418)
             self.TIOCMGET = getattr(termios, "TIOCMGET", 0x5415)
             self.TIOCM_DTR = getattr(termios, "TIOCM_DTR", 0x002)
             self.TIOCM_RTS = getattr(termios, "TIOCM_RTS", 0x004)
             super().__init__(*args, **kwargs)
 
-        def setDTRAndRTS(self, dtr, rts):  # noqa: N802
+        def setDTRAndRTS(self, dtr, rts):
             status = struct.unpack("I", fcntl.ioctl(self.fileno(), self.TIOCMGET, struct.pack("I", 0)))[0]
             if dtr:
                 status |= self.TIOCM_DTR
@@ -148,5 +148,5 @@ else:
             # print(status)
             fcntl.ioctl(self.fileno(), self.TIOCMSET, struct.pack("I", status))
 
-    def GetSerial():  # noqa: N802
+    def GetSerial():
         return LinSerial

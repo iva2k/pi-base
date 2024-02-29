@@ -21,6 +21,13 @@
     "tox:build": "tox run -e build",
     "ruff:format": "ruff format .",
     "docs:test": "sphinx-build -b doctest ",
-    "docs:auto-api": "sphinx-apidoc"
+    "docs:auto-api": "sphinx-apidoc",
+
+    "lint": "npm run tox:lint",
+    "format": "npm run ruff:format",
+    "test": "npm run tox:test",
+    "docs": "npm run tox:docs",
+    "build": "npm run tox:build"
+
   }
 }

@@ -270,9 +270,8 @@ def reset_vt(vt_number):
                 try:
                     result = check_output(cmd, shell=True, text=True)
                     pids_killed += [pid_n]
-                except:
-                    # Ignore kill errors
-                    pass
+                except:  # noqa: S110
+                    pass  # Silently ignore kill errors
     return pids_killed
     # deallocvt
 
@@ -288,7 +287,7 @@ def cvt(vt_number=1, loggr=None):
             loggr.error(f'Error {type(err)} "{err}" in cvt({vt_number}) cmd={cmd}')
 
 
-def open_vt(vt_number, app_path, user=None, do_sudo=True, do_chvt=True, do_nohup=True, loggr=None):  # noqa: PLR0913
+def open_vt(vt_number, app_path, user=None, do_sudo=True, do_chvt=True, do_nohup=True, loggr=None):
     # Use `exec < /dev/tty1` at the start of the target script
     # See https://superuser.com/questions/584931/howto-start-an-interactive-script-at-ubuntu-startup
 
@@ -364,7 +363,7 @@ def eth0_mac():
 def strftimedelta(format_str: str, td: datetime.timedelta) -> str:
     zero_td = datetime.timedelta(0)
     # Create a datetime object with a dummy date
-    dummy_date = datetime.datetime(1900, 1, 1)
+    dummy_date = datetime.datetime(1900, 1, 1, tzinfo=datetime.timezone.utc)
     # Add the timedelta object to the dummy date to get a datetime object
     td_datetime = dummy_date + td
     # Format the datetime object using strftime() and the given format string
@@ -411,7 +410,7 @@ def find_path(path_name: str, paths: List[str], loggr=None, is_dir=False) -> str
     return None
 
 
-def download_and_execute(url, downloaded_file_path, command=None, remove_after=False, timeout=30, loggr=None) -> int:  # noqa: D417, C901, PLR0913
+def download_and_execute(url, downloaded_file_path, command=None, remove_after=False, timeout=30, loggr=None) -> int:
     """Download from given URL a file and either execute the file or optionally execute the given command. Intended use is to download and install software.
 
     Args:
@@ -464,7 +463,7 @@ def download_and_execute(url, downloaded_file_path, command=None, remove_after=F
 class PeriodicTask(threading.Thread):
     """Helper class to manage periodic tasks."""
 
-    def __init__(self, interval, task_fnc, *args, **kwargs):  # noqa: ANN003, ANN002
+    def __init__(self, interval, task_fnc, *args, **kwargs):
         """Constructor.
 
         Args:
@@ -492,7 +491,7 @@ class PeriodicTask(threading.Thread):
                 time.sleep(max(0, next_run - time.monotonic()))
                 if not self._pause_event.is_set():
                     self._task_fnc(*self._args, **self._kwargs)
-            except StopIteration:
+            except StopIteration:  # noqa: PERF203
                 break
 
     def kill(self):
@@ -519,7 +518,7 @@ class PeriodicTask(threading.Thread):
             yield next_time
 
 
-def print_task(*args):  # noqa: ANN002
+def print_task(*args):
     print(*args)
 
 

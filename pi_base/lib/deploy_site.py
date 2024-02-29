@@ -37,7 +37,7 @@ g_db_file_name = "sites.csv"
 MAX_SN = 1000
 
 
-def eprint(*args, **kwargs):  # noqa: ANN002, ANN003
+def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
@@ -69,7 +69,7 @@ class DeploySiteDB:
 
     # TODO: (soon) DRY - move DB code into a generic class. Use here and in remoteiot.py.
 
-    def __init__(self, conf_file=None, db_file=None, config_paths=None, secrets_paths=None, loggr=logger, debug=False):  # noqa: PLR0913
+    def __init__(self, conf_file=None, db_file=None, config_paths=None, secrets_paths=None, loggr=logger, debug=False):
         self.conf_file = conf_file
         self.db_file = db_file
         self.loggr = loggr
@@ -146,7 +146,7 @@ class DeploySiteDB:
             self.loggr.info(f'Reading sites database from "{self.db_file}" file.')
             return self.db_file_load_fd(in_file_fd)
 
-    def db_file_load_fd(self, in_file_fd) -> List[DeploySite]:  # noqa: C901
+    def db_file_load_fd(self, in_file_fd) -> List[DeploySite]:
         csvreader = csv.reader(in_file_fd, delimiter=",", quotechar='"')
         input_row_num = 0
         got_header = False

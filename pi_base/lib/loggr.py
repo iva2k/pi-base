@@ -8,7 +8,7 @@ import platform
 from enum import Enum
 from subprocess import Popen, PIPE, DEVNULL
 
-os.system("")  # Enable ANSI color codes
+os.system("")  # Enable ANSI color codes  # noqa: S605, S607
 
 
 class ColorCodes(Enum):
@@ -276,11 +276,10 @@ class Loggr:
             if response.lower() in ("yes", "y"):
                 result = True
                 break
-            elif response.lower() in ("no", "n"):
+            if response.lower() in ("no", "n"):
                 result = False
                 break
-            else:
-                self.color_print("Response must be [Y]es or [N]o.", ColorCodes.RED)
+            self.color_print("Response must be [Y]es or [N]o.", ColorCodes.RED)
         return result
 
     def color_print(self, text: str, color_code: str = ColorCodes.DEFAULT, end: str = "\n", filter_text: str = "") -> None:
@@ -380,52 +379,52 @@ class Loggr:
 
 # Quick unit check
 def quick_check():
-    l = Loggr(use_vt_number=2, use_journal_name="testloggr", use_stdout=True)
+    loggr = Loggr(use_vt_number=2, use_journal_name="testloggr", use_stdout=True)
     print("sleeping 3")
     time.sleep(3)
-    l.cls("cleared!")
-    l.log(logging.INFO, "voila1")
-    l.log(logging.INFO, "voila2")
-    l.position(10, 40)
-    l.log(logging.INFO, "position 10,42")
+    loggr.cls("cleared!")
+    loggr.log(logging.INFO, "voila1")
+    loggr.log(logging.INFO, "voila2")
+    loggr.position(10, 40)
+    loggr.log(logging.INFO, "position 10,42")
     print("sleeping 3")
     time.sleep(3)
-    l.print("DONE")
+    loggr.print("DONE")
     # print("DONE")
 
 
 def position_check():
-    l = Loggr(use_vt_number=2, use_journal_name="testloggr", use_stdout=True)
+    loggr = Loggr(use_vt_number=2, use_journal_name="testloggr", use_stdout=True)
     print("sleeping 3")
     time.sleep(5)
-    l.cls("0,0")
-    l.position(10, 10, "10,10")
-    l.position(0, 10, "0,10")
-    l.position(30, 3, "30,3")
-    l.position(20, 2, "20,2")
-    l.position(10, 1, "10,1")
-    l.position(20, 10, "20,10")
-    l.position(1, 9, "1,9")
-    l.position(0, 11, "0,11")
+    loggr.cls("0,0")
+    loggr.position(10, 10, "10,10")
+    loggr.position(0, 10, "0,10")
+    loggr.position(30, 3, "30,3")
+    loggr.position(20, 2, "20,2")
+    loggr.position(10, 1, "10,1")
+    loggr.position(20, 10, "20,10")
+    loggr.position(1, 9, "1,9")
+    loggr.position(0, 11, "0,11")
 
     print("sleeping 3")
     time.sleep(3)
-    l.print("DONE")
+    loggr.print("DONE")
     # print("DONE")
 
 
 def vt_check():
-    l = Loggr(use_vt_number=4, use_journal_name=None, use_stdout=None, use_sudo=True)
-    l.cls("0,0")
-    l.position(10, 10, "10,10")
-    l.position(0, 10, "0,10")
-    l.position(30, 3, "30,3")
-    l.position(20, 2, "20,2")
-    l.position(10, 1, "10,1")
-    l.position(20, 10, "20,10")
-    l.position(1, 9, "1,9")
-    l.position(0, 11, "0,11")
-    l.print("DONE")
+    loggr = Loggr(use_vt_number=4, use_journal_name=None, use_stdout=None, use_sudo=True)
+    loggr.cls("0,0")
+    loggr.position(10, 10, "10,10")
+    loggr.position(0, 10, "0,10")
+    loggr.position(30, 3, "30,3")
+    loggr.position(20, 2, "20,2")
+    loggr.position(10, 1, "10,1")
+    loggr.position(20, 10, "20,10")
+    loggr.position(1, 9, "1,9")
+    loggr.position(0, 11, "0,11")
+    loggr.print("DONE")
     # print("DONE")
 
 
@@ -436,14 +435,14 @@ def journal_check():
     g_logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
     g_logger.setLevel(logging.DEBUG)
 
-    l = Loggr(use_vt_number=None, use_journal_name="testloggrjournal", use_stdout=None)
+    loggr = Loggr(use_vt_number=None, use_journal_name="testloggrjournal", use_stdout=None)
     # These should appear only in journal, not on the console:
-    # l.critical("loggr critical")
-    l.error("loggr error")
-    l.warning("loggr warn")
-    l.info("loggr info")
-    l.debug("loggr debug")
-    l.print("DONE")
+    # loggr.critical("loggr critical")
+    loggr.error("loggr error")
+    loggr.warning("loggr warn")
+    loggr.info("loggr info")
+    loggr.debug("loggr debug")
+    loggr.print("DONE")
     # print("DONE")
 
 

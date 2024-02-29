@@ -142,7 +142,7 @@ class GoogleDriveService:
         # df = pd.read_csv(content)
         return gfile, content
 
-    def upload_file(self, dir_id, file_path, mimetype, dst_filename=None, dst_mimetype=None, resumable=True):  # noqa: PLR0913
+    def upload_file(self, dir_id, file_path, mimetype, dst_filename=None, dst_mimetype=None, resumable=True):
         """Upload a file (optionally resumable, and optionally with conversion if dst_mimetype provided and is different than mimetype).
 
         Returns: uploaded file object
@@ -302,7 +302,7 @@ class GoogleDriveService:
         return None
 
 
-def gd_connect(  # noqa: PLR0912, PLR0913, C901
+def gd_connect(
     loggr, gd_secrets, extra_fields_with_values: Optional[Dict[str, str]] = None, extra_mode: str = "override", skip_msg: str = "Will skip uploading results files.", prefix: str = "pibase_"
 ) -> Tuple[GoogleDriveService, Dict[str, str]]:
     """Helper function: Open secrets file and Authenticate with Google Drive, and additionally load extra fields from the secrets file.
@@ -396,7 +396,7 @@ def drive_delete_file(drive, file_id):
     print(f'Deleted file id "{file_id}"')
 
 
-def upload_file(service, dir_id, file_path, mimetype, dst_filename=None, dst_mimetype=None, resumable=True):  # noqa: PLR0913
+def upload_file(service, dir_id, file_path, mimetype, dst_filename=None, dst_mimetype=None, resumable=True):
     """Upload a file (optionally resumable, and optionally with conversion if dst_mimetype provided and is different than mimetype).
 
     Returns: ID of the file uploaded
@@ -432,7 +432,7 @@ def upload_file(service, dir_id, file_path, mimetype, dst_filename=None, dst_mim
     return file
 
 
-def demo(use_sa=True):  # noqa: PLR0915, PLR0912, C901
+def demo(use_sa=True):
     def get_script_dir(follow_symlinks=True):
         if getattr(sys, "frozen", False):  # py2exe, PyInstaller, cx_Freeze
             path = os.path.abspath(sys.executable)
