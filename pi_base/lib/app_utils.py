@@ -9,7 +9,6 @@ import time
 # import zmq
 import threading
 from subprocess import run, check_output, CalledProcessError
-from typing import List
 from uuid import getnode as get_mac
 
 import requests
@@ -393,7 +392,7 @@ def path_part_sanitize(part: str, replace: str = "", more: str = "") -> str:
     return out
 
 
-def find_path(path_name: str, paths: List[str], loggr=None, is_dir=False) -> str:
+def find_path(path_name: str, paths: list[str], loggr=None, is_dir=False) -> str:
     path_basename = os.path.basename(path_name)
     if path_basename != path_name:
         paths = [os.path.dirname(path_name)] + paths

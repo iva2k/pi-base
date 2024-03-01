@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 import os
 import time
 import tput
@@ -227,7 +228,7 @@ class Loggr:
         if self.journal:
             self.journal.info(*tstr, **kwargs)
 
-    def log_box(self, text: str, width: int = 50, color_code=ColorCodes.DEFAULT) -> None:
+    def log_box(self, text: str, width: int = 50, color_code: ColorCodes | str = ColorCodes.DEFAULT) -> None:
         """Log provided text in a box of given width (centered).
 
         Example:
@@ -247,7 +248,7 @@ class Loggr:
         self.color_print("┃")
         self.color_print("┗" + "━" * width + "┛")
 
-    def get_user_input(self, text: str, color_code: str = ColorCodes.YELLOW) -> str:
+    def get_user_input(self, text: str, color_code: ColorCodes | str = ColorCodes.YELLOW) -> str:
         """Gets user input utilizing colored text.
 
         Args:
@@ -260,7 +261,7 @@ class Loggr:
         self.color_print(text, color_code=color_code, end=" ")
         return input()
 
-    def get_user_yes_no_input(self, text: str, color_code: str = ColorCodes.YELLOW) -> bool:
+    def get_user_yes_no_input(self, text: str, color_code: ColorCodes | str = ColorCodes.YELLOW) -> bool:
         """Gets a yes/no user confirmation.
 
         Args:
@@ -282,7 +283,7 @@ class Loggr:
             self.color_print("Response must be [Y]es or [N]o.", ColorCodes.RED)
         return result
 
-    def color_print(self, text: str, color_code: str = ColorCodes.DEFAULT, end: str = "\n", filter_text: str = "") -> None:
+    def color_print(self, text: str, color_code: ColorCodes | str = ColorCodes.DEFAULT, end: str = "\n", filter_text: str = "") -> None:
         """Prints the text as both an std output using the given color code.
 
         Args:

@@ -4,6 +4,7 @@
 
 # We're not going after extreme performance here
 # pylint: disable=logging-fstring-interpolation
+from __future__ import annotations
 
 import argparse
 import csv
@@ -14,7 +15,7 @@ import os
 # import socket
 # from subprocess import check_output
 import sys
-from typing import List, Optional, Tuple
+from typing import Optional
 
 # "modpath" must be first of our modules
 # from modpath import get_workspace_dir, get_script_dir, app_dir  # pylint: disable=wrong-import-position
@@ -74,6 +75,7 @@ class DeploySiteDB:
         self.db_file = db_file
         self.loggr = loggr
         self.debug = debug
+        self.sites = []
         # script_dir = os.path.dirname(os.path.realpath(__file__))
         # workspace = os.path.abspath(os.path.dirname(os.path.dirname(script_dir)))
         script_dir = get_script_dir(__file__)
@@ -136,7 +138,7 @@ class DeploySiteDB:
         sites = self.db_file_load_fd(buffered)
         return sites, in_file_fd
 
-    def db_file_load(self) -> List[DeploySite]:
+    def db_file_load(self) -> list[DeploySite]:
         if not self.db_file:
             self.db_file = find_path(g_db_file_name, self.config_paths, self.loggr)
         if not self.db_file:
@@ -146,7 +148,7 @@ class DeploySiteDB:
             self.loggr.info(f'Reading sites database from "{self.db_file}" file.')
             return self.db_file_load_fd(in_file_fd)
 
-    def db_file_load_fd(self, in_file_fd) -> List[DeploySite]:
+    def db_file_load_fd(self, in_file_fd) -> list[DeploySite]:
         csvreader = csv.reader(in_file_fd, delimiter=",", quotechar='"')
         input_row_num = 0
         got_header = False
@@ -236,7 +238,7 @@ class DeploySiteDB:
             return -1
         return 0
 
-    def find_site_by_id(self, site_id):
+    def find_site_by_id(self, site_id) -> DeploySite | None:
         for site in self.sites:
             if site_id == site["site_id"]:
                 return site
@@ -268,14 +270,14 @@ class DeploySiteDB:
     def add(self, name: str, site: DeploySite) -> int:
         pass
 
-    def get(self, name: str) -> Tuple[int, DeploySite]:
-        pass
+    def get(self, name: str) -> tuple[int, DeploySite]:
+        return 0, None
 
     def delete(self, name: str) -> int:
-        pass
+        return 0
 
     def update(self, name: str, site: DeploySite) -> int:
-        pass
+        return 0
 
 
 def cmd_sites(db, args):

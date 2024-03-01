@@ -19,6 +19,7 @@
         "ms-vscode-remote.remote-ssh",
         "tamasfe.even-better-toml",
         "charliermarsh.ruff",
-        "matangover.mypy"
+        "matangover.mypy",
+        "ms-pyright.pyright"
     ]
 }

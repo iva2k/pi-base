@@ -16,6 +16,7 @@
     "dev:uninstall": "pip uninstall pi_base",
     "dev:env": "source venv/Scripts/activate",
     "tox:lint": "tox run -e lint",
+    "tox:types": "tox run -e types",
     "tox:test": "tox run -e test",
     "tox:docs": "tox run -e docs",
     "tox:build": "tox run -e build",

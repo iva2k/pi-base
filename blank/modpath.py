@@ -14,17 +14,27 @@ import os
 import sys
 
 
+# BEGIN These to be overriden when full modpath is imported
+def get_script_dir(file_or_object_or_func, follow_symlinks=True):
+    raise ImportError("Cannot load full modpath")
+
+
+app_dir = None
+# END These to be overriden when full modpath is imported
+
+
 def import_module_from_locations(module_name, locations):
     for location in locations:
         try:
             module_path = os.path.join(location, f"{module_name}.py")
             spec = importlib.util.spec_from_file_location(module_name, module_path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            # Register module and its variables (as `import module_name` would do)
-            globals().update(module.__dict__)
-            sys.modules[module_name] = module
-            return module
+            if spec and spec.loader:
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                # Register module and its variables (as `import module_name` would do)
+                globals().update(module.__dict__)
+                sys.modules[module_name] = module
+                return module
         except FileNotFoundError as err:  # noqa: PERF203
             continue
     raise ImportError(f'Module "{module_name}" not found in any of the specified locations')

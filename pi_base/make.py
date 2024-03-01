@@ -39,7 +39,10 @@ try:
     from .lib.deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
 except:
     from deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
-from app_utils import find_path
+try:
+    from .lib.app_utils import find_path
+except:
+    from app_utils import find_path
 
 
 logging.basicConfig(level=logging.INFO)
@@ -67,7 +70,7 @@ class Builder:
         self.comment = ""
         self.type = args.type
         self.site_id = args.site
-        self.base_dir = args.workspace or get_workspace_dir()  # Find client project base directory
+        self.base_dir = args.workspace if isinstance(args.workspace, str) else get_workspace_dir()  # Find client project base directory
         self.package_dir = get_script_dir(__file__)  # Find package directory
         self.stage_dir = os.path.join(self.base_dir, "build", self.site_id, self.type)
 
@@ -147,7 +150,7 @@ class Builder:
         # Merge defaults and custom
         self.conf_dat = {**default_conf_dat, **custom_conf_dat}  # python >= 3.5
 
-        self.loggr.debug(json.dumps(self.conf_dat, indent=4, default="DEFAULT"))
+        self.loggr.debug(json.dumps(self.conf_dat, indent=4))
         self.app_info = self.conf_dat["Info"]
         self.app_info["Site"] = self.site_id
         self.app_info["Type"] = self.type
@@ -290,34 +293,6 @@ class Builder:
         self.make_files_per_conf(target_app)
         self.make_files_from_template(self.stage_dir)
         self.loggr.info(f"Done Making build of {self.type}.\n")
-
-
-def find_package_dir():
-    # TODO: (now) Here's an idea, implement robust design:
-    import pkgutil
-
-    data = pkgutil.get_data(__name__, "templates/temp_file")
-
-
-def find_package_dir2():
-    # TODO: (now) Here's an idea, implement robust design: Deprecated in python 3.11 in 2021:
-    try:
-        from importlib import resources as impresources
-    except ImportError:
-        # Try backported to PY<37 `importlib_resources`.
-        import importlib_resources as impresources
-
-    from . import common  # relative-import the *package* containing the templates
-
-    try:
-        inp_file = impresources.files(common) / "temp_file"
-        with inp_file.open("rb") as f:  # or "rt" as text file with universal newlines
-            template = f.read()
-    except AttributeError:
-        # Python < PY3.9, fall back to method deprecated in PY3.11.
-        template = impresources.read_text(common, "temp_file")
-        # or for a file-like stream:
-        template = impresources.open_text(common, "temp_file")
 
 
 def main(loggr=logger) -> int:

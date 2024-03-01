@@ -19,7 +19,7 @@ import inspect
 import mimetypes
 import os
 import sys
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 from apiclient import errors
 from googleapiclient.discovery import build
@@ -303,21 +303,21 @@ class GoogleDriveService:
 
 
 def gd_connect(
-    loggr, gd_secrets, extra_fields_with_values: Optional[Dict[str, str]] = None, extra_mode: str = "override", skip_msg: str = "Will skip uploading results files.", prefix: str = "pibase_"
-) -> Tuple[GoogleDriveService, Dict[str, str]]:
+    loggr, gd_secrets, extra_fields_with_values: Optional[dict[str, str]] = None, extra_mode: str = "override", skip_msg: str = "Will skip uploading results files.", prefix: str = "pibase_"
+) -> tuple[GoogleDriveService, dict[str, str]]:
     """Helper function: Open secrets file and Authenticate with Google Drive, and additionally load extra fields from the secrets file.
 
     Args:
         loggr (Loggr): Logger object
         gd_secrets (str): File with GD secrets
-        extra_fields_with_values (Dict[str, str], optional): Keys define extra fields to load from gd_secrets file, how to use the values is determined by extra_mode. Defaults to None.
+        extra_fields_with_values (dict[str, str], optional): Keys define extra fields to load from gd_secrets file, how to use the values is determined by extra_mode. Defaults to None.
         extra_mode (str, optional): 'override' will load field from secrets file if given value is None. 'default' will use given value as fallback if secrets file does not have the field set.
                             'override' mode is intended for command line args that should override secrets file values. Defaults to 'override'.
         skip_msg (str, optional): Text to add to loggr messages when cannot load gd_secrets or connect. Defaults to 'Will skip uploading results files.'.
         prefix (str, optional): Prefix for all field names in gd_secrets file. Defaults to 'pibase_'.
 
     Returns:
-        Tuple[GoogleDriveService, Dict[str, str]]: Google Drive service object, Extra fields from the secrets file.
+        tuple[GoogleDriveService, dict[str, str]]: Google Drive service object, Extra fields from the secrets file.
     """
     if extra_fields_with_values is None:
         extra_fields_with_values = {}

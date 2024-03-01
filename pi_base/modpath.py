@@ -82,7 +82,7 @@ def is_win():
 # def get_workspace_dir(file_or_object_or_func=None):
 #     if not file_or_object_or_func:
 #         raise ValueError("Please provide file_or_object_or_func argument (can be __file__).")
-def get_workspace_dir():
+def get_workspace_dir() -> str:
     return os.getcwd()
 
 

@@ -88,13 +88,14 @@ tox = [
   "tox==4.11.1",
 ]
 lint = [
-  "mypy==1.5.1",
+  # "mypy==1.5.1",
+  "pyright==1.1.352",
   "pytest==7.4.1",
   "types-docutils",
   "types-setuptools",
   "jinja2==3.1.2",
   # "ruff==0.1.6",
-  "ruff~=0.2.1",
+  "ruff==0.2.1",
 ]
 test = [
   "pytest==7.4.1",
@@ -114,22 +115,32 @@ build = [
 ]
 
 
-[tool.pyright]
-exclude = [
-  "build/**",
-  "lib/cyclone/cycloneControlSDK_python*/**",
-]
-
 [tool.ruff]
 line-length = 200
-src = ["pi_base"]
+src = [
+  "pi_base",
+  "lib"
+]
 exclude = [
-  "lib/cyclone/cycloneControlSDK_python*/**",
+  "venv.*/",
+  "build/",
+  "dist/",
+  "lib/_import/",
+  "lib/_try1/",
+  "lib/cyclone/cycloneControlSDK_python/",
+  "lib/cyclone/cycloneControlSDK_python.git/",
+  "lib/cyclone/deploy/",
+  "lib/cyclone/downloads/",
+  "lib/swd/blackmagic/",
+  "lib/swd/cables/",
+  "lib/swd/openocd/",
+  "lib/swd/probes/",
+  "lib/swd/pyocd/",
 ]
 extend-exclude = [
   "conf.py",
 ]
-target-version = "py38"
+target-version = "py39"
 lint.select = ["ALL"]
 lint.ignore = [
   "COM812",   # Conflicts with the formatter
@@ -257,6 +268,48 @@ exclude = [
   "lib/swd/probes/",
   "lib/swd/pyocd/",
 ]
+
+[tool.pyright]
+# typeCheckingMode = "basic"
+include = [
+  "blank",
+  "pi_base",
+  "lib",
+]
+exclude = [
+  "pi_base-\\d+", # Ignore temporary folder created by setuptools when building an sdist
+  "venv.*/",
+  "build/",
+  "dist/",
+  "lib/_import/",
+  "lib/_try1/",
+  "lib/cyclone/cycloneControlSDK_python/",
+  "lib/cyclone/cycloneControlSDK_python.git/",
+  "lib/cyclone/deploy/",
+  "lib/cyclone/downloads/",
+  "lib/swd/blackmagic/",
+  "lib/swd/cables/",
+  "lib/swd/openocd/",
+  "lib/swd/probes/",
+  "lib/swd/pyocd/",
+  "**/node_modules",
+  "**/__pycache__",
+]
+# ignore = ["src/oldstuff"]
+# defineConstant = { DEBUG = true }
+stubPath = ".types"
+pythonVersion = "3.9"
+# pythonPlatform = "Linux"
+# executionEnvironments = [
+#   { root = "src/web", pythonVersion = "3.5", pythonPlatform = "Windows", extraPaths = [ "src/service_libs" ] },
+#   { root = "src/sdk", pythonVersion = "3.0", extraPaths = [ "src/backend" ] },
+#   { root = "src/tests", extraPaths = ["src/tests/e2e", "src/sdk" ]},
+#   { root = "src" }
+# ]
+reportMissingImports = false
+reportMissingTypeStubs = false
+reportUnknownParameterType = false
+reportUntypedFunctionDecorator = false
 
 [tool.pytest.ini_options]
 addopts = """

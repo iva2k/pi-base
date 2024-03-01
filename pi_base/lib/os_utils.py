@@ -8,7 +8,7 @@ import os
 import platform
 import shutil
 import sys
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import psutil
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 _our_exe_name = os.path.basename(sys.argv[0])
 
 
-def which(progname, additional_paths: Optional[List[str]] = None, exit_on_fail=False):
+def which(progname, additional_paths: Optional[list[str]] = None, exit_on_fail=False):
     if isinstance(progname, str):
         progname = [progname]
     if not additional_paths:
@@ -55,7 +55,7 @@ def find_file(search_dir_list, filename, descr="input", loggr=logger):
     @see find_path() in app_utils.py
 
     Args:
-        search_dir_list (List[str]): List of directories to search
+        search_dir_list (list[str]): List of directories to search
         filename (str): File name
         descr (str, optional): Description of the file for logging. Defaults to "input".
         loggr (_type_, optional): _description_. Defaults to logger.
@@ -85,7 +85,7 @@ def partition_device_name(partition: psutil._common.sdiskpart) -> str:
     return device_name
 
 
-def disk_has_space(printer=None, disk_usage_limit: Optional[int] = None) -> Tuple[bool, List[str]]:
+def disk_has_space(printer=None, disk_usage_limit: Optional[int] = None) -> tuple[bool, list[str]]:
     healthy = True
     summary = []
     if disk_usage_limit:
@@ -102,7 +102,7 @@ def disk_has_space(printer=None, disk_usage_limit: Optional[int] = None) -> Tupl
     return healthy, summary
 
 
-def disk_is_healthy(printer=None) -> Tuple[bool, List[str]]:
+def disk_is_healthy(printer=None) -> tuple[bool, list[str]]:
     healthy = True
     summary = []
     # disk_io = psutil.disk_io_counters()

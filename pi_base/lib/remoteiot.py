@@ -13,7 +13,6 @@ import os
 import socket
 from subprocess import check_output
 import sys
-from typing import Tuple
 
 # "modpath" must be first of our modules
 from modpath import app_dir  # pylint: disable=wrong-import-position
@@ -222,7 +221,7 @@ class Remoteiot:
                 return device
         return None
 
-    def unique_device_id(self, site_id: str, app_type: str, app_name: str) -> Tuple[str, str, str]:
+    def unique_device_id(self, site_id: str, app_type: str, app_name: str) -> tuple[str, str, str]:
         device_id_template = self.conf.get("device_id_template", "RPI-{sn:03d}")
         device_name_template = self.conf.get("device_name_template", "RPI {sn:03d}")
         # device_group_template = self.conf.get('device_group_template', "RPI {sn:03d}")
@@ -268,7 +267,7 @@ class Remoteiot:
         except:
             return False
 
-    def remoteiot_is_installed(self) -> Tuple[bool, str]:
+    def remoteiot_is_installed(self) -> tuple[bool, str]:
         # Check if remoteiot config file is present
         remoteiot_conf_file = "/etc/remote-iot/configure"
         if not os.path.isfile(remoteiot_conf_file):

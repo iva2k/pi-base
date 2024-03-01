@@ -42,7 +42,7 @@ import os
 import platform
 import subprocess
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 from abc import ABC, abstractmethod
 
 from os_utils import which
@@ -124,34 +124,34 @@ class PrinterInterface(ABC):
         return False
 
     @abstractmethod
-    def get_devices(self) -> List[str]:
+    def get_devices(self) -> list[str]:
         """Get list of available devices.
 
         Returns:
-            list[Dict[str, str]]: _description_
+            list[dict[str, str]]: _description_
         """
         return False
 
     @abstractmethod
-    def get_printers(self) -> List[Dict[str, str]]:
+    def get_printers(self) -> list[dict[str, str]]:
         """Get list of added printers.
 
         Returns:
-            list[Dict[str, str]]: _description_
+            list[dict[str, str]]: _description_
         """
         return []
 
     @abstractmethod
-    def print_test(self, printer_name: str, options: Optional[Dict[str, str]] = None) -> int:
+    def print_test(self, printer_name: str, options: Optional[dict[str, str]] = None) -> int:
         """Print test page."""
         return -1
 
     @abstractmethod
-    def print_file(self, printer_name: str, file_name: str, doc_name: str = "", options: Optional[Dict[str, str]] = None) -> int:
+    def print_file(self, printer_name: str, file_name: str, doc_name: str = "", options: Optional[dict[str, str]] = None) -> int:
         """Print given file."""
         return -1
 
-    def autoadd_printers(self, options: Optional[Dict[str, str]] = None) -> Tuple[int, List[Dict[str, str]]]:
+    def autoadd_printers(self, options: Optional[dict[str, str]] = None) -> tuple[int, list[dict[str, str]]]:
         """Add all found compatible printers."""
         return (-1, [])
 
@@ -160,12 +160,12 @@ class PrinterInterface(ABC):
         return -1
 
     @abstractmethod
-    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[Dict[str, str]] = None) -> int:
+    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[dict[str, str]] = None) -> int:
         """Add given printer."""
         return -1
 
     @abstractmethod
-    def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None) -> int:
+    def delete_printer(self, printer_name: str, options: Optional[dict[str, str]] = None) -> int:
         """Delete previously added printer."""
         return -1
 
@@ -215,7 +215,7 @@ class CupsPrinter(PrinterInterface):
     def get_printers(self):
         return self.conn.getPrinters()
 
-    def print_test(self, printer_name: str, options: Optional[Dict[str, str]] = None) -> int:
+    def print_test(self, printer_name: str, options: Optional[dict[str, str]] = None) -> int:
         file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "printer-test-label.png"))
         return self.print_file(printer_name, file_path, options=options)
 
@@ -237,7 +237,7 @@ class CupsPrinter(PrinterInterface):
             logger.warning(f'File "{file_name}" does not exit.')
         return returncode
 
-    def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None):
+    def delete_printer(self, printer_name: str, options: Optional[dict[str, str]] = None):
         cmd = ["lpadmin", "-x", printer_name]
         res, out, err = shell(cmd)
         return res
@@ -272,7 +272,7 @@ class CupsPrinter(PrinterInterface):
 
         return returncode
 
-    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[Dict[str, str]] = None):
+    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[dict[str, str]] = None):
         """Install a printer.
 
         CUPS: @see https://www.cups.org/doc/admin.html
@@ -283,7 +283,7 @@ class CupsPrinter(PrinterInterface):
             printer_name (str): _description_
             printer_uri (str): _description_
             ppd_file (str): _description_
-            options (Dict[str, str], optional): _description_. Defaults to None.
+            options (dict[str, str], optional): _description_. Defaults to None.
 
         Returns:
             int: Error code
@@ -476,13 +476,13 @@ class LprintPrinter(PrinterInterface):
             return e.errno
         return 0
 
-    def delete_printer(self, printer_name: str, options: Optional[Dict[str, str]] = None):
+    def delete_printer(self, printer_name: str, options: Optional[dict[str, str]] = None):
         # TODO: (when needed) check if it works:
         cmd = ["lprint", "delete", "-d", printer_name]
         res, out, err = shell(cmd)
         return res
 
-    def autoadd_printers(self, options: Optional[Dict[str, str]] = None):
+    def autoadd_printers(self, options: Optional[dict[str, str]] = None):
         # had_printers = self.get_printers()
         cmd = [
             "lprint",
@@ -508,14 +508,14 @@ class LprintPrinter(PrinterInterface):
         # TODO: (when needed) printers -= had_printers
         return res, printers
 
-    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[Dict[str, str]] = None):
+    def add_printer(self, printer_name: str, printer_uri: str, ppd_file: str, options: Optional[dict[str, str]] = None):
         """Install a printer.
 
         Args:
             printer_name (str): _description_
             printer_uri (str): _description_, " TODO: if 'auto', invoke self.autoadd_printers()
             ppd_file (str): One of LPrint -m files (see "lprint drivers"), e.g. zpl_2inch-203dpi-tt
-            options (Dict[str, str], optional): _description_. Defaults to None.
+            options (dict[str, str], optional): _description_. Defaults to None.
 
         Returns:
             int: Error code
