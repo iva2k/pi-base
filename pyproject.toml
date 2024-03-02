@@ -7,8 +7,7 @@
 
 
 [build-system]
-requires      = ["setuptools>=68.0.0"]
-# requires      = ["setuptools>=68", "setuptools_scm[toml]>=8"]
+requires      = ["setuptools>=68", "setuptools_scm[toml]>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -75,7 +74,7 @@ exclude = [
 ]
 
 # Enables the usage of setuptools_scm
-# [tool.setuptools_scm]
+[tool.setuptools_scm]
 
 [project.optional-dependencies]
 dev = [
