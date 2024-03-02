@@ -7,7 +7,10 @@
 
 
 [build-system]
-requires      = ["setuptools>=68", "setuptools_scm[toml]>=8"]
+# requires = ["setuptools>=68"]
+# Though we would like to use setuptools_scm for version, it breaks 'excludes' here
+# and completely disables MANIFEST.in. See https://github.com/pypa/setuptools_scm/pull/851
+requires = ["setuptools>=68", "setuptools_scm[toml]>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -22,9 +25,9 @@ readme = "pi_base/README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
 ]
 dynamic = ["version"]
 # For an analysis of this field vs pip's requirements files see:
@@ -55,6 +58,13 @@ pi_base = "pi_base.__main__:main"
 
 [tool.setuptools]
 include-package-data = true
+exclude-package-data = {"*" = [
+  # "pi_base/tests/**",
+  # "pi_base/pictures/**",
+  # "pi_base/pictures-v1.7/**",
+  # "pi_base/scripts/**",
+  # "pi_base/remoteiot.com/**"
+]}
 
 [tool.setuptools.package-data]
 # If there are data files included in your packages that need to be installed, specify them here.
@@ -63,18 +73,16 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 namespaces = true
-# where = ["."]
 include = [
   "pi_base*",
 ]
 exclude = [
   "pi_base.tests*",
-  "pi_base.pictures*",
-  "pi_base.scripts*"
+  # More excludes are in MANIFEST.in
 ]
 
-# Enables the usage of setuptools_scm
-[tool.setuptools_scm]
+# Enables the usage of setuptools_scm, which kills MANIFEST.in and disables all "exclude"s in this file.
+# [tool.setuptools_scm] # DO NOT USE! (we still can install the package)
 
 [project.optional-dependencies]
 dev = [
@@ -272,6 +280,13 @@ exclude = [
   "lib/swd/pyocd/",
 ]
 
+[[tool.mypy.overrides]]
+module = [
+  # Ignore packages that do not provide type hints here
+  # For example, add "dash.*" to ignore all imports from Dash
+]
+ignore_missing_imports = true
+
 [tool.pyright]
 typeCheckingMode = "basic"
 # typeCheckingMode = "strict"
@@ -361,10 +376,3 @@ directory = "reports/coverage_html"
 
 [tool.coverage.xml]
 output = "reports/coverage.xml"
-
-[[tool.mypy.overrides]]
-module = [
-  # Ignore packages that do not provide type hints here
-  # For example, add "dash.*" to ignore all imports from Dash
-  ]
-ignore_missing_imports = true

@@ -1,6 +1,7 @@
 {
   "description": "Using npm's package.json file purely for simple organization of many shell commands, each can be easily invoked as `npm run <script>` if node.js/npm is installed.",
   "scripts": {
+    "a": "npm run pkg:clean && npm run pkg:build && npm run pkg:extract",
     "pkg:clean": "rm -rf dist pi_base.egg-info",
     "pkg:build": "python3 -m build",
     "pkg:extract": "(cd dist && tar -zxvf *.tar.gz)",
@@ -24,6 +25,11 @@
     "tox:all": "tox run -e lint && tox run -e test && tox run -e combine-test-reports && tox run -e docs  && tox run -e build",
     "docs:test": "sphinx-build -b doctest ",
     "docs:auto-api": "sphinx-apidoc",
+
+    "version:current": "python3 -m setuptools_scm",
+    "version:bump": "python3 -m setuptools_scm --version-scheme=post-release",
+    "version:bump-patch": "python3 -m setuptools_scm --version-scheme=post-release --bump-patch",
+    "version:bump-minor": "python3 -m setuptools_scm --version-scheme=post-release --bump-minor",
 
     "format": "npm run tox:format",
     "lint": "npm run tox:lint",

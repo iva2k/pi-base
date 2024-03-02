@@ -1,9 +1,5 @@
 include pyproject.toml
 
-# recursive-include pi_base/lib *.txt *.ppd *.md *.sh
 recursive-include pi_base/common *
-# graft pi_base/common
-# graft pi_base/common/etc
-graft pi_base/common/etc/default
-graft pi_base/common/etc/lightdm
-graft pi_base/common/etc/systemd/system/getty@tty1.service.d
+exclude pi_base/pictures/** pi_base/pictures-v1.7/** pi_base/scripts/** pi_base/remoteiot.com/**
+exclude .vscode/** docs/** **/.git* develop* ./*.cfg ./*.ini ./*.json ./*.md

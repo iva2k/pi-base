@@ -4,8 +4,9 @@
 #  - *.md
 # 
 SOURCE=pi_base
-# TODO: (now) Auto-extract version and set $BUILD correctly:
-BUILD=dist/pi_base-0.0.1/pi_base
+# Auto-extract version and set $BUILD correctly:
+VER=$(python -m setuptools_scm)
+BUILD=dist/pi_base-${VER}/pi_base
 
 all_diffs=$(
   diff -u \
