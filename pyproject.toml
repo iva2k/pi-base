@@ -3,6 +3,7 @@
 #  https://setuptools.pypa.io/en/latest/userguide/development_mode.html
 #  https://github.com/Mr-Pepe/python-template
 #    pip install cruft ruff cookiecutter && cruft create git@github.com:Mr-Pepe/python-template.git # Broken on Windows!
+# Another notable cookiecutter template: https://github.com/ionelmc/cookiecutter-pylibrary
 
 
 [build-system]
@@ -79,6 +80,7 @@ exclude = [
 [project.optional-dependencies]
 dev = [
   "pi_base[tox]",
+  "pi_base[format]",
   "pi_base[lint]",
   "pi_base[test]",
   "pi_base[doc]",
@@ -87,14 +89,15 @@ dev = [
 tox = [
   "tox==4.11.1",
 ]
+format = [
+  "ruff==0.2.1",
+]
 lint = [
+  "jinja2==3.1.2",
   # "mypy==1.5.1",
   "pyright==1.1.352",
-  "pytest==7.4.1",
   "types-docutils",
   "types-setuptools",
-  "jinja2==3.1.2",
-  # "ruff==0.1.6",
   "ruff==0.2.1",
 ]
 test = [
@@ -104,11 +107,11 @@ test = [
   "coverage[toml]==7.3.1",
 ]
 doc = [
+  "jinja2==3.1.2",
+  "pip-licenses==4.3.2",
   "sphinx==7.2.6",
   "sphinx_rtd_theme==1.3.0",
   "sphinx-autodoc-typehints==1.24.0",
-  "pip-licenses==4.3.2",
-  "jinja2==3.1.2",
 ]
 build = [
   "build[virtualenv]==1.0.3",
@@ -118,8 +121,9 @@ build = [
 [tool.ruff]
 line-length = 200
 src = [
+  "blank",
+  "lib",
   "pi_base",
-  "lib"
 ]
 exclude = [
   "venv.*/",
@@ -226,7 +230,7 @@ lint.ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = [
+"**/tests/**" = [
   "S101", # Use of `assert` detected
   "D103", # Missing docstring in public function
 ]
@@ -270,11 +274,12 @@ exclude = [
 ]
 
 [tool.pyright]
-# typeCheckingMode = "basic"
+typeCheckingMode = "basic"
+# typeCheckingMode = "strict"
 include = [
   "blank",
-  "pi_base",
   "lib",
+  "pi_base",
 ]
 exclude = [
   "pi_base-\\d+", # Ignore temporary folder created by setuptools when building an sdist
@@ -298,7 +303,7 @@ exclude = [
 # ignore = ["src/oldstuff"]
 # defineConstant = { DEBUG = true }
 stubPath = ".types"
-pythonVersion = "3.9"
+pythonVersion = "3.8" # check no python > 3.8 features are used
 # pythonPlatform = "Linux"
 # executionEnvironments = [
 #   { root = "src/web", pythonVersion = "3.5", pythonPlatform = "Windows", extraPaths = [ "src/service_libs" ] },
@@ -306,17 +311,29 @@ pythonVersion = "3.9"
 #   { root = "src/tests", extraPaths = ["src/tests/e2e", "src/sdk" ]},
 #   { root = "src" }
 # ]
+reportIncompatibleMethodOverride = false
 reportMissingImports = false
 reportMissingTypeStubs = false
 reportUnknownParameterType = false
 reportUntypedFunctionDecorator = false
+reportImportCycles = false
+reportMissingModuleSource = false
+reportPrivateUsage = false
+reportUnnecessaryIsInstance = false
+reportUnnecessaryComparison = false
+disableBytesTypePromotions = false
+reportMissingTypeArgument = false
+reportUnnecessaryCast = false
+reportUnnecessaryContains = false
+reportPrivateImportUsage = false
+reportUnnecessaryTypeIgnoreComment = false
 
 [tool.pytest.ini_options]
 addopts = """
-  --vv
+  -vv
   --doctest-modules
   --import-mode=append
-  --ignore-glob={{ cookiecutter.package_name }}-[0-9]*
+  --ignore-glob=pi_base-[0-9]*
   --ignore="docs/_scripts"
   --cov=pi_base
   --cov-config=pyproject.toml

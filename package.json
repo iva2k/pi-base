@@ -1,34 +1,38 @@
 {
-  "description": "Using npm's package.json file purely for simple organization of many shell commands, each can be easily ran as `npm run <command>` if node.js/npm is installed.",
+  "description": "Using npm's package.json file purely for simple organization of many shell commands, each can be easily invoked as `npm run <script>` if node.js/npm is installed.",
   "scripts": {
-    "a": "(bash -c pi_base/scripts/pkg-check.sh)",
-
     "pkg:clean": "rm -rf dist pi_base.egg-info",
     "pkg:build": "python3 -m build",
     "pkg:extract": "(cd dist && tar -zxvf *.tar.gz)",
     "pkg:diff-build-data": "bash -c pi_base/scripts/pkg-check.sh",
     "pkg:check-build-data": "npm run pkg:clean && npm run pkg:build && npm run pkg:extract && npm run pkg:diff-build-data",
-    "all": "npm run pkg:check-build-data && echo SUCCESS!",
+    "pkg:all": "npm run pkg:check-build-data && echo SUCCESS!",
 
     "dev:init": "python3 -m venv venv && source venv/Scripts/activate && pip install --upgrade pip && pip install -e . && pip install -e .[dev]",
     "dev:editable": "pip install -e . && pip install -e .[dev]",
     "dev:strict": "pip install -e . --config-settings editable_mode=strict && pip install -e .[dev]",
     "dev:uninstall": "pip uninstall pi_base",
     "dev:env": "source venv/Scripts/activate",
+    "tox:format": "tox run -e format",
     "tox:lint": "tox run -e lint",
     "tox:types": "tox run -e types",
-    "tox:test": "tox run -e test",
+    "tox:test": "tox run -e py39-test && tox run -e combine-test-reports",
     "tox:docs": "tox run -e docs",
     "tox:build": "tox run -e build",
-    "ruff:format": "ruff format .",
+    "tox": "tox",
+    "tox:all_FULL": "tox run -e lint && tox run -e types && tox run -e test && tox run -e combine-test-reports && tox run -e docs  && tox run -e build",
+    "tox:all": "tox run -e lint && tox run -e test && tox run -e combine-test-reports && tox run -e docs  && tox run -e build",
     "docs:test": "sphinx-build -b doctest ",
     "docs:auto-api": "sphinx-apidoc",
 
+    "format": "npm run tox:format",
     "lint": "npm run tox:lint",
-    "format": "npm run ruff:format",
+    "types": "npm run tox:types",
     "test": "npm run tox:test",
-    "docs": "npm run tox:docs",
-    "build": "npm run tox:build"
+    "docs": "npm run tox:docs && npm run docs:test && npm run docs:auto-api",
+    "build": "npm run tox:build",
+    "all_FULL": "npm run format && npm run lint && npm run types && npm run test && npm run docs && npm run build",
+    "all": "npm run format && npm run lint && npm run test && npm run docs && npm run build"
 
   }
 }

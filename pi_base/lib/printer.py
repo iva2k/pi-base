@@ -608,7 +608,7 @@ def OsPrinter(*args, **kwargs) -> PrinterInterface:
     elif platform.system() == "Darwin" or os.name == "posix":  # MacOS
         driver_type = "CUPS"
     else:
-        raise Exception(f"Unsupported OS {os.name}")
+        raise NotImplementedError(f"Unsupported OS {os.name}")
 
     printer = Printer(driver_type)
     if not printer:
