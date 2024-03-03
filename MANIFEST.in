@@ -2,4 +2,4 @@ include pyproject.toml
 
 recursive-include pi_base/common *
 exclude pi_base/pictures/** pi_base/pictures-v1.7/** pi_base/scripts/** pi_base/remoteiot.com/**
-exclude .vscode/** docs/** **/.git* develop* ./*.cfg ./*.ini ./*.json ./*.md
+exclude .vscode/** docs/** **/.git* develop* ./*.cfg ./*.ini ./*.json ./*.md pi_base/*.md

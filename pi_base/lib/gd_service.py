@@ -15,6 +15,8 @@
 # Note: Make sure to include terminating slash in 'http://localhost:8080/' for �Authorized redirect URIs�.
 # (downloaded .json file will not have the terminating slash to muddy the matter, but it works ok, just need the slash in GD Auth config)
 
+from __future__ import annotations
+
 import inspect
 import mimetypes
 import os
@@ -29,9 +31,11 @@ from httplib2 import Http
 from oauth2client.service_account import ServiceAccountCredentials
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
-# from pydrive2.files import FileNotUploadedError
+from pydrive2.files import ApiRequestError, FileNotUploadedError, FileNotDownloadableError
 
 from app_utils import get_conf
+
+__all__ = ["ApiRequestError", "FileNotUploadedError", "FileNotDownloadableError"]
 
 
 class GoogleDriveService:
@@ -303,8 +307,8 @@ class GoogleDriveService:
 
 
 def gd_connect(
-    loggr, gd_secrets, extra_fields_with_values: Optional[dict[str, str]] = None, extra_mode: str = "override", skip_msg: str = "Will skip uploading results files.", prefix: str = "pibase_"
-) -> tuple[GoogleDriveService, dict[str, str]]:
+    loggr, gd_secrets, extra_fields_with_values: "Optional[dict[str, str]]" = None, extra_mode: str = "override", skip_msg: str = "Will skip uploading results files.", prefix: str = "pibase_"
+) -> "tuple[GoogleDriveService | None, dict[str, str]]":
     """Helper function: Open secrets file and Authenticate with Google Drive, and additionally load extra fields from the secrets file.
 
     Args:
