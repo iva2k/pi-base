@@ -6,4 +6,4 @@ PI-BASE is a framework for quick development of appliance projects using Raspber
 
 ## Documentation
 
-[PI-BASE README](pi_base/README.md)
+[PI-BASE README](./docs/README.md)

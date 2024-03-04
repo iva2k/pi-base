@@ -1,6 +1,9 @@
 Welcome to pi_base's documentation!
 ===================================
 
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -8,31 +11,31 @@ Welcome to pi_base's documentation!
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
 
 
-
-
-.. include:: ../README.rst
-
 Contents:
-=========
+---------
 
 .. toctree::
    :maxdepth: 2
 
-   get_started
+   README
+   GET_STARTED
+   SDCARD
+   SDCARD-v1.7
    pi_base
+   GD_SERVICE
    changelog
    authors
 
 
 License Compliance Information:
-===============================
+-------------------------------
 
 .. toctree::
    :maxdepth: 1

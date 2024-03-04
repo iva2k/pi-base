@@ -4,51 +4,15 @@ Framework for creating Raspberry Pi appliances.
 
 PI-BASE is a framework for quick development of appliance projects using Raspberry Pi running Linux (Raspberry Pi OS, previously called Raspbian), e.g. for IoT, home automation, custom appliances, manufacturing test stations, etc.
 
-<!--ts-->
-- [pi-base](#pi-base)
-  - [Deployment](#deployment)
-    - [Assemble Raspberry Pi](#assemble-raspberry-pi)
-    - [Create Micro-SD Card or M2 SSD with Boot software image](#create-micro-sd-card-or-m2-ssd-with-boot-software-image)
-    - [Build the RPI App](#build-the-rpi-app)
-    - [Upload the App to RPI](#upload-the-app-to-rpi)
-    - [Install the App on RPI](#install-the-app-on-rpi)
-  - [Data Backend](#data-backend)
-  - [Development](#development)
-    - [App Layers](#app-layers)
-    - [Remote Debugging](#remote-debugging)
-    - [Toolchain](#toolchain)
-      - [`pi_base/make.py` \[`<project>`\]](#pi_basemakepy-project)
-      - [`pi_base/upload.sh` / `pi_base/upload.cmd`](#pi_baseuploadsh--pi_baseuploadcmd)
-      - [`<project>/install.sh`](#projectinstallsh)
-      - [`common/common_install.sh`](#commoncommon_installsh)
-      - [`common/common_requirements.txt`](#commoncommon_requirementstxt)
-      - [`<project>/requirements.txt`](#projectrequirementstxt)
-      - [`/etc/systemd/system/app_manager_startup.service`](#etcsystemdsystemapp_manager_startupservice)
-      - [`/usr/local/bin/app_manager_startup`](#usrlocalbinapp_manager_startup)
-      - [`/home/pi/modules/manager.py`](#homepimodulesmanagerpy)
-      - [`/home/pi/app/<project>.py`](#homepiappprojectpy)
-    - [Dev.Notes](#devnotes)
-    - [Large.py vs. Pyfiglet](#largepy-vs-pyfiglet)
-    - [VTs](#vts)
-    - [Autologin](#autologin)
-    - [SAMBA File Sharing](#samba-file-sharing)
-  - [RPi System LEDs](#rpi-system-leds)
-  - [TODOs](#todos)
-  - [CREDITS](#credits)
-
-<!-- Added by: iva2k, at: Sat, Sep 16, 2023 12:22:43 PM -->
-
-<!--te-->
-
 ## Deployment
 
 ### Assemble Raspberry Pi
 
 Acquire all the parts (Raspberry Pi board, case, power supply, Micro-SD card or M2 SSD) and assemble per the case instructions. Before installing M2 SSD into the case, write the OS to it (see instructions below).
 
-### Create Micro-SD Card or M2 SSD with Boot software image
+### Create Micro-SD Card or M2 SSD with Boot Software Image
 
-See [SDCARD](SDCARD.md)
+See [SDCARD](./SDCARD.md)
 
 TODO: (when needed) Add a 'installer' user (sudoer) to install.sh to differ from default user 'pi'.
 
@@ -64,7 +28,7 @@ Run `pi_base/upload.sh` script from host computer (run `pi_base/upload.cmd` scri
 
 ### Install the App on RPI
 
-Login either in RPi console or via SSH as [ssh://pi@RPI.local](ssh://pi@RPI.local). If you entered a different hostname and/or userbname in the Raspberry Pi Imager, use that hostname.
+Login either in RPi console or via SSH as `ssh://pi@RPI.local` <ssh://pi@RPI.local>. If you entered a different hostname and/or username in the Raspberry Pi Imager, use that hostname.
 
 Run `/home/pi/pi-base/build/<site_id>/<project>/install.sh` (site_id is the short name of the Deployment Site it is built for by `pi_base/make.py`). It may take some time to download and install all the packages on the first run. Subsequent runs (e.g. while developing) will be faster.
 
@@ -88,7 +52,7 @@ To avoid any potential name collision with existing or future Google props, the 
 - pibase_gd_sites_folder_id     - Sites DB File   Folder ID on Google Drive
 - pibase_gd_sites_file_title    - Sites DB File   Title     on Google Drive
 
-For details on creating new Service Account and setting up `*_secrets.json` key file (properties for Google APIs) see [GD_SERVICE.md](./lib/GD_SERVICE.md). After creating the key file, add all needed `pibase_XXX` properties to it.
+For details on creating new Service Account and setting up `*_secrets.json` key file (properties for Google APIs) see [GD_SERVICE.md](./GD_SERVICE.md). After creating the key file, add all needed `pibase_XXX` properties to it.
 
 ## Development
 

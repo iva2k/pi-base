@@ -36,9 +36,13 @@ sys.path.insert(0, parent)
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named "sphinx.ext.*") or your custom ones.
-custom_extensions: List[str] = []
+custom_extensions_pre: List[str] = [
+    "myst_parser",
+]
+custom_extensions: List[str] = [
+]
 
-# DO NOT ADD ANY EXTENSIONS TO THIS LIST, USE THE `custom_extensions` list for your extensions
+# DO NOT ADD ANY EXTENSIONS TO THIS LIST, USE THE `custom_extensions{_pre}` list for your extensions
 template_extensions: List[str] = [
     "sphinx.ext.autodoc",
     "sphinx.ext.viewcode",
@@ -47,13 +51,14 @@ template_extensions: List[str] = [
     "sphinx_autodoc_typehints",
 ]
 
-extensions = template_extensions + custom_extensions
+extensions = custom_extensions_pre + template_extensions + custom_extensions
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = ".rst"
+# source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The encoding of source files.
 # source_encoding = "utf-8-sig"
@@ -119,40 +124,62 @@ pygments_style = "sphinx"
 # a list of builtin themes.
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 # html_theme = "sphinx_rtd_theme"
-html_theme = 'alabaster'
+# html_theme = 'pydata_sphinx_theme'
+# html_theme = 'furo'
+html_theme = 'sphinx_book_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+html_theme_options = {
+    "home_page_in_toc": True,
+    "github_url": "https://github.com/iva2k/pi-base",
+    "repository_url": "https://github.com/iva2k/pi-base",
+    "repository_branch": "main",
+    "path_to_docs": "docs",
+    "use_repository_button": True,
+    "use_edit_page_button": True,
+    "use_issues_button": True,
+    # "announcement": "<b>v0.0.1</b> is now out! See the Changelog for details",
+}
+
+# OpenGraph metadata
+#ogp_site_url = "https://pi-base.readthedocs.io/en/latest"
+# This is the image that GitHub stores for our social media previews
+#ogp_image = "https://repository-images.githubusercontent.com/123456789/11111111-cccc-2222-3333-444444444444"
+#ogp_custom_meta_tags = [
+#    '<meta name="twitter:card" content="summary_large_image">',
+#]
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-# html_title = None
+html_title = ""
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 # html_short_title = None
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-# html_logo = None
+#TODO: (when needed) html_logo = "_static/logo-wide.svg"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-# html_favicon = None
+#TODO: (when needed) html_favicon = "_static/logo-square.svg"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["local.css"]
 
 # If not "", a "Last updated on:" timestamp is inserted at every page bottom,
 # using the given strftime format.
 # html_last_updated_fmt = "%b %d, %Y"
+html_last_updated_fmt = ""
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
@@ -192,7 +219,7 @@ html_static_path = ["_static"]
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "cookiecutter_pypackagedoc"
+htmlhelp_basename = "pi_basedoc"
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -211,9 +238,9 @@ latex_elements: dict = {
 latex_documents = [
     (
         "index",
-        "cookiecutter_pypackage.tex",
-        "Cookiecutter PyPackage Documentation",
-        "Max Mustermann",
+        "pi_base.tex",
+        "pi-base PyPackage Documentation",
+        "Ilya Ivanchenko",
         "manual",
     ),
 ]
@@ -246,9 +273,9 @@ latex_documents = [
 man_pages = [
     (
         "index",
-        "cookiecutter_pypackage",
-        "Cookiecutter PyPackage Documentation",
-        ["Max Mustermann"],
+        "pi_base",
+        "pi-base PyPackage Documentation",
+        ["Ilya Ivanchenko"],
         1,
     )
 ]
@@ -265,10 +292,10 @@ man_pages = [
 texinfo_documents = [
     (
         "index",
-        "cookiecutter_pypackage",
-        "Cookiecutter PyPackage Documentation",
-        "Max Mustermann",
-        "cookiecutter_pypackage",
+        "pi_base",
+        "pi-base PyPackage Documentation",
+        "Ilya Ivanchenko",
+        "pi_base",
         "One line description of project.",
         "Miscellaneous",
     ),
@@ -285,3 +312,45 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+# -- Options for MyST extension ------------------------------------------------
+myst_heading_anchors = 3
+# Enables cross-reference links like this in .md files:
+# `This is [a cross-reference to "My section" on page 2](./page_2.md#my-section).`
+
+myst_enable_extensions = [
+    "colon_fence"
+]
+# Enable use of colon fences around figures in the .md documents:
+# :::{figure-md} fig-target
+# :class: myclass
+# ![fishy](img/fun-fish.png){.bg-primary .mb-1 width=200px} # or:
+# <img src="img/fun-fish.png" alt="fishy" class="bg-primary mb-1" width="200px">
+#
+# This is a caption in **Markdown**
+# :::
+
+myst_url_schemes = {
+    "http": None,
+    "https": None,
+    "mailto": None,
+    "ftp": None,
+    "ssh": None,
+    "wiki": "https://en.wikipedia.org/wiki/{{path}}#{{fragment}}",
+    "doi": "https://doi.org/{{path}}",
+    "gh-pr": {
+        "url": "https://github.com/iva2k/pi-base/pull/{{path}}#{{fragment}}",
+        "title": "PR #{{path}}",
+        "classes": ["github"],
+    },
+    "gh-issue": {
+        "url": "https://github.com/iva2k/pi-base/issue/{{path}}#{{fragment}}",
+        "title": "Issue #{{path}}",
+        "classes": ["github"],
+    },
+    "gh-user": {
+        "url": "https://github.com/{{path}}",
+        "title": "@{{path}}",
+        "classes": ["github"],
+    },
+}

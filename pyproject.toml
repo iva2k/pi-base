@@ -23,7 +23,7 @@ authors = [
 ]
 description = ""
 keywords = ["raspberry pi"]
-readme = "pi_base/README.rst"
+readme = "docs/README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 classifiers = [
@@ -61,8 +61,6 @@ pi_base = "pi_base.__main__:main"
 include-package-data = true
 exclude-package-data = {"*" = [
   # "pi_base/tests/**",
-  # "pi_base/pictures/**",
-  # "pi_base/pictures-v1.7/**",
   # "pi_base/scripts/**",
   # "pi_base/remoteiot.com/**"
 ]}
@@ -95,6 +93,12 @@ dev = [
   "pi_base[doc]",
   "pi_base[release]",
   "pi_base[build]",
+
+  # For vscode extensions:
+  "esbonio==0.16.4",
+  # "docutils==0.20.1",
+  "doc8==1.1.1",
+  # "rstcheck==6.2.0",
 ]
 tox = [
   "tox==4.13.0",
@@ -126,11 +130,14 @@ doc = [
   "jinja2==3.1.2",
   "pip-licenses==4.3.2",
   "sphinx==7.2.6",
-  "sphinx_rtd_theme==2.0.0",
   "sphinx-autodoc-typehints==1.24.0",
-  "docutils==0.20.1",
-  "doc8==1.1.1",
-  "rstcheck==6.2.0",
+  # Themes (choose one in docs/conf.py):
+  # "sphinx_rtd_theme==2.0.0",
+  "sphinx-book-theme==1.1.2",
+  # "pydata-sphinx-theme==0.15.2",
+  # "furo==2024.1.29",
+  # Add .md to .rst conversion extension/parser to sphinx:
+  "myst-parser==2.0.0",
 ]
 release = [
   "setuptools_scm[toml]>=8.0.4",

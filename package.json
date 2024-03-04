@@ -21,8 +21,8 @@
     "tox:docs": "tox run -e docs",
     "tox:build": "tox run -e build",
     "tox": "tox",
-    "tox:all_FULL": "tox run -e lint,types,test-py39,reports,docs,build",
-    "tox:all": "tox run -e lint,test-py39,reports,docs,build",
+    "tox:all_FULL": "tox run -e format,lint,types,test-py39,reports,docs,build",
+    "tox:all": "tox run -e format,lint,test-py39,reports,docs,build",
     "docs:test": "sphinx-build -b doctest ",
     "docs:auto-api": "sphinx-apidoc",
 

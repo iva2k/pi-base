@@ -307,8 +307,8 @@ class GoogleDriveService:
 
 
 def gd_connect(
-    loggr, gd_secrets, extra_fields_with_values: "Optional[dict[str, str]]" = None, extra_mode: str = "override", skip_msg: str = "Will skip uploading results files.", prefix: str = "pibase_"
-) -> "tuple[GoogleDriveService | None, dict[str, str]]":
+    loggr, gd_secrets, extra_fields_with_values: Optional[dict[str, str]] = None, extra_mode: str = "override", skip_msg: str = "Will skip uploading results files.", prefix: str = "pibase_"
+) -> tuple[GoogleDriveService | None, dict[str, str]]:
     """Helper function: Open secrets file and Authenticate with Google Drive, and additionally load extra fields from the secrets file.
 
     Args:

@@ -1,15 +1,11 @@
-.cache/clangd/
-.DS_Store
 .pio
 .vscode/.browse.c_cpp.db*
 .vscode/ipch
-.vscode/settings.json
+#.vscode/settings.json
 *.bak
 *.log
 *.md.orig.[0-9]*
 *.md.toc.[0-9]*
-**/__pycache__/
-build
 build-*
 labels/
 log.*
@@ -27,7 +23,8 @@ _assets
 .coverage.*
 build/
 dist/
-docs/pi_base*
+docs/_build/
+docs/pi_base*.rst
 docs/modules.rst
 docs/ossLicenses.json
 docs/license_compliance.rst
@@ -36,7 +33,7 @@ reports/
 *.egg-info/
 *.egg
 *.py[cod]
-__pycache__/
+**/__pycache__/
 *.so
 *~
 p_scm.toml
