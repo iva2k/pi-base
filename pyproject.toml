@@ -21,13 +21,25 @@ dynamic = ["version"]
 authors = [
   { name="Ilya Ivanchenko", email="iva2k@yahoo.com" },
 ]
-description = ""
+description = "Framework for creating Raspberry Pi appliances."
 keywords = ["raspberry pi"]
 readme = "docs/README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 3 - Alpha",
+
+  # Indicate who your project is intended for
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Build Tools",
+
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
@@ -49,7 +61,10 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/iva2k/pi-base"
+# TODO: (soon) Documentation = "https://pi-base.readthedocs.org"
+Repository = "https://github.com/iva2k/pi-base"
 Issues = "https://github.com/iva2k/pi-base/issues"
+Changelog = "https://github.com/iva2k/pi-base/blob/main/CHANGELOG.md"
 
 [project.scripts]
 # Provide both underscore and dash versions of CLI:
