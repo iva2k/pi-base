@@ -20,6 +20,6 @@
         "tamasfe.even-better-toml",
         "charliermarsh.ruff",
         "matangover.mypy",
-        "ms-pyright.pyright"
+        "swyddfa.esbonio"
     ]
 }
