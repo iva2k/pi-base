@@ -1,0 +1,77 @@
+{
+    "C_Cpp.intelliSenseEngine": "Default",
+    "idf.adapterTargetName": "esp32",
+    "idf.espIdfPath": "${env:IDF_PATH}",
+    "idf.toolsPathWin": "${env:IDF_TOOLS_PATH}",
+    "idf.portWin": "COM10",
+
+    // Python settings https://code.visualstudio.com/docs/python/settings-reference
+    // Settings Profiles are coming <https://code.visualstudio.com/updates/v1_69#_settings-profiles>
+    "python.defaultInterpreterPath": "${env:CONDA_ENV}",
+    "python.pythonPath": "${env:CONDA_ENV}",
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}/scripts:${workspaceFolder}/common"
+    },
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${workspaceFolder}/scripts:${workspaceFolder}/common"
+    },
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}/scripts;${workspaceFolder}/common"
+    },
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/scripts",
+        "${workspaceFolder}/common"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/scripts",
+        "${workspaceFolder}/common"
+    ],
+
+    "[python]": {
+        // "editor.codeActionsOnSave": {"source.faxAll": "always", "source.organizeImports": "always" }, // This messes up modpath. // TODO: (now) Fix imports order, and not break modpath being first.
+        "editor.codeActionsOnSave": {"source.faxAll": "always", "source.organizeImports": "never" },
+        // "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "modificationsIfAvailable",
+
+        "editor.wordWrap": "off",
+        "editor.wordWrapColumn": 200,
+    },
+    "python.experiments.optInto": ["pythonTerminalEnvVarActivation"],
+
+    "pylint.args": [
+        "--max-line-length=200",
+        "--disable=C0103,C0111,C0301,C0302,C0321,W0511,W0702,W0703,W0612,W0613",
+        "--init-hook",
+        "import sys; sys.path.append(\"./scripts\"); sys.path.append(\"./common\")"
+    ],
+    "autopep8.args": [
+        "--max-line-length=200"
+    ],
+    "svgPreview.style": {
+        "html": {
+            "background": "#808080"
+        }
+    },
+    "svg.preview.background": "transparent",
+    "evenBetterToml.schema.associations": {
+        "pyproject.toml": "https://json.schemastore.org/pyproject.json"
+    },
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "*test*.py"
+    ],
+    "esbonio.sphinx.buildDir" : "${workspaceFolder}/docs/_build/html",
+    "esbonio.sphinx.confDir"  : "${workspaceFolder}/docs",
+    "esbonio.sphinx.srcDir"   : "${workspaceFolder}/docs",
+    "esbonio.server.enabled": true
+}
