@@ -1,7 +1,6 @@
 {
   "version": "0.2.0",
   "configurations": [
-    // integratedTerminal broken as of 2023-1025. Using integratedTerminal. TODO: FIXME!
     {
       "name": "Python: Current File",
       "type": "debugpy",
@@ -10,7 +9,6 @@
       "console": "integratedTerminal",
       "justMyCode": true
     },
-
     {
       "name": "Python: pi-base make BASE blank",
       "type": "debugpy",
@@ -18,8 +16,10 @@
       "program": "pi_base",
       "args": [
         "make",
-        "--site", "BASE",
-        "--type", "blank",
+        "--site",
+        "BASE",
+        "--type",
+        "blank",
       ],
       "console": "integratedTerminal",
       "justMyCode": false
@@ -47,20 +47,20 @@
       "console": "integratedTerminal",
       "justMyCode": false
     },
-
     {
       "name": "Python: pi_base/make BASE blank",
       "type": "debugpy",
       "request": "launch",
       "program": "pi_base/make.py",
       "args": [
-        "--site", "BASE",
-        "--type", "blank",
+        "--site",
+        "BASE",
+        "--type",
+        "blank",
       ],
       "console": "integratedTerminal",
       "justMyCode": true
     },
-
     {
       "name": "Python: blank/blank.py",
       "type": "debugpy",
@@ -72,7 +72,6 @@
       "console": "integratedTerminal",
       "justMyCode": true
     },
-
     {
       "name": "Python: pi_base/lib/large",
       "type": "debugpy",
@@ -100,7 +99,6 @@
       "console": "integratedTerminal",
       "justMyCode": true
     },
-
     {
       "name": "Python: Deployment Sites List",
       "type": "debugpy",
@@ -133,15 +131,15 @@
       "args": [
         "-D",
         "add",
-        "JAYBIL",
-        "Jaybil",
+        "ACME",
+        "Acme",
         "sa_admin_client_secrets.json",
-        "--description", "Jaybil",
+        "--description",
+        "Acme",
       ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
-
     {
       "name": "Python: Remote Devices List",
       "type": "debugpy",
@@ -163,7 +161,9 @@
         "-D",
         "unique",
         // site_id, app_type, app_name:
-        "BASE", "blank", "Blank",
+        "BASE",
+        "blank",
+        "Blank",
       ],
       "console": "integratedTerminal",
       "justMyCode": false
@@ -189,7 +189,9 @@
         "-D",
         "add",
         // site_id, app_type, app_name:
-        "BASE", "blank", "Blank",
+        "BASE",
+        "blank",
+        "Blank",
       ],
       "console": "integratedTerminal",
       "justMyCode": false
@@ -206,7 +208,6 @@
       "console": "integratedTerminal",
       "justMyCode": false
     },
-
     {
       "name": "Python: Cyclone Install",
       "type": "debugpy",
@@ -225,7 +226,8 @@
       "program": "lib/cyclone.py",
       "args": [
         // "-d", "USB1",
-        "-d", "auto",
+        "-d",
+        "auto",
         "images"
       ],
       "console": "integratedTerminal",
@@ -238,8 +240,10 @@
       "program": "lib/cyclone.py",
       "args": [
         // "-d", "USB1",
-        "-d", "auto",
-        "program_slot", "1",
+        "-d",
+        "auto",
+        "program_slot",
+        "1",
       ],
       "console": "integratedTerminal",
       "justMyCode": false
@@ -251,7 +255,8 @@
       "program": "lib/cyclone.py",
       "args": [
         // "-d", "USB1",
-        "-d", "auto",
+        "-d",
+        "auto",
         "program",
         "C:\\payrange\\Hardware\\Firmware\\Tools\\BG24 Programming\\BKSPro-Provisioner.sap",
       ],
@@ -265,7 +270,8 @@
       "program": "lib/cyclone.py",
       "args": [
         // "-d", "USB1",
-        "-d", "auto",
+        "-d",
+        "auto",
         "program",
         "C:\\payrange\\Hardware\\Firmware\\Tools\\BG24 Programming\\BKSPro-Provisioner.sap",
         "--force",
@@ -283,11 +289,16 @@
         "C:\\dev\\pi-base\\lib\\bks_pro.sap",
         "C:\\dev\\pi-base\\lib\\sap_config.cfg",
         "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_pro_provision.s37",
-        "-b", "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_bootloader.s37",
-        "-t", "ARM",
-        "-a", "C:\\PEMicro\\cyclone\\supportfiles\\supportFiles_ARM\\SiliconLabs\\Bluetooth\\SiliconLabs_EFR32BG24A010F1024_1024KB.arp",
-        "-d", "BKSPro provisioner",
-        "-l", "C:\\dev\\pi-base\\lib\\log.bks_pro_provisioner.sap",
+        "-b",
+        "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_bootloader.s37",
+        "-t",
+        "ARM",
+        "-a",
+        "C:\\PEMicro\\cyclone\\supportfiles\\supportFiles_ARM\\SiliconLabs\\Bluetooth\\SiliconLabs_EFR32BG24A010F1024_1024KB.arp",
+        "-d",
+        "BKSPro provisioner",
+        "-l",
+        "C:\\dev\\pi-base\\lib\\log.bks_pro_provisioner.sap",
       ],
       "console": "integratedTerminal",
       "justMyCode": false,
@@ -299,7 +310,8 @@
       "program": "lib/cyclone.py",
       "args": [
         // "-d", "USB1",
-        "-d", "auto",
+        "-d",
+        "auto",
         "program",
         "C:\\dev\\pi-base\\lib\\bks_pro_provisioner.sap",
         "--force",
@@ -307,14 +319,14 @@
       "console": "integratedTerminal",
       "justMyCode": false
     },
-
     {
       "name": "Python: SWD(bmp) Install",
       "type": "debugpy",
       "request": "launch",
       "program": "lib/swd.py",
       "args": [
-        "install", "bmp"
+        "install",
+        "bmp"
       ],
       "console": "integratedTerminal",
       "justMyCode": false
@@ -325,21 +337,22 @@
       "request": "launch",
       "program": "lib/swd.py",
       "args": [
-        "program", "bmp",
+        "program",
+        "bmp",
         "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_pro_provision.s37",
         "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_bootloader.s37"
       ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
-
     {
       "name": "Python: SWD(openocd) Install",
       "type": "debugpy",
       "request": "launch",
       "program": "lib/swd.py",
       "args": [
-        "install", "openocd"
+        "install",
+        "openocd"
       ],
       "console": "integratedTerminal",
       "justMyCode": false
@@ -350,21 +363,22 @@
       "request": "launch",
       "program": "lib/swd.py",
       "args": [
-        "program", "openocd",
+        "program",
+        "openocd",
         "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_pro_provision.s37",
         "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_bootloader.s37"
       ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
-
     {
       "name": "Python: SWD(pyocd) Install",
       "type": "debugpy",
       "request": "launch",
       "program": "lib/swd.py",
       "args": [
-        "install", "pyocd"
+        "install",
+        "pyocd"
       ],
       "console": "integratedTerminal",
       "justMyCode": false
@@ -375,14 +389,14 @@
       "request": "launch",
       "program": "lib/swd.py",
       "args": [
-        "program", "pyocd",
+        "program",
+        "pyocd",
         "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_pro_provision.s37",
         "C:\\payrange\\Hardware\\BLE5-BKPro\\Bringup\\bks_pro\\bks_bootloader.s37"
       ],
       "console": "integratedTerminal",
       "justMyCode": false
     },
-
     {
       "name": "Python: Printer Install",
       "type": "debugpy",
@@ -426,8 +440,10 @@
         "ZT411",
         "usb//",
         "drv:///sample.drv/zebra.ppd",
-        "-L", "Ilya's desk",
-        "-D", "Zebra label printer"
+        "-L",
+        "Engineer's desk",
+        "-D",
+        "Zebra label printer"
       ],
       "console": "integratedTerminal",
       "justMyCode": true
@@ -442,8 +458,10 @@
         "ZT411",
         "usb//",
         "zpl_2inch-203dpi-tt",
-        "-L", "Ilya's desk",
-        "-D", "Zebra label printer"
+        "-L",
+        "Engineer's desk",
+        "-D",
+        "Zebra label printer"
       ],
       "console": "integratedTerminal",
       "justMyCode": true
@@ -474,6 +492,5 @@
       "console": "integratedTerminal",
       "justMyCode": false
     }
-
   ]
 }
