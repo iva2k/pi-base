@@ -3,7 +3,7 @@
 ## 0.0.2 (unreleased)
 
 
-- Nothing changed yet.
+* Set up PyPI 1st time registration
 
 
 ## 0.0.1 (2024-03-04)
