@@ -24,7 +24,6 @@
     "tox:all_FULL": "tox run -e format,lint,types,test-py39,reports,docs,build",
     "tox:all": "tox run -e format,lint,test-py39,reports,docs,build",
 
-    "version:git-current": "bash pi_base/scripts/get-git-version.sh",
     "version:current": "python3 pi_base/_version.py current",
     "version:release": "tox run -e release",
 

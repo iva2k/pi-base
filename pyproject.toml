@@ -8,10 +8,11 @@
 
 [build-system]
 requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
 # Though we would like to use setuptools_scm for version, it breaks 'excludes' here
 # and completely disables MANIFEST.in. See https://github.com/pypa/setuptools_scm/pull/851
-# requires = ["setuptools>=68", "setuptools_scm[toml]>=8.0.4"]
-build-backend = "setuptools.build_meta"
+# Instead, we use zest.releaser and local version in `pi_base/_version.py`.
+# DONT_USE: requires = ["setuptools>=68", "setuptools_scm[toml]>=8.0.4"]
 
 [project]
 name = "pi_base"
@@ -161,7 +162,6 @@ doc = [
   "myst-parser==2.0.0",
 ]
 release = [
-  "setuptools_scm[toml]>=8.0.4",
   "zest-releaser==9.1.3",
   # "zest-releaser[recommended]==9.1.3", # adds: check-manifest pep440 pyroma wheel trove-classifiers,
   # and `prerelease`, `fullrelease` run 'check-manifest` and `pyroma` automatically - not what we want (yet) as we're not 100% clean for check-manifest is not 
@@ -171,16 +171,17 @@ build = [
 ]
 
 [tool.zest-releaser]
+# Also see `.pypirc` (we moved all zest.releaser settings here)
 create-wheel = false
+push-changes = true
+release = true
+upload-pypi = true
+register = false
+tag-format = "{version}"
 python-file-with-version = "pi_base/_version.py"
-
-# See `.pypirc`
-# release = true
-# upload-pypi = true
-# # upload-pypi = false
-# push-changes = true
-# tag-format = "{version}"
-# history-file = "CHANGELOG.md"
+history-file = "CHANGELOG.md"
+history_format = "md"
+run-pre-commit = false
 
 [tool.check-manifest]
 ignore = ["package.json", "lib/swd.*", "lib/cyclone.*"]

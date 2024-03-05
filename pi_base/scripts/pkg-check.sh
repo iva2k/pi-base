@@ -27,7 +27,6 @@ BUILD=
 BUILD_EXTR=
 # VER=$(python -m setuptools_scm)
 VERS=(
-  "$("$parent/get-git-version.sh" )"
   "$(python3 "$SOURCE/_version.py" current )"
 )
 for VER in "${VERS[@]}"; do
