@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.4 (unreleased)
+## 0.0.4 (2024-03-05)
 
 
 * Add empty section [zest.releaser] to .pypirc
