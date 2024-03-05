@@ -179,6 +179,9 @@ python-file-with-version = "pi_base/_version.py"
 # tag-format = "{version}"
 # history-file = "CHANGELOG.md"
 
+[tool.check-manifest]
+ignore = ["package.json", "lib/swd.*", "lib/cyclone.*"]
+
 [tool.ruff]
 line-length = 200
 src = [
