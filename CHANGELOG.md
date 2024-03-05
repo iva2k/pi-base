@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.3 (unreleased)
+## 0.0.3 (2024-03-05)
 
 
 * Pull version from pi_base/_version.py into pyproject.toml
