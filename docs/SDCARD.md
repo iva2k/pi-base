@@ -11,12 +11,7 @@ See [SDCARD-v1.7](./SDCARD-v1.7.md) for older Raspberry Pi Imager version.
   3. Run Raspberry Pi Imager:
      1. Make sure "Raspberry Pi Device" is set to "NO FILTERING" or to your Raspberry Pi device
 
-        :::{figure-md} fig-target
-        :class: myclass
         ![Raspberry Pi Imager - Choose OS](./_static/pictures/imager-0.annotated.png){.bg-primary .mb-1 width=200px}
-
-        This is a caption in **Markdown**
-        :::
 
      2. Click "CHOOSE OS" button
 

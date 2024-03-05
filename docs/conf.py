@@ -321,16 +321,7 @@ myst_heading_anchors = 3
 # `This is [a cross-reference to "My section" on page 2](./page_2.md#my-section).`
 
 myst_enable_extensions = [
-    "colon_fence"
 ]
-# Enable use of colon fences around figures in the .md documents:
-# :::{figure-md} fig-target
-# :class: myclass
-# ![fishy](img/fun-fish.png){.bg-primary .mb-1 width=200px} # or:
-# <img src="img/fun-fish.png" alt="fishy" class="bg-primary mb-1" width="200px">
-#
-# This is a caption in **Markdown**
-# :::
 
 myst_url_schemes = {
     "http": None,
