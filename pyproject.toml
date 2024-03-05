@@ -98,6 +98,9 @@ exclude = [
   # More excludes are in MANIFEST.in
 ]
 
+[tool.setuptools.dynamic]
+version = {attr = "pi_base._version.__version__"}
+
 # Enables the usage of setuptools_scm, which kills MANIFEST.in and disables all "exclude"s in this file.
 # [tool.setuptools_scm] # DO NOT USE! (we still can install the package)
 

@@ -3,6 +3,8 @@
 ## 0.0.3 (unreleased)
 
 
+* Pull version from pi_base/_version.py into pyproject.toml
+
 * Add missing EXAMPLE files
 
 
