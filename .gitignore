@@ -52,13 +52,16 @@ Thumbs.db
 
 # Key files
 .pypirc
-/secrets
+secrets/**
 secrets.zip
 *secrets.json
 *secrets.yaml
 ssh_secret.txt
 devices.csv
 sites.csv
+
+# Allow example files (make sure to not have any secrets in *EXAMPLE* files!:
+!*EXAMPLE*
 
 # Secure info
 pi_base/common/pkg/etc/wpa_supplicant/wpa_supplicant.conf

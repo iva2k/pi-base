@@ -4,13 +4,13 @@ include *EXAMPLE*
 include ./*.md
 
 recursive-include blank *
-recursive-include lib *.py *.md *.cfg
+recursive-include lib *.py *.md
 recursive-include pi_base/common *
 recursive-include secrets *EXAMPLE*
 
 exclude pi_base/scripts/** pi_base/remoteiot.com/** pi_base/*.md
 exclude .vscode/** docs/** **/.git* develop* ./*.cfg ./*.json
-exclude lib/_*/** lib/cyclone/** lib/swd/** lib/*.sap
+exclude lib/_*/** lib/cyclone/** lib/swd/** lib/*.sap lib/*.cfg
 
 # Remove Secret / Password files included by recursive-include
 exclude **/wpa_supplicant.conf

@@ -1,0 +1,40 @@
+# See https://packaging.python.org/en/latest/distributing.html#uploading-your-project-to-pypiformoreinfo.
+
+[distutils]
+index-servers =
+  pypi
+  local
+
+[pypi]
+# default repository is https://upload.pypi.org/legacy/
+username:exampleuser
+password:examplepassword
+
+[local]
+repository:http://localhost:8080/test/products/
+username:exampleuser
+password:examplepassword
+# You may need to specify the realm, which is the domain the
+# server sends back when you do a challenge:
+#realm:Zope
+
+[zest.releaser]
+# create-wheel = no
+# push-changes = yes
+push-changes = no
+  # 'no' while debugging
+
+release = no
+upload-pypi = no
+# upload-pypi = yes
+
+register = no
+# register = yes
+  # 'yes' for one-time registration on PyPI.org, register only the very first time
+
+
+tag-format = {version}
+history-file = CHANGELOG.md
+history_format = md
+
+run-pre-commit = no
