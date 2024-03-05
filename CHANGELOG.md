@@ -3,6 +3,8 @@
 ## 0.0.4 (unreleased)
 
 
+* Add zest-releaser dependency for tox:docs
+
 * Remove setuptools_scm (not using git-based version)
 
 * Move zest-releaser settings to pyproject.toml

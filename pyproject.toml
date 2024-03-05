@@ -108,6 +108,7 @@ version = {attr = "pi_base._version.__version__"}
 [project.optional-dependencies]
 dev = [
   "pi_base[tox]",
+  "pi_base[version]",
   "pi_base[format]",
   "pi_base[lint]",
   "pi_base[test]",
@@ -124,6 +125,11 @@ dev = [
 ]
 tox = [
   "tox==4.13.0",
+]
+version=[
+  "zest-releaser==9.1.3",
+  # "zest-releaser[recommended]==9.1.3", # adds: check-manifest pep440 pyroma wheel trove-classifiers,
+  # and `prerelease`, `fullrelease` run 'check-manifest` and `pyroma` automatically - not what we want (yet) as we're not 100% clean for check-manifest is not 
 ]
 format = [
   "ruff==0.2.1",
@@ -148,6 +154,7 @@ reports = [
   "junitparser==3.1.2",
 ]
 doc = [
+  "pi_base[version]",
   "importlib_metadata==7.0.1",
   "jinja2==3.1.2",
   "pip-licenses==4.3.2",
@@ -162,9 +169,7 @@ doc = [
   "myst-parser==2.0.0",
 ]
 release = [
-  "zest-releaser==9.1.3",
-  # "zest-releaser[recommended]==9.1.3", # adds: check-manifest pep440 pyroma wheel trove-classifiers,
-  # and `prerelease`, `fullrelease` run 'check-manifest` and `pyroma` automatically - not what we want (yet) as we're not 100% clean for check-manifest is not 
+  "pi_base[version]",
 ]
 build = [
   "build[virtualenv]==1.0.3",

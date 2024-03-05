@@ -18,7 +18,7 @@ import os
 import sys
 from typing import List
 
-# import importlib_metadata
+# import importlib_metadata # py<3.8
 import importlib.metadata
 
 # If extensions (or modules to document with autodoc) are in another directory,
