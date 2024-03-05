@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.2 (unreleased)
+## 0.0.2 (2024-03-04)
 
 
 * Set up PyPI 1st time registration
