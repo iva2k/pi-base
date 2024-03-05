@@ -10,6 +10,17 @@
       "justMyCode": true
     },
     {
+      "name": "Python: prerelease",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "venv/Scripts/prerelease.exe",
+      "args": [
+        "-v",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
       "name": "Python: pi-base make BASE blank",
       "type": "debugpy",
       "request": "launch",
