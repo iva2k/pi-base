@@ -3,6 +3,8 @@
 ## 0.0.4 (unreleased)
 
 
+* Add empty section [zest.releaser] to .pypirc
+
 * Add zest-releaser dependency for tox:docs
 
 * Remove setuptools_scm (not using git-based version)
