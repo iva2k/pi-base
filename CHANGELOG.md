@@ -3,7 +3,7 @@
 ## 0.0.1 (unreleased)
 
 
-- Nothing changed yet.
+* Development and fixes of the toolchain
 
 
 ## 0.0.0 (2024-03-04)
