@@ -156,22 +156,25 @@ doc = [
 ]
 release = [
   "setuptools_scm[toml]>=8.0.4",
-  # "zest-releaser==9.1.3",
-  "zest-releaser[recommended]==9.1.3", # adds: check-manifest pep440 pyroma wheel trove-classifiers
+  "zest-releaser==9.1.3",
+  # "zest-releaser[recommended]==9.1.3", # adds: check-manifest pep440 pyroma wheel trove-classifiers,
+  # and `prerelease`, `fullrelease` run 'check-manifest` and `pyroma` automatically - not what we want (yet) as we're not 100% clean for check-manifest is not 
 ]
 build = [
   "build[virtualenv]==1.0.3",
 ]
 
 [tool.zest-releaser]
-release = true
-upload-pypi = true
-# upload-pypi = false
 create-wheel = false
-push-changes = true
-tag-format = "{version}"
-history-file = "CHANGELOG.rst"
 python-file-with-version = "pi_base/_version.py"
+
+# See `.pypirc`
+# release = true
+# upload-pypi = true
+# # upload-pypi = false
+# push-changes = true
+# tag-format = "{version}"
+# history-file = "CHANGELOG.md"
 
 [tool.ruff]
 line-length = 200

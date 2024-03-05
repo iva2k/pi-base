@@ -1,5 +1,17 @@
 include pyproject.toml
+include tox.ini
+include *EXAMPLE*
+include ./*.md
 
+recursive-include blank *
+recursive-include lib *.py *.md *.cfg
 recursive-include pi_base/common *
-exclude pi_base/scripts/** pi_base/remoteiot.com/**
-exclude .vscode/** docs/** **/.git* develop* ./*.cfg ./*.ini ./*.json ./*.md pi_base/*.md
+recursive-include secrets *EXAMPLE*
+
+exclude pi_base/scripts/** pi_base/remoteiot.com/** pi_base/*.md
+exclude .vscode/** docs/** **/.git* develop* ./*.cfg ./*.json
+exclude lib/_*/** lib/cyclone/** lib/swd/** lib/*.sap
+
+# Remove Secret / Password files included by recursive-include
+exclude **/wpa_supplicant.conf
+exclude ./.pypirc

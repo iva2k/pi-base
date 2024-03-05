@@ -4,9 +4,9 @@
     "a": "npm run pkg:clean && npm run pkg:build && npm run pkg:extract",
     "pkg:clean": "rm -rf dist pi_base.egg-info",
     "pkg:build": "python3 -m build",
-    "pkg:extract": "(cd dist && tar -zxvf *.tar.gz)",
+    "pkg:extract-all-dist": "(cd dist && tar -zxvf *.tar.gz)",
     "pkg:diff-build-data": "bash pi_base/scripts/pkg-check.sh",
-    "pkg:check-build-data": "npm run pkg:clean && npm run pkg:build && npm run pkg:extract && npm run pkg:diff-build-data",
+    "pkg:check-build-data": "npm run pkg:clean && npm run pkg:build && npm run pkg:diff-build-data",
     "pkg:all": "npm run pkg:check-build-data && echo SUCCESS!",
 
     "dev:init": "python3 -m venv venv && source venv/Scripts/activate && pip install --upgrade pip && pip install -e . && pip install -e .[dev]",
@@ -23,8 +23,6 @@
     "tox": "tox",
     "tox:all_FULL": "tox run -e format,lint,types,test-py39,reports,docs,build",
     "tox:all": "tox run -e format,lint,test-py39,reports,docs,build",
-    "docs:test": "sphinx-build -b doctest ",
-    "docs:auto-api": "sphinx-apidoc",
 
     "version:git-current": "bash pi_base/scripts/get-git-version.sh",
     "version:current": "python3 pi_base/_version.py current",

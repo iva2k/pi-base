@@ -18,7 +18,8 @@ import os
 import sys
 from typing import List
 
-import importlib_metadata
+# import importlib_metadata
+import importlib.metadata
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -57,8 +58,8 @@ extensions = custom_extensions_pre + template_extensions + custom_extensions
 templates_path = ["_templates"]
 
 # The suffix of source filenames.
-# source_suffix = '.rst'
-source_suffix = ['.rst', '.md']
+# source_suffix = ".rst"
+source_suffix = [".rst", ".md"]
 
 # The encoding of source files.
 # source_encoding = "utf-8-sig"
@@ -67,16 +68,17 @@ source_suffix = ['.rst', '.md']
 master_doc = "index"
 
 # General information about the project.
-project = 'pi_base'
-copyright = '2024, Ilya Ivanchenko'
-author = 'Ilya Ivanchenko'
+project = "pi_base"
+copyright = "2024, Ilya Ivanchenko"
+author = "Ilya Ivanchenko"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = importlib_metadata.version("pi_base")
+# release = importlib_metadata.version("zest.releaser")
+release = importlib.metadata.version("zest.releaser")
 # The short X.Y version.
 version = ".".join(release.split(".")[:2])
 
@@ -92,7 +94,7 @@ version = ".".join(release.split(".")[:2])
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -124,9 +126,9 @@ pygments_style = "sphinx"
 # a list of builtin themes.
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 # html_theme = "sphinx_rtd_theme"
-# html_theme = 'pydata_sphinx_theme'
-# html_theme = 'furo'
-html_theme = 'sphinx_book_theme'
+# html_theme = "pydata_sphinx_theme"
+# html_theme = "furo"
+html_theme = "sphinx_book_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

@@ -51,6 +51,7 @@ Thumbs.db
 *report*.csv
 
 # Key files
+.pypirc
 /secrets
 secrets.zip
 *secrets.json
