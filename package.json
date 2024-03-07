@@ -9,9 +9,9 @@
     "pkg:check-build-data": "npm run pkg:clean && npm run pkg:build && npm run pkg:diff-build-data",
     "pkg:all": "npm run pkg:check-build-data && echo SUCCESS!",
 
-    "dev:init": "python3 -m venv venv && source venv/Scripts/activate && pip install --upgrade pip && pip install -e . && pip install -e .[dev]",
-    "dev:editable": "pip install -e . && pip install -e .[dev]",
-    "dev:strict": "pip install -e . --config-settings editable_mode=strict && pip install -e .[dev]",
+    "dev:init": "python3 -m venv venv && source venv/Scripts/activate && pip install --upgrade pip && pip install -e .[dev]",
+    "dev:editable": "pip install -e .[dev]",
+    "dev:strict": "pip install -e .[dev] --config-settings editable_mode=strict",
     "dev:uninstall": "pip uninstall pi_base",
     "dev:env": "source venv/Scripts/activate",
     "tox:format": "tox run -e format",

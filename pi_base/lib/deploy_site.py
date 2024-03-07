@@ -18,12 +18,9 @@ import sys
 from typing import Optional
 
 # "modpath" must be first of our modules
-# from modpath import get_workspace_dir, get_script_dir, app_dir  # pylint: disable=wrong-import-position
-from modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "common")))
-
-from gd_service import gd_connect, FileNotUploadedError
-from app_utils import get_conf, find_path
+from pi_base.modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
+from .app_utils import get_conf, find_path
+from .gd_service import gd_connect, FileNotUploadedError
 
 
 logging.basicConfig(level=logging.INFO)

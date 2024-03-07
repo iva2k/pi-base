@@ -5,11 +5,11 @@ import signal
 import sys
 import time
 
-# "modpath" must be first of our modules
-from modpath import app_dir  # pylint: disable=wrong-import-position
-from app_utils import eth0_mac, get_conf, get_pi_model, get_pi_revision, reboot
-from large import Large
-from loggr import Loggr
+# "modpath" must be first of pi_base modules
+from pi_base.modpath import app_dir  # pylint: disable=wrong-import-position
+from pi_base.lib.app_utils import eth0_mac, get_conf, get_pi_model, get_pi_revision, reboot
+from pi_base.lib.large import Large
+from pi_base.lib.loggr import Loggr
 
 vt_number = None
 vt_history = 4
@@ -50,9 +50,9 @@ class Test:
                 loggr.print("  ID not recognized. Do not enter spaces.")
             else:
                 break
-
-        other_str = "(other entry ignored: %s)" % (" ".join(other)) if len(other) > 0 else ""
-        loggr.debug(f'got user entry: "{device_id}" {other_str}')
+        other_str = (" ".join(other)) if len(other) > 0 else ""
+        ignored = f"(other entry ignored: {other_str})"
+        loggr.debug(f'got user entry: "{device_id}" {ignored}')
         filt = self.fnc_filter_input(device_id)
         if filt:
             return False, ""

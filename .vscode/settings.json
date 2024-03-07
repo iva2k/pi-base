@@ -28,8 +28,8 @@
     ],
 
     "[python]": {
-        // "editor.codeActionsOnSave": {"source.faxAll": "always", "source.organizeImports": "always" }, // This messes up modpath. // TODO: (now) Fix imports order, and not break modpath being first.
-        "editor.codeActionsOnSave": {"source.faxAll": "always", "source.organizeImports": "never" },
+        // "editor.codeActionsOnSave": {"source.fixAll": "always", "source.organizeImports": "always" }, // This messes up modpath. // TODO: (now) Fix imports order, and not break modpath being first.
+        "editor.codeActionsOnSave": {"source.fixAll": "always", "source.organizeImports": "never" },
         // "editor.defaultFormatter": "ms-python.autopep8",
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
@@ -38,7 +38,7 @@
         "editor.wordWrap": "off",
         "editor.wordWrapColumn": 200,
     },
-    "python.experiments.optInto": ["pythonTerminalEnvVarActivation"],
+    // "python.experiments.optInto": ["pythonTerminalEnvVarActivation"],
 
     "pylint.args": [
         "--max-line-length=200",
@@ -73,5 +73,6 @@
     "esbonio.sphinx.buildDir" : "${workspaceFolder}/docs/_build/html",
     "esbonio.sphinx.confDir"  : "${workspaceFolder}/docs",
     "esbonio.sphinx.srcDir"   : "${workspaceFolder}/docs",
-    "esbonio.server.enabled": true
+    "esbonio.server.enabled": true,
+    "mypy.enabled": false
 }

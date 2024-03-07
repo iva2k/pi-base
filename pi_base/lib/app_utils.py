@@ -1,18 +1,29 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 import datetime
 import json
+import logging
 import os
 import platform
-import time
-
-# import zmq
-import threading
 from subprocess import run, check_output, CalledProcessError
+import threading
+import time
+from typing import Optional, Callable
+from collections.abc import Generator
 from uuid import getnode as get_mac
+# import zmq
 
 import requests
 import yaml
+
+
+class AtDict(dict):
+    # See https://stackoverflow.com/a/1328686
+    # See more complete implementation https://github.com/Infinidat/munch/tree/develop "pip install munch" `from munch import Munch as AtDict; __all__ = ["AtDict"]`
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
 def get_os_name() -> str:
@@ -28,14 +39,14 @@ def get_os_name() -> str:
     return "Unknown"
 
 
-def uptime():
+def uptime() -> str:
     cmd = "uptime"
     p = check_output(cmd, shell=True, text=True)
     x = p.split()
     return x[0]
 
 
-def reboot(reboot_type, delay=0, loggr=None):
+def reboot(reboot_type: str, delay: int = 0, loggr: Optional[logging.Logger] = None) -> None:
     if reboot_type in ("r", "h"):
         message = "System is shutting down." if reboot_type == "h" else "System is rebooting."
         cmd = f'sudo shutdown -{reboot_type} now "{message}"&'
@@ -48,13 +59,13 @@ def reboot(reboot_type, delay=0, loggr=None):
             loggr.debug(f"reboot() cmd={cmd} result={p}")
 
 
-def get_hostname():
+def get_hostname() -> str:
     cmd = "hostname"
     result = check_output(cmd, shell=True, text=True)
     return result[:-1]
 
 
-def set_hostname(wants):
+def set_hostname(wants: str) -> tuple[bool, str]:
     # TODO: (soon) change implementation to use raspi-config, instead of hosts_str
     hosts_str = """127.0.1.1	{wants}
 127.0.0.1	localhost
@@ -73,7 +84,7 @@ ff02::2		ip6-allrouters
     return True, out
 
 
-def is_up():
+def is_up() -> bool:
     cmd = "ping -c 1 8.8.8.8 2>/dev/null"
     try:
         p = check_output(cmd, shell=True, text=True)
@@ -83,13 +94,13 @@ def is_up():
 
 
 class iface_dev:
-    def __init__(self):
+    def __init__(self) -> None:
         self.done = False
+        self.ifaces: Optional[dict[str, list[str]]] = None
         self.t = threading.Thread(target=self.worker)
         self.t.start()
-        self.ifaces = None
 
-    def worker(self):
+    def worker(self) -> None:
         cmd = "ifconfig"
         self.ifaces = {}
         iface = ""
@@ -105,7 +116,7 @@ class iface_dev:
             for line in out:
                 if len(line) == 0:
                     count += 1
-                    if len(iface) > 0:
+                    if len(iface) > 0 and mac and ip:
                         print(f"\033[{count};6H{iface} {mac} {ip}")
                         self.ifaces[iface] = [mac, ip]
                     ip = ""
@@ -121,11 +132,11 @@ class iface_dev:
                 if params[0] == "ether":
                     mac = params[1]
 
-    def dump(self):
+    def dump(self) -> None:
         print(f"\033[6;6H{self.ifaces!s}")
 
 
-def get_ifconfig():
+def get_ifconfig() -> list[str]:
     cmd = "ifconfig"
     try:
         p = check_output(cmd, shell=True, text=True)
@@ -134,7 +145,7 @@ def get_ifconfig():
     return p.split("\n")
 
 
-def data_amount(if_type="ppp0"):
+def data_amount(if_type: str = "ppp0") -> tuple[int, int]:
     out = get_ifconfig()
     iface = ""
     for line in out:
@@ -150,9 +161,9 @@ def data_amount(if_type="ppp0"):
     return -1, -1
 
 
-def ifconfig():
+def ifconfig() -> dict[str, dict[str, Optional[str]]]:
     out = get_ifconfig()
-    ifaces = {}
+    ifaces: dict[str, dict[str, Optional[str]]] = {}
     iface = ""
     for line in out:
         params = line.lstrip().split(" ")
@@ -166,7 +177,7 @@ def ifconfig():
     return ifaces
 
 
-def get_iface(if_list=None, require_connected=True):
+def get_iface(if_list: Optional[list[str]] = None, require_connected: bool = True) -> tuple[Optional[str], dict[str, Optional[str]]]:
     """Issue ifconfig command and parse the output to determine which interfaces are up.
 
     By up, it means the interface has been assigned an ipv4 address.
@@ -182,7 +193,7 @@ def get_iface(if_list=None, require_connected=True):
     return None, {"ipaddress": None, "mac": None}
 
 
-def list_iw():
+def list_iw() -> list[str]:
     """List all WLAN interfaces (Linux only)."""
     cmd = "iw dev | awk '$1==\"Interface\"{print $2}'"
     try:
@@ -192,7 +203,7 @@ def list_iw():
     return [x for x in p.split("\n") if x]  # Remove blanks
 
 
-def ping_test(url="www.google.com", f_timeout_seconds=None):
+def ping_test(url: str = "www.google.com", f_timeout_seconds: Optional[float] = None) -> bool:
     options = ""
     count = 3
     interval = 0.3
@@ -213,7 +224,7 @@ def ping_test(url="www.google.com", f_timeout_seconds=None):
 class get_conf:
     """Read configuration file (.yaml or .json)."""
 
-    def __init__(self, filepath="app_conf.yaml"):
+    def __init__(self, filepath: str = "app_conf.yaml") -> None:
         self.filepath = filepath
         self.conf = {}
         with open(filepath, encoding="utf-8") as file:
@@ -224,30 +235,30 @@ class get_conf:
                 self.conf = json.load(file)
             # TODO: (when needed) .ini .xml
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
         if key in self.conf:
             return self.conf[key]
         return default
 
-    def get_subkey(self, key, key2, default=None):
+    def get_subkey(self, key: str, key2: str, default: Optional[str] = None) -> Optional[str]:
         if key in self.conf:
             conf = self.conf[key]
             if conf and key2 in conf:
                 return conf[key2]
         return default
 
-    def dump(self):
+    def dump(self) -> None:
         print(self.conf)
 
 
-def get_fg_vt():
+def get_fg_vt() -> None:
     # TODO: (when needed) Implement, use `cat /sys/class/tty/tty0/active` --> tty2 or `sudo fgconsole` -> 2
     pass
 
 
-def reset_vt(vt_number):
+def reset_vt(vt_number: int) -> list[int]:
     # TODO: (when needed) reset vt to a login shell (kill all processes on the given VT)
-    pids_killed = []
+    pids_killed: list[int] = []
     # Get list of PIDs of VTn device:
     cmd = f"sudo /usr/bin/fuser /dev/tty{vt_number} 2>/dev/null"
     try:
@@ -275,7 +286,7 @@ def reset_vt(vt_number):
     # deallocvt
 
 
-def cvt(vt_number=1, loggr=None):
+def cvt(vt_number: int = 1, loggr: Optional[logging.Logger] = None) -> None:
     cmd = f"chvt {vt_number}"
     try:
         result = check_output(cmd, shell=True, text=True)
@@ -286,7 +297,7 @@ def cvt(vt_number=1, loggr=None):
             loggr.error(f'Error {type(err)} "{err}" in cvt({vt_number}) cmd={cmd}')
 
 
-def open_vt(vt_number, app_path, user=None, do_sudo=True, do_chvt=True, do_nohup=True, loggr=None):
+def open_vt(vt_number: int, app_path: str, user: Optional[str] = None, do_sudo: bool = True, do_chvt: bool = True, do_nohup: bool = True, loggr: Optional[logging.Logger] = None) -> str:
     # Use `exec < /dev/tty1` at the start of the target script
     # See https://superuser.com/questions/584931/howto-start-an-interactive-script-at-ubuntu-startup
 
@@ -319,7 +330,7 @@ def open_vt(vt_number, app_path, user=None, do_sudo=True, do_chvt=True, do_nohup
     return result
 
 
-def get_pi_revision():
+def get_pi_revision() -> Optional[str]:
     try:
         with open("/proc/cpuinfo", encoding="utf-8") as cpuinfo:
             for line in cpuinfo:
@@ -332,7 +343,7 @@ def get_pi_revision():
         return None
 
 
-def get_pi_model():
+def get_pi_model() -> Optional[str]:
     try:
         with open("/proc/cpuinfo", encoding="utf-8") as cpuinfo:
             for line in cpuinfo:
@@ -343,13 +354,12 @@ def get_pi_model():
         return None
 
 
-def eth0_mac():
+def eth0_mac() -> Optional[str]:
+    mac = None
     try:
-        mac = get_mac()
-        mac = f"{mac:012x}"
+        mac_int = get_mac()
+        mac = f"{mac_int:012x}"
     except:
-        mac = None
-    if not mac:
         ifaces = ifconfig()
         key = "eth0"
         if key in ifaces:
@@ -392,7 +402,7 @@ def path_part_sanitize(part: str, replace: str = "", more: str = "") -> str:
     return out
 
 
-def find_path(path_name: str, paths: list[str], loggr=None, is_dir=False) -> str:
+def find_path(path_name: str, paths: list[str], loggr: Optional[logging.Logger] = None, is_dir: bool = False) -> Optional[str]:
     path_basename = os.path.basename(path_name)
     if path_basename != path_name:
         paths = [os.path.dirname(path_name)] + paths
@@ -409,13 +419,13 @@ def find_path(path_name: str, paths: list[str], loggr=None, is_dir=False) -> str
     return None
 
 
-def download_and_execute(url, downloaded_file_path, command=None, remove_after=False, timeout=30, loggr=None) -> int:
+def download_and_execute(url: str, downloaded_file_path: str, command: Optional[list[str]] = None, remove_after: bool = False, timeout: int = 30, loggr: Optional[logging.Logger] = None) -> int:
     """Download from given URL a file and either execute the file or optionally execute the given command. Intended use is to download and install software.
 
     Args:
         url (str): URL to the download file
         downloaded_file_path (str): Path to where store the file
-        command (_type_, optional): Command to execute once the file is downloaded. Defaults to None.
+        command (list[str], optional): Command to execute once the file is downloaded. Defaults to None.
         remove_after (bool, optional): True to remove downloaded file after. Defaults to False.
         timeout (int, optional): Maximum time to wait. Defaults to 30.
 
@@ -438,9 +448,9 @@ def download_and_execute(url, downloaded_file_path, command=None, remove_after=F
         return 1
 
     # Run the downloaded executable
+    if not command:
+        command = [downloaded_file_path]
     try:
-        if not command:
-            command = [downloaded_file_path]
         run(command, shell=True, check=True)
     except CalledProcessError as e:
         if loggr:
@@ -462,7 +472,7 @@ def download_and_execute(url, downloaded_file_path, command=None, remove_after=F
 class PeriodicTask(threading.Thread):
     """Helper class to manage periodic tasks."""
 
-    def __init__(self, interval, task_fnc, *args, **kwargs):
+    def __init__(self, interval: float, task_fnc: Callable, *args: object, **kwargs: object) -> None:
         """Constructor.
 
         Args:
@@ -473,40 +483,42 @@ class PeriodicTask(threading.Thread):
         """
         super().__init__()
         self.interval = interval
-        self._task_fnc, self._args, self._kwargs = task_fnc, args, kwargs
+        self._task_fnc: Optional[Callable] = task_fnc
+        self._args: object = args
+        self._kwargs: object = kwargs
         self._kill_event = threading.Event()
         self._pause_event = threading.Event()
         super().start()
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.kill()
 
-    def run(self):
+    def run(self) -> None:
         gen = self._interval_generator()
         next(gen)  # Start the generator
         while not self._kill_event.is_set():
             try:
                 next_run = next(gen)
                 time.sleep(max(0, next_run - time.monotonic()))
-                if not self._pause_event.is_set():
+                if not self._pause_event.is_set() and self._task_fnc:
                     self._task_fnc(*self._args, **self._kwargs)
             except StopIteration:  # noqa: PERF203
                 break
 
-    def kill(self):
+    def kill(self) -> None:
         self._kill_event.set()
         self._pause_event.set()
         self.interval = 0
         self._task_fnc, self._args, self._kwargs = None, None, None
         self.join()
 
-    def stop(self):
+    def stop(self) -> None:
         self._pause_event.set()
 
-    def start(self):
+    def start(self) -> None:
         self._pause_event.clear()
 
-    def _interval_generator(self):
+    def _interval_generator(self) -> Generator[float, None, None]:
         last_time = time.monotonic()
         while True:
             next_time = last_time + self.interval
@@ -517,11 +529,11 @@ class PeriodicTask(threading.Thread):
             yield next_time
 
 
-def print_task(*args):
+def print_task(*args: object) -> None:
     print(*args)
 
 
-def unittest_periodic_task():
+def unittest_periodic_task() -> None:
     pt = PeriodicTask(0.5, print_task, "  - task1")
     pt2 = PeriodicTask(3, print_task, "  -        task2")
 
@@ -554,12 +566,10 @@ def unittest_periodic_task():
     pt.start()
     time.sleep(3)
 
-    pt = None
-    pt2 = None
     print("DONE")
 
 
-def main():
+def main() -> None:
     unittest_periodic_task()
 
 

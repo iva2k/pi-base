@@ -21,6 +21,31 @@
       "justMyCode": false
     },
     {
+      "name": "Python: tox:test",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "tox",
+      "args": [
+        "-e", "test-py39"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "windows": { "program": "${env:CONDA_PREFIX}\\Scripts\\tox.exe"}
+    },
+    {
+      "name": "Python: pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "pytest",
+      "args": [
+        "--junitxml=reports/pytest.xml.dbg",
+        "pi_base/tests"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "windows": { "program": "${env:CONDA_PREFIX}\\Scripts\\pytest.exe"}
+    },
+    {
       "name": "Python: pi-base make BASE blank",
       "type": "debugpy",
       "request": "launch",

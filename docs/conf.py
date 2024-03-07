@@ -26,8 +26,12 @@ import importlib.metadata
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath("."))
 
+# We need this hacky workaround (directory above root) because all directories, including root, have __init__.py, and
+# sphinx can't import modules from the tree.
 cwd = os.getcwd()
-parent = os.path.dirname(cwd)
+parent = os.path.dirname(os.path.abspath(cwd))
+parent2 = os.path.dirname(parent)
+sys.path.insert(0, parent2)
 sys.path.insert(0, parent)
 
 # -- General configuration -----------------------------------------------------
@@ -320,8 +324,7 @@ myst_heading_anchors = 3
 # Enables cross-reference links like this in .md files:
 # `This is [a cross-reference to "My section" on page 2](./page_2.md#my-section).`
 
-myst_enable_extensions = [
-]
+# myst_enable_extensions = []
 
 myst_url_schemes = {
     "http": None,

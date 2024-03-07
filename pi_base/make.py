@@ -30,19 +30,9 @@ from timeit import default_timer as timer
 import yaml
 
 # "modpath" must be first of our modules
-try:
-    from .modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
-except:
-    from modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
-
-try:
-    from .lib.deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
-except:
-    from deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
-try:
-    from .lib.app_utils import find_path
-except:
-    from app_utils import find_path
+from .modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
+from .lib.deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
+from .lib.app_utils import find_path
 
 
 logging.basicConfig(level=logging.INFO)
@@ -156,8 +146,10 @@ class Builder:
         self.app_info["Type"] = self.type
         self.app_info["Version"] = self.ver  # TODO: (now) Generate app version from ?? Add script/subcommand to pi_base bumping app version in conf.yaml.
         site = self.sites_db.find_site_by_id(self.site_id)
-        if not site:
+        if not site or not site.site_id or site.site_id != site.site_id:
             raise ValueError(f"Site {self.site_id} not found or sites DB not loaded")
+        if not site.sa_client_secrets:
+            raise ValueError(f"Client secrets file not set for site {self.site_id}")
 
         # If self.app_info->GoogleDrive->secrets is 'auto':
         if "GoogleDrive" in self.app_info and "secrets" in self.app_info["GoogleDrive"] and self.app_info["GoogleDrive"]["secrets"] == "auto":
@@ -254,8 +246,6 @@ class Builder:
                 {"src": os.path.join(self.package_dir, "common", "pkg/"), "dst": "./pkg"},
                 {"src": os.path.join(self.package_dir, "common", "common_requirements.txt"), "dst": "./"},
                 {"src": os.path.join(self.package_dir, "common", "common_install.sh"), "dst": "./"},
-                {"src": os.path.join(self.package_dir, "modpath.py"), "dst": os.path.join("pkg", app_dir, "app/")},
-                {"src": os.path.join(self.package_dir, "modpath.py"), "dst": os.path.join("pkg", app_dir, "modules/")},
                 # App files:
                 {"src": os.path.join(self.base_dir, self.type, "pkg/"), "dst": "./pkg"},
                 {"src": os.path.join(self.base_dir, self.type, "requirements.txt"), "dst": "./"},
@@ -309,7 +299,7 @@ def main(loggr=logger) -> int:
 
     db = DeploySiteDB(loggr=loggr)
     # first element is the default choice
-    sites_list = [site.site_id for site in db.sites]
+    sites_list = [site.site_id for site in db.sites if site.site_id]
     site_help_text = "Must be one of: " + ", ".join(sites_list)
 
     parser.add_argument("-D", "--debug", help="Enable debugging log", action="store_true")

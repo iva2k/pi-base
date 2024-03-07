@@ -53,10 +53,20 @@ dependencies = [
   #? "importlib-metadata",
   # Add runtime dependencies here
   "pyyaml~=6.0",
+  "types-PyYAML~=6.0",
   "pydrive2~=1.14.0",
   # "click~=8.1.7",
   # "cliff~=4.6.0",
   # "pyserial~=3.5",
+  "requests>=2.31.0",
+  "types-requests>=2.31.0",
+  "httplib2>=0.18.1",
+  "types-httplib2>=0.22.0",
+  "psutil==5.9.8",
+  "pyserial==3.5",
+  # "pycups", # printer.py, not on Win
+  # "pywin32==305.1", # win32 for printer.py - on Win only
+  # "win32ui", # printer.py on Win only
 ]
 
 # [project.optional-dependencies]
@@ -294,6 +304,7 @@ lint.ignore = [
   "SIM108",
   "SIM115",
   "T201",
+  "TCH003",
   "TD002",
   "TD003",
   "TRY002",
@@ -326,7 +337,6 @@ convention = "google"
 disallow_untyped_defs = true # Functions need to be annotated
 warn_unused_ignores = true
 #? show_error_codes = true
-#?? pass_filenames = false # To allow mmultiple files "modpath.py" across sourcetree
 disable_error_code = "misc"
 exclude = [
   "pi_base-\\d+", # Ignore temporary folder created by setuptools when building an sdist
@@ -419,6 +429,8 @@ addopts = """
   --cov-config=pyproject.toml
   --cov-report=
   """
+  # Add this (or similar) to help pytest find the package under test: pythonpath = [".", "src"]
+  pythonpath = [".."]  # We need this hacky workaround (directory above root) because all directories, including root, have __init__.py, and pytest under tox looks for "pi_base.pi_base" and can't find it.
 
 [tool.coverage.run]
 branch = true

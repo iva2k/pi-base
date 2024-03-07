@@ -4,6 +4,7 @@
 # pylint: disable=logging-fstring-interpolation
 
 # WIP: Creating: Service to manage remote control of devices
+from __future__ import annotations
 
 import argparse
 import csv
@@ -13,12 +14,13 @@ import os
 import socket
 from subprocess import check_output
 import sys
+from typing import IO, Optional
+from collections.abc import Iterable
 
 # "modpath" must be first of our modules
-from modpath import app_dir  # pylint: disable=wrong-import-position
-from app_utils import get_conf, find_path
-
-from gd_service import gd_connect
+from pi_base.modpath import app_dir  # pylint: disable=wrong-import-position
+from .app_utils import get_conf, find_path
+from .gd_service import gd_connect, GoogleDriveFile
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
@@ -36,11 +38,16 @@ MAX_SN = 1000
 
 
 class Remoteiot:
-    def __init__(self, yaml_file=None, db_file=None, gd_secrets=None, loggr=logger, debug=False):
+    def __init__(self, yaml_file: Optional[str] = None, db_file: Optional[str] = None, gd_secrets: Optional[str] = None, loggr: Optional[logging.Logger] = logger, debug: bool = False) -> None:
         self.yaml_file = yaml_file
         self.db_file = db_file
-        self.loggr = loggr
         self.debug = debug
+        if not loggr:
+            raise ValueError("Please provide loggr argument")
+        self.loggr = loggr
+
+        if not app_dir:
+            raise RuntimeError("Was not able to find app directory")
 
         root = os.path.dirname(os.path.realpath(__file__))
         base = os.path.abspath(os.path.join(root, os.pardir, os.pardir))
@@ -70,37 +77,43 @@ class Remoteiot:
         self.cols_secret = ["key"]
 
         # Compiled columns from device database file:
-        self.db_file_cols = None
-
-        if not self.loggr:
-            raise ValueError("Please provide loggr argument")
+        self.db_file_cols: Optional[list[str]] = None
 
         self.conf = self.conf_file_load()
         # Look for devices DB in Google Drive first
         self.gd_file = None
         gd_secrets_file = self.conf.get_subkey("GoogleDrive", "secrets", os.path.join(app_dir, gd_secrets_file_default))
-        gd_secrets = find_path(gd_secrets_file, self.secrets_paths, self.loggr)
+        gd_secrets = find_path(gd_secrets_file, self.secrets_paths, self.loggr) if gd_secrets_file else None
         if gd_secrets:
             self.gds, extras = gd_connect(self.loggr, gd_secrets, {"gd_devices_folder_id": None, "gd_devices_file_title": None}, skip_msg="Cannot continue.")
             if not self.gds:
                 raise ValueError("Failed loading GoogleDrive secrets or connecting.")
             self.gd_folder_id = extras["gd_devices_folder_id"] if extras else None
             self.gd_file_title = extras["gd_devices_file_title"] if extras else None
-            self.devices, self.gd_file = self.db_file_load_gd(self.gd_file_title, self.gd_folder_id)
+            if self.gd_file_title and self.gd_folder_id:
+                devices, self.gd_file = self.db_file_load_gd(self.gd_file_title, self.gd_folder_id)
+                self.devices = devices or []
+            else:
+                raise ValueError(f'Expected non-empty gd_devices_folder_id and gd_devices_file_title in "{gd_secrets}" file.')
         else:
-            self.devices = self.db_file_load()
+            devices = self.db_file_load()
+            self.devices = devices or []
 
-    def db_file_load_gd(self, gd_file_title, gd_folder_id):
+    def db_file_load_gd(self, gd_file_title: str, gd_folder_id: str) -> tuple[Optional[list[dict[str, Optional[str]]]], Optional[GoogleDriveFile]]:
+        if not self.gds:
+            raise ValueError("Expected non-empty self.gds.")
+        devices = None
         # gd_file_id = 'TBD'
         # in_file_fd = self.gds.open_file_by_id(gd_file_id)
-        in_file_fd = self.gds.maybe_create_file_by_title(gd_file_title, gd_folder_id)
         self.loggr.info(f'Reading device database from Google Drive "{gd_file_title}" file.')
-        content = in_file_fd.GetContentString()
-        buffered = io.StringIO(content)
-        devices = self.db_file_load_fd(buffered)
+        in_file_fd = self.gds.maybe_create_file_by_title(gd_file_title, gd_folder_id)
+        if in_file_fd:
+            content = in_file_fd.GetContentString()
+            buffered = io.StringIO(content)
+            devices = self.db_file_load_fd(buffered)
         return devices, in_file_fd
 
-    def db_file_load(self):
+    def db_file_load(self) -> list[dict[str, Optional[str]]]:
         if not self.db_file:
             self.db_file = find_path(g_db_file_name, self.config_paths, self.loggr)
         if not self.db_file:
@@ -112,7 +125,7 @@ class Remoteiot:
             self.loggr.info(f'Reading device database from "{self.db_file}" file.')
             return self.db_file_load_fd(in_file_fd)
 
-    def db_file_load_fd(self, in_file_fd):
+    def db_file_load_fd(self, in_file_fd: Iterable[str]) -> list[dict[str, Optional[str]]]:
         csvreader = csv.reader(in_file_fd, delimiter=",", quotechar='"')
         input_row_num = 0
         got_header = False
@@ -157,12 +170,14 @@ class Remoteiot:
             self.db_file_cols[0] = "# " + self.db_file_cols[0]
         return devices
 
-    def db_file_save(self, devices, out_file):
+    def db_file_save(self, devices: list[dict[str, Optional[str]]], out_file: str) -> None:
         with open(out_file, "w", newline="", encoding="utf-8") as out_file_fd:
             self.loggr.info(f'Writing device database to "{out_file}" file.')
-            return self.db_file_save_fd(devices, out_file_fd)
+            self.db_file_save_fd(devices, out_file_fd)
 
-    def db_file_save_fd(self, devices, out_file_fd):
+    def db_file_save_fd(self, devices: list[dict[str, Optional[str]]], out_file_fd: IO) -> None:
+        if not self.db_file_cols:
+            raise ValueError("Expected non-empty self.db_file_cols.")
         csvwriter = csv.writer(out_file_fd, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         # Write header
@@ -175,7 +190,7 @@ class Remoteiot:
                 row += [device.get(key, "")]
             csvwriter.writerow(row)
 
-    def db_file_save_back(self):
+    def db_file_save_back(self) -> int:
         try:
             if self.gd_file and self.gds:
                 self.loggr.info(f'Writing device database to Google Drive "{self.gd_file["title"]}" file.')
@@ -196,7 +211,7 @@ class Remoteiot:
             return -1
         return 0
 
-    def db_add_device(self, device_id, device_name, device_group) -> int:
+    def db_add_device(self, device_id: str, device_name: str, device_group: Optional[str]) -> int:
         if self.find_device_by_id(device_id):
             raise ValueError(f'Device "{device_id}" already exists in the database')
         device = {
@@ -208,40 +223,40 @@ class Remoteiot:
         self.devices += [device]
         return self.db_file_save_back()
 
-    def db_delete_device(self, device_id) -> int:
+    def db_delete_device(self, device_id: str) -> int:
         device = self.find_device_by_id(device_id)
         if not device:
             raise ValueError(f'Device "{device_id}" is not found in the database')
         self.devices.remove(device)
         return self.db_file_save_back()
 
-    def find_device_by_id(self, device_id):
+    def find_device_by_id(self, device_id: str) -> Optional[dict[str, Optional[str]]]:
         for device in self.devices:
             if device_id == device["device_id"]:
                 return device
         return None
 
-    def unique_device_id(self, site_id: str, app_type: str, app_name: str) -> tuple[str, str, str]:
-        device_id_template = self.conf.get("device_id_template", "RPI-{sn:03d}")
-        device_name_template = self.conf.get("device_name_template", "RPI {sn:03d}")
+    def unique_device_id(self, site_id: str, app_type: str, app_name: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        device_id_template = self.conf.get("device_id_template") or "RPI-{sn:03d}"
+        device_name_template = self.conf.get("device_name_template") or "RPI {sn:03d}"
         # device_group_template = self.conf.get('device_group_template', "RPI {sn:03d}")
         device_group = None
-        values = {
+        values: dict[str, int | str] = {
             "sn": 1,
             "site_id": site_id,
             "app_type": app_type,
             "app_name": app_name,
         }
-        while values["sn"] < MAX_SN:
+        while int(values["sn"]) < MAX_SN:
             device_id = device_id_template.format(**values)
             device_name = device_name_template.format(**values)
             # device_group = device_group_template.format(**values)
             if not self.find_device_by_id(device_id):
                 return device_id, device_name, device_group
-            values["sn"] += 1
+            values["sn"] = int(values["sn"]) + 1
         return None, None, None
 
-    def conf_file_load(self):
+    def conf_file_load(self) -> get_conf:
         if not self.yaml_file:
             self.yaml_file = find_path(g_conf_file_name, self.config_paths, self.loggr)
         if not self.yaml_file:
@@ -267,7 +282,7 @@ class Remoteiot:
         except:
             return False
 
-    def remoteiot_is_installed(self) -> tuple[bool, str]:
+    def remoteiot_is_installed(self) -> tuple[bool, Optional[str]]:
         # Check if remoteiot config file is present
         remoteiot_conf_file = "/etc/remote-iot/configure"
         if not os.path.isfile(remoteiot_conf_file):
@@ -292,13 +307,15 @@ class Remoteiot:
 
         return True, device_id
 
-    def remoteiot_delete_device(self, device_id):
+    def remoteiot_delete_device(self, device_id: str) -> int:
         # TODO: (when implemented by remoteiot) Delete device record on remoteiot
         return 0
 
-    def remoteiot_install_and_connect(self, device_id, device_name, device_group):
+    def remoteiot_install_and_connect(self, device_id: str, device_name: str, device_group: Optional[str]) -> int:
         # if self.debug and os.name == 'nt': return 0  # For debug: Pretend completed ok
         service_key = self.conf.get("service_key")
+        if not service_key:
+            raise ValueError("Configuration does not have Remoteiot service key.")
         cmd = f"curl -s -L 'https://remoteiot.com/install/install.sh' | sudo bash -s '{service_key}' '{device_id}' '{device_name}'"
         if device_group:
             cmd += f" '{device_group}'"
@@ -308,10 +325,12 @@ class Remoteiot:
         self.loggr.info(f"DONE installing remoteiot, cmd={cmd_log} result={p}")
         return 0
 
-    def remoteiot_uninstall(self):
+    def remoteiot_uninstall(self) -> int:
         if self.debug and os.name == "nt":
             return 0  # Pretend completed ok # TODO: (now) Remove when done debugging
         service_key = self.conf.get("service_key")
+        if not service_key:
+            raise ValueError("Configuration does not have Remoteiot service key.")
         cmd = f"curl -s -L 'https://remoteiot.com/install/uninstall.sh' | sudo bash -s '{service_key}'"
         cmd_log = cmd.replace(service_key, "*" * 10)
         self.loggr.info(f"Uninstalling remoteiot, cmd={cmd_log} ...")
@@ -319,7 +338,7 @@ class Remoteiot:
         self.loggr.info(f"DONE uninstalling remoteiot, cmd={cmd_log} result={p}")
         return 0
 
-    def remoteiot_add_new_device(self, site_id: str, app_type: str, app_name: str):
+    def remoteiot_add_new_device(self, site_id: str, app_type: str, app_name: str) -> tuple[int, Optional[str], Optional[str]]:
         connected, device_id = self.remoteiot_is_installed()
         if connected:
             # if self.debug and os.name == 'nt': return 0  # For debug: Pretend completed ok
@@ -327,7 +346,7 @@ class Remoteiot:
             raise ValueError(f'This device is already connected to remoteiot.com service as device_id="{device_id}".')
 
         device_id, device_name, device_group = self.unique_device_id(site_id, app_type, app_name)
-        if not device_id:
+        if not device_id or not device_name:
             raise RuntimeError("Cannot find unique device id")
 
         err = self.remoteiot_install_and_connect(device_id, device_name, device_group)
@@ -342,7 +361,7 @@ class Remoteiot:
 
         return 0, device_id, device_name
 
-    def remoteiot_add_named_device(self, device_id: str, device_name: str, device_group: str):
+    def remoteiot_add_named_device(self, device_id: str, device_name: str, device_group: Optional[str]) -> tuple[int, Optional[str], Optional[str]]:
         # connected, existing_device_id = self.remoteiot_is_installed()
         # if connected:
         #     if self.debug and os.name == 'nt': return 0  # For debug: Pretend completed ok
@@ -351,24 +370,23 @@ class Remoteiot:
         # TODO: (when needed) remove existing connection for re-connecting device under old name?
 
         device = self.find_device_by_id(device_id)
-        if device:
-            device_name = device["device_name"]
-            device_group = device["device_group"]
+        my_device_name = (device["device_name"] or device_name) if device else device_name
+        my_device_group = device["device_group"] if device else device_group
 
-        err = self.remoteiot_install_and_connect(device_id, device_name, device_group)
+        err = self.remoteiot_install_and_connect(device_id, my_device_name, my_device_group)
         if err:
             # ? raise Exception(f'Cannot install remoteiot.com service, device_id={device_id}')
             return err, None, None
 
         if not device:
-            err = self.db_add_device(device_id, device_name, device_group)
+            err = self.db_add_device(device_id, my_device_name, my_device_group)
             if err:
                 # ? raise Exception(f'Cannot add new record to device database for device_id={device_id}')
                 return err, None, None
 
-        return 0, device_id, device_name
+        return 0, device_id, my_device_name
 
-    def remoteiot_delete_named_device(self, device_id: str):
+    def remoteiot_delete_named_device(self, device_id: str) -> tuple[int, str, Optional[str]]:
         device = self.find_device_by_id(device_id)
         device_name = None
         if not device:
@@ -390,31 +408,31 @@ class Remoteiot:
         return 0, device_id, device_name
 
 
-def cmd_devices(remote: Remoteiot, args):
+def cmd_devices(remote: Remoteiot, args: argparse.Namespace) -> int:
     show_secret = getattr(args, "show_secret", False)
     for device in remote.devices:
         vals = []
         for c in remote.cols + remote.cols_optional:
             key = c.replace(" ", "_")
             if show_secret or key not in remote.cols_secret:
-                vals += [device[key]]
+                vals += [device[key] or ""]
         print(", ".join(vals))
     return 0
 
 
-def cmd_unique(remote: Remoteiot, args):
+def cmd_unique(remote: Remoteiot, args: argparse.Namespace) -> int:
     print(*remote.unique_device_id(args.site_id, args.app_type, args.app_name), sep=", ")
     return 0
 
 
-def cmd_add(remote: Remoteiot, args):
+def cmd_add(remote: Remoteiot, args: argparse.Namespace) -> int:
     res, device_id, device_name = remote.remoteiot_add_new_device(args.site_id, args.app_type, args.app_name)
     if not res:
         print(f'Connected this device to remoteiot.com service as device_id="{device_id}" "{device_name}"')
     return res
 
 
-def cmd_add_named(remote: Remoteiot, args):
+def cmd_add_named(remote: Remoteiot, args: argparse.Namespace) -> tuple[int, Optional[str], Optional[str]]:
     device_id = args.device_id
     device_name = args.device_name
     device_group = None
@@ -426,18 +444,25 @@ def cmd_add_named(remote: Remoteiot, args):
     return res, device_id, device_name
 
 
-def cmd_add_at_install(remote: Remoteiot, args):
+def cmd_add_at_install(remote: Remoteiot, args: argparse.Namespace) -> int:
     conf = get_conf(filepath=f"{app_dir}/app_conf.yaml")
     site_id = conf.get("Site")
     app_name = conf.get("Name")
     app_type = conf.get("Type")
+    if not site_id:
+        raise ValueError(f'App configuration file "{app_dir}/app_conf.yaml" does not have "Site" set.')
+    if not app_name:
+        raise ValueError(f'App configuration file "{app_dir}/app_conf.yaml" does not have "Name" set.')
+    if not app_type:
+        raise ValueError(f'App configuration file "{app_dir}/app_conf.yaml" does not have "Type" set.')
+
     res, device_id, device_name = remote.remoteiot_add_new_device(site_id, app_type, app_name)
     if not res:
         print(f'Connected this device to remoteiot.com service as device_id="{device_id}" "{device_name}"')
     return res
 
 
-def cmd_query(remote: Remoteiot, args):
+def cmd_query(remote: Remoteiot, args: argparse.Namespace) -> int:
     connected, device_id = remote.remoteiot_is_installed()
     if connected:
         print(f'This device is connected to remoteiot.com service as device_id="{device_id}".')
@@ -446,7 +471,7 @@ def cmd_query(remote: Remoteiot, args):
     return 1
 
 
-def cmd_delete_named(remote: Remoteiot, args):
+def cmd_delete_named(remote: Remoteiot, args: argparse.Namespace) -> int:
     device_id = args.device_id
     res, device_id, device_name = remote.remoteiot_delete_named_device(device_id)
     if not res:
@@ -454,7 +479,7 @@ def cmd_delete_named(remote: Remoteiot, args):
     return res
 
 
-def parse_args():
+def parse_args() -> tuple[argparse.Namespace, argparse.ArgumentParser]:
     parser = argparse.ArgumentParser(description="Manage remote access (add)")
 
     # Common optional arguments
@@ -499,7 +524,7 @@ def parse_args():
     return args, parser
 
 
-def main():
+def main() -> int:
     args, parser = parse_args()
     logger.debug(f"DEBUG {vars(args)}")
 
@@ -513,7 +538,8 @@ def main():
         if args.command == "add":
             return cmd_add(remote, args)
         if args.command == "add_named":
-            return cmd_add_named(remote, args)
+            res, _device_id, _device_name = cmd_add_named(remote, args)
+            return res
         if args.command == "add_at_install":
             return cmd_add_at_install(remote, args)
         if args.command == "delete_named":

@@ -18,40 +18,56 @@
 from __future__ import annotations
 
 import inspect
+import logging
 import mimetypes
 import os
 import sys
 from typing import Optional
 
 from apiclient import errors
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build, Resource
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from httplib2 import Http
-from oauth2client.service_account import ServiceAccountCredentials
+from oauth2client.service_account import ServiceAccountCredentials, client
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
-from pydrive2.files import ApiRequestError, FileNotUploadedError, FileNotDownloadableError
+from pydrive2.files import GoogleDriveFile, MediaIoReadable, ApiRequestError, FileNotUploadedError
 
-from app_utils import get_conf
+from .app_utils import get_conf  # pylint: disable=relative-beyond-top-level
 
-__all__ = ["ApiRequestError", "FileNotUploadedError", "FileNotDownloadableError"]
+__all__ = [
+    # Unused imports for export
+    "ApiRequestError",
+    "FileNotUploadedError",
+    # API:
+    "gd_connect",
+    "GoogleDriveService",
+    "GoogleDrive",
+    "GoogleDriveFile",
+    # Examples:
+    # "check_file_write",
+    # "check_file_upload",
+    # "check_list_files",
+    # "drive_delete_file",
+    # "upload_file",
+]
 
 
 class GoogleDriveService:
-    def __init__(self, loggr=None):
+    def __init__(self, loggr: Optional[logging.Logger] = None) -> None:
         self.loggr = loggr
-        self._secrets_file = None
-        self.credentials = None
-        self.drive = None
-        self.service = None
+        self._secrets_file: Optional[str] = None
+        self.credentials: Optional[ServiceAccountCredentials | client.OAuth2Credentials] = None
+        self.drive: Optional[GoogleDrive] = None
+        self.service: Optional[Resource] = None
         self.gauth = None
 
-    def authenticate_in_browser(self, secrets_file):
+    def authenticate_in_browser(self, secrets_file: str) -> Optional[ServiceAccountCredentials | client.OAuth2Credentials]:
         """Authenticate using local webserver and webbrowser. Very slow and requires user interaction.
 
         Args:
-            secrets_file (string): Path to secrets json file
+            secrets_file (str): Path to secrets json file
 
         Returns:
             object: credentials
@@ -71,17 +87,18 @@ class GoogleDriveService:
                     "oauth_scope": ["https://www.googleapis.com/auth/drive"],
                 }
             )
-            self.gauth.LocalWebserverAuth()  # Creates local webserver and auto handles authentication.
-            # ? self.gauth.CommandLineAuth()  # Doesn't work for our use case: 1. It requires a token to be collected from visiting very long URL. 2. Trying that URL fails with redirect uri mismatch.
-            self.credentials = self.gauth.credentials
-            # print(f'Credentials: {self.gauth.credentials}')
+            if self.gauth:
+                self.gauth.LocalWebserverAuth()  # Creates local webserver and auto handles authentication.
+                # ? self.gauth.CommandLineAuth()  # Doesn't work for our use case: 1. It requires a token to be collected from visiting very long URL. 2. Trying that URL fails with redirect uri mismatch.
+                self.credentials = self.gauth.credentials
+                # print(f'Credentials: {self.gauth.credentials}')
         return self.credentials
 
-    def authenticate_sa(self, secrets_file):
+    def authenticate_sa(self, secrets_file: str) -> Optional[ServiceAccountCredentials | client.OAuth2Credentials]:
         """Authenticate using service account.
 
         Args:
-            secrets_file (string): Path to service account secrets json file
+            secrets_file (str): Path to service account secrets json file
 
         Returns:
             object: credentials
@@ -101,13 +118,15 @@ class GoogleDriveService:
                     "oauth_scope": ["https://www.googleapis.com/auth/drive"],
                 }
             )
-            scopes = ["https://www.googleapis.com/auth/drive"]
-            self.gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(self._secrets_file, scopes)
-            self.credentials = self.gauth.credentials
-            # if self.loggr: self.loggr.debug(f'Credentials: {self.gauth.credentials}')
+            if self.gauth:
+                # scopes = ["https://www.googleapis.com/auth/drive"] # Either list or str works, however, ServiceAccountCredentials.from_json_keyfile_name() has no type annotation for the list.
+                scopes = "https://www.googleapis.com/auth/drive"
+                self.gauth.credentials = ServiceAccountCredentials.from_json_keyfile_name(self._secrets_file, scopes)
+                self.credentials = self.gauth.credentials
+                # if self.loggr: self.loggr.debug(f'Credentials: {self.gauth.credentials}')
         return self.credentials
 
-    def get_drive(self):
+    def get_drive(self) -> Optional[GoogleDrive]:
         if not self.drive:
             # Must call self.authenticate_*() method before.
             if not self.gauth:
@@ -118,7 +137,7 @@ class GoogleDriveService:
             self.drive = GoogleDrive(self.gauth)
         return self.drive
 
-    def get_service(self, api="drive", api_version="v3"):
+    def get_service(self, api: str = "drive", api_version: str = "v3") -> Optional[Resource]:
         if not self.service:
             # see https://github.com/iterative/PyDrive2/issues/185#issuecomment-1269331395
             if not self.credentials:
@@ -129,15 +148,19 @@ class GoogleDriveService:
             self.service = build(api, api_version, http=http_auth, cache_discovery=False)
         return self.service
 
-    def open_file_by_id(self, file_id):
+    def open_file_by_id(self, file_id: str) -> Optional[MediaIoReadable]:
         drive = self.get_drive()
+        if not drive:
+            return None
         # Create a file with the same id
         gfile = drive.CreateFile({"id": file_id})
         return gfile.GetContentIOBuffer()
 
-    def read_file_by_id(self, file_id):
+    def read_file_by_id(self, file_id: str) -> Optional[tuple[GoogleDriveFile, str]]:
         # service = self.get_service()
         drive = self.get_drive()
+        if not drive:
+            return None
         # Create a file with the same id
         gfile = drive.CreateFile({"id": file_id})
         # Save the content as a string
@@ -146,16 +169,19 @@ class GoogleDriveService:
         # df = pd.read_csv(content)
         return gfile, content
 
-    def upload_file(self, dir_id, file_path, mimetype, dst_filename=None, dst_mimetype=None, resumable=True):
+    def upload_file(
+        self, dir_id: Optional[str], file_path: str, mimetype: str, dst_filename: Optional[str] = None, dst_mimetype: Optional[str] = None, resumable: bool = True
+    ) -> Optional[GoogleDriveFile]:
         """Upload a file (optionally resumable, and optionally with conversion if dst_mimetype provided and is different than mimetype).
 
         Returns: uploaded file object
         """
         service = self.get_service()
+        if not service:
+            return None
         if not mimetype:
-            mimetype = mimetypes.guess_type(file_path)[0]
-            if not mimetype:
-                mimetype = "application/octet-stream"
+            mimetype_maybe = mimetypes.guess_type(file_path)[0]
+            mimetype = mimetype_maybe or "application/octet-stream"
 
         if not dst_filename:
             dst_filename = os.path.basename(file_path)
@@ -163,7 +189,7 @@ class GoogleDriveService:
             dst_mimetype = mimetype
         file = None
         try:
-            file_metadata = {
+            file_metadata: dict[str, str | list[str]] = {
                 "name": dst_filename,
                 "mimeType": dst_mimetype,
             }
@@ -171,7 +197,9 @@ class GoogleDriveService:
                 file_metadata["parents"] = [dir_id]
             media = MediaFileUpload(file_path, mimetype=mimetype, resumable=resumable)
             # pylint: disable=maybe-no-member
-            file = service.files().create(body=file_metadata, media_body=media, fields="id", supportsAllDrives=dir_id is not None).execute()
+            files_service = service.files()  # TODO: (now) FIXME: service of type Resource does not have .files() method!
+            if files_service:
+                file = files_service.create(body=file_metadata, media_body=media, fields="id", supportsAllDrives=dir_id is not None).execute()
             # supportsAllDrives=True is important to use so 'parents' works correctly.
             # if self.loggr: self.loggr.info(f'Uploaded "{file_path}" to "{dst_filename}" in folder id "{dir_id}", created file ID: "{file.get("id")}"')
 
@@ -184,7 +212,7 @@ class GoogleDriveService:
 
     # https://developers.google.com/drive/api/v2/reference/files/list
     @classmethod
-    def retrieve_all_files(cls, service):
+    def retrieve_all_files(cls, service: Resource) -> list[GoogleDriveFile]:
         """Retrieve a list of File resources.
 
         Args:
@@ -197,13 +225,16 @@ class GoogleDriveService:
         page_token = None
         while True:
             try:
-                param = {}
+                param: dict[str, str] = {}
                 if page_token:
                     param["pageToken"] = page_token
-                files = service.files().list(**param).execute()
-
-                result.extend(files["items"])
-                page_token = files.get("nextPageToken")
+                page_token = None
+                files_service = service.files()  # TODO: (now) FIXME: service of type Resource does not have .files() method!
+                if files_service:
+                    files = files_service.list(**param).execute()
+                    if files:
+                        result.extend(files.get("items", []))
+                        page_token = files.get("nextPageToken")
                 if not page_token:
                     break
             except errors.HttpError as error:
@@ -212,7 +243,7 @@ class GoogleDriveService:
         return result
 
     @classmethod
-    def retrieve_all_drives(cls, service):
+    def retrieve_all_drives(cls, service: Resource) -> list[GoogleDrive]:
         """Retrieve a list of Drive resources.
 
         Args:
@@ -225,16 +256,16 @@ class GoogleDriveService:
         page_token = None
         while True:
             try:
-                param = {}
+                param: dict[str, str] = {}
                 if page_token:
                     param["pageToken"] = page_token
-                drives = service.drives().list(**param).execute()
-
-                if "items" in drives:
-                    result.extend(drives["items"])
-                else:
-                    pass
-                page_token = drives.get("nextPageToken")
+                page_token = None
+                drives_service = service.drives()  # TODO: (now) FIXME: service of type Resource does not have .derives() method!
+                if drives_service:
+                    drives = drives_service.list(**param).execute()
+                    if drives:
+                        result.extend(drives.get("items", []))
+                        page_token = drives.get("nextPageToken")
                 if not page_token:
                     break
             except errors.HttpError as error:
@@ -242,40 +273,42 @@ class GoogleDriveService:
                 break
         return result
 
-    def drive_create_folder(self, parent_folder_id, subfolder_name):
+    def drive_create_folder(self, parent_folder_id: str, subfolder_name: str) -> Optional[GoogleDriveFile]:
         if not self.drive:
             raise ValueError("Expected non-empty self.drive.")
         new_folder = self.drive.CreateFile({"title": subfolder_name, "parents": [{"kind": "drive#fileLink", "id": parent_folder_id}], "mimeType": "application/vnd.google-apps.folder"})
         new_folder.Upload()
         return new_folder
 
-    def maybe_create_file_by_title(self, title, parent_directory_id):
+    def maybe_create_file_by_title(self, title: str, parent_directory_id: str) -> Optional[GoogleDriveFile]:
         file = self.get_file_by_title(title, parent_directory_id)
         if not file:
             drive = self.get_drive()
-            file = drive.CreateFile({"parents": [{"id": parent_directory_id}], "title": title})  # Create GoogleDriveFile instance with title.
-            # file.SetContentString(contents) # Set content of the file from given string.
-            # file.Upload()
+            if drive:
+                file = drive.CreateFile({"parents": [{"id": parent_directory_id}], "title": title})  # Create GoogleDriveFile instance with title.
+                # file.SetContentString(contents) # Set content of the file from given string.
+                # file.Upload()
 
         return file
 
-    def get_file_by_title(self, title, parent_directory_id):
+    def get_file_by_title(self, title: str, parent_directory_id: str) -> Optional[GoogleDriveFile]:
         # based on drive_get_id_of_title() from https://docs.iterative.ai/PyDrive2/quickstart/#return-file-id-via-file-title
         drive = self.get_drive()
-        foldered_list = drive.ListFile({"q": f"'{parent_directory_id}' in parents and trashed=false"}).GetList()
-        for file in foldered_list:
-            if file["title"] == title:
-                return file
+        if drive:
+            foldered_list = drive.ListFile({"q": f"'{parent_directory_id}' in parents and trashed=false"}).GetList()
+            for file in foldered_list:
+                if file["title"] == title:
+                    return file
         return None
 
-    def get_file_id_by_title(self, title, parent_directory_id):
+    def get_file_id_by_title(self, title: str, parent_directory_id: str) -> Optional[str]:
         file = self.get_file_by_title(title, parent_directory_id)
         return file["id"] if file else None
 
     # HOME_DIRECTORY=""
     # ROOT_FOLDER_NAME=""
     # USERNAME=""
-    def interactive_folder_browser(self, folder_list, parent_id, browsed=None):
+    def interactive_folder_browser(self, folder_list: list[dict[str, str | list]], parent_id: str, browsed: Optional[list[str]] = None) -> Optional[str]:
         if not browsed:
             browsed = []
         for element in folder_list:
@@ -294,21 +327,30 @@ class GoogleDriveService:
             newfolder = self.drive_create_folder(parent_id, inp)
             # if not os.path.exists(HOME_DIRECTORY+ROOT_FOLDER_NAME+os.path.sep+USERNAME):
             #   os.makedirs(HOME_DIRECTORY+ROOT_FOLDER_NAME+os.path.sep+USERNAME)
-            return newfolder["id"]
+            return newfolder["id"] if newfolder else None
 
         folder_selected = inp
         for element in folder_list:
             if isinstance(element, dict) and element["title"] == folder_selected:
-                struc = element["list"]
+                if not isinstance(element["list"], list):
+                    return None  # This should not be happening, but type system is simplistic, need schema instead.
+                struc: list[dict[str, str | list]] = element["list"]
                 browsed.append(folder_selected)
                 print("Inside " + folder_selected)
+                if not isinstance(element["id"], str):
+                    return None  # This should not be happening, but type system is simplistic, need schema instead.
                 return self.interactive_folder_browser(struc, element["id"], browsed)
         return None
 
 
 def gd_connect(
-    loggr, gd_secrets, extra_fields_with_values: Optional[dict[str, str]] = None, extra_mode: str = "override", skip_msg: str = "Will skip uploading results files.", prefix: str = "pibase_"
-) -> tuple[GoogleDriveService | None, dict[str, str]]:
+    loggr: Optional[logging.Logger],
+    gd_secrets: str,
+    extra_fields_with_values: Optional[dict[str, Optional[str]]] = None,
+    extra_mode: str = "override",
+    skip_msg: str = "Will skip uploading results files.",
+    prefix: str = "pibase_",
+) -> tuple[Optional[GoogleDriveService], dict[str, Optional[str]]]:
     """Helper function: Open secrets file and Authenticate with Google Drive, and additionally load extra fields from the secrets file.
 
     Args:
@@ -363,14 +405,14 @@ def gd_connect(
     return gds, extra
 
 
-def check_file_write(drive, dir_id, filename, contents):
+def check_file_write(drive: GoogleDrive, dir_id: str, filename: str, contents: str) -> None:
     file1 = drive.CreateFile({"parents": [{"id": dir_id}], "title": filename})  # Create GoogleDriveFile instance with title.
     file1.SetContentString(contents)  # Set content of the file from given string.
     file1.Upload()
     print(f'Created file "{filename}" in Drive/Folder "{dir_id}", size:{len(contents)}')
 
 
-def check_file_upload(drive, dir_id):
+def check_file_upload(drive: GoogleDrive, dir_id: str) -> None:
     filename = "1.jpg"
     gfile = drive.CreateFile({"parents": [{"id": dir_id}]})
     # Read file and set it as the content of this instance.
@@ -378,7 +420,7 @@ def check_file_upload(drive, dir_id):
     gfile.Upload()  # Upload the file.
 
 
-def check_list_files(drive, folder_id):
+def check_list_files(drive: GoogleDrive, folder_id: str) -> None:
     # Auto-iterate through all files that matches this query
     query_fmt = "'{id}' in parents and trashed=false"
     query = query_fmt.format(id=folder_id)
@@ -392,7 +434,7 @@ def check_list_files(drive, folder_id):
     print("-" * 80)
 
 
-def drive_delete_file(drive, file_id):
+def drive_delete_file(drive: GoogleDrive, file_id: str) -> None:
     file = drive.CreateFile({"id": file_id})
     # file.Trash()  # Move file to trash.
     # file.UnTrash()  # Move file out of trash.
@@ -400,15 +442,16 @@ def drive_delete_file(drive, file_id):
     print(f'Deleted file id "{file_id}"')
 
 
-def upload_file(service, dir_id, file_path, mimetype, dst_filename=None, dst_mimetype=None, resumable=True):
+def upload_file(
+    service: Resource, dir_id: str, file_path: str, mimetype: str, dst_filename: Optional[str] = None, dst_mimetype: Optional[str] = None, resumable: bool = True
+) -> Optional[GoogleDriveFile]:
     """Upload a file (optionally resumable, and optionally with conversion if dst_mimetype provided and is different than mimetype).
 
     Returns: ID of the file uploaded
     """
     if not mimetype:
-        mimetype = mimetypes.guess_type(file_path)[0]
-        if not mimetype:
-            mimetype = "application/octet-stream"
+        mimetype_maybe = mimetypes.guess_type(file_path)[0]
+        mimetype = mimetype_maybe or "application/octet-stream"
 
     if not dst_filename:
         dst_filename = os.path.basename(file_path)
@@ -416,7 +459,7 @@ def upload_file(service, dir_id, file_path, mimetype, dst_filename=None, dst_mim
         dst_mimetype = mimetype
     file = None
     try:
-        file_metadata = {
+        file_metadata: dict[str, str | list[str]] = {
             "name": dst_filename,
             "mimeType": dst_mimetype,
         }
@@ -424,9 +467,11 @@ def upload_file(service, dir_id, file_path, mimetype, dst_filename=None, dst_mim
             file_metadata["parents"] = [dir_id]
         media = MediaFileUpload(file_path, mimetype=mimetype, resumable=resumable)
         # pylint: disable=maybe-no-member
-        file = service.files().create(body=file_metadata, media_body=media, fields="id", supportsAllDrives=dir_id is not None).execute()
-        # supportsAllDrives=True is important to use so 'parents' works correctly.
-        print(f'Uploaded "{file_path}" to "{dst_filename}" in folder id "{dir_id}", created file ID: "{file.get("id")}"')
+        files_service = service.files()  # TODO: (now) FIXME: service of type Resource does not have .files() method!
+        if files_service:
+            file = files_service.create(body=file_metadata, media_body=media, fields="id", supportsAllDrives=dir_id is not None).execute()
+            # supportsAllDrives=True is important to use so 'parents' works correctly.
+            print(f'Uploaded "{file_path}" to "{dst_filename}" in folder id "{dir_id}", created file ID: "{file.get("id")}"')
 
     except HttpError as error:
         # print(F'upload_file() failed, error: {error}')
@@ -436,8 +481,8 @@ def upload_file(service, dir_id, file_path, mimetype, dst_filename=None, dst_mim
     return file
 
 
-def demo(use_sa=True):
-    def get_script_dir(follow_symlinks=True):
+def demo(use_sa: bool = True) -> None:
+    def get_script_dir(follow_symlinks: bool = True) -> str:
         if getattr(sys, "frozen", False):  # py2exe, PyInstaller, cx_Freeze
             path = os.path.abspath(sys.executable)
         else:
@@ -480,7 +525,7 @@ def demo(use_sa=True):
 
     # see https://github.com/iterative/PyDrive2/issues/185#issuecomment-1269331395
     service = mygd.get_service()
-    drives = GoogleDriveService.retrieve_all_drives(service)
+    drives = GoogleDriveService.retrieve_all_drives(service) if service else []
     print("-" * 80)
     print(f"All Drives: items:{len(drives)}")
     for i, item in enumerate(drives):

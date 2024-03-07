@@ -1,3 +1,6 @@
+# TODO: (now) Update this version number along with _version.py:
+pi_base==0.0.4
+
 esptool==3.3
 bleak==0.19.5
 coolname==2.2.0

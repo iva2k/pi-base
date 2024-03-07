@@ -11,14 +11,8 @@ import os
 import subprocess
 import sys
 
-try:
-    from .modpath import get_script_dir  # pylint: disable=wrong-import-position
-except:
-    from modpath import get_script_dir  # pylint: disable=wrong-import-position
-try:
-    from .make import main as make_main
-except:
-    from make import main as make_main
+from .modpath import get_script_dir  # pylint: disable=wrong-import-position
+from .make import main as make_main
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
