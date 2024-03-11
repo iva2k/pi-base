@@ -4,12 +4,14 @@
 import signal
 import sys
 import time
+from typing import Callable
 
-# "modpath" must be first of pi_base modules
-from pi_base.modpath import app_dir  # pylint: disable=wrong-import-position
+# "modpath" must be first of our modules
+from pi_base.modpath import app_conf_dir  # pylint: disable=wrong-import-position
 from pi_base.lib.app_utils import eth0_mac, get_conf, get_pi_model, get_pi_revision, reboot
 from pi_base.lib.large import Large
 from pi_base.lib.loggr import Loggr
+
 
 vt_number = None
 vt_history = 4
@@ -22,7 +24,7 @@ large = Large()
 class Test:
     """Test."""
 
-    def __init__(self, fnc_input, fnc_filter_input) -> None:
+    def __init__(self, fnc_input: Callable, fnc_filter_input: Callable) -> None:
         """@fnc_input is getter of test data (e.g. operator input() or some other automated data provider).
 
         @fnc_filter_input checks for special commands in the input and returns "True" to stop test, "False" if data is not filtered and test can proceed.
@@ -124,8 +126,8 @@ def main():
         pi_model = "(not a Pi)"
         pi_revision = ""
 
-    # os.chdir(app_dir)
-    conf = get_conf(filepath=f"{app_dir}/app_conf.yaml")
+    # os.chdir(app_conf_dir)
+    conf = get_conf(filepath=f"{app_conf_dir}/app_conf.yaml")
     name = conf.get("Name")
     app_type = conf.get("Type")
     version = conf.get("Version")

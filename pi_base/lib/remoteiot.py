@@ -18,9 +18,9 @@ from typing import IO, Optional
 from collections.abc import Iterable
 
 # "modpath" must be first of our modules
-from pi_base.modpath import app_dir  # pylint: disable=wrong-import-position
-from .app_utils import get_conf, find_path
-from .gd_service import gd_connect, GoogleDriveFile
+from pi_base.modpath import app_conf_dir  # pylint: disable=wrong-import-position
+from app_utils import get_conf, find_path
+from gd_service import gd_connect, GoogleDriveFile
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
@@ -46,7 +46,7 @@ class Remoteiot:
             raise ValueError("Please provide loggr argument")
         self.loggr = loggr
 
-        if not app_dir:
+        if not app_conf_dir:
             raise RuntimeError("Was not able to find app directory")
 
         root = os.path.dirname(os.path.realpath(__file__))
@@ -58,16 +58,16 @@ class Remoteiot:
             ".",
             "./remoteiot.com",
             "../remoteiot.com",
-            os.path.join(app_dir, "app"),
-            app_dir,
+            os.path.join(app_conf_dir, "app"),
+            app_conf_dir,
             "~",
         ]
         self.secrets_paths = [
             root,
             os.path.join(base, "secrets"),
             base,
-            os.path.join(app_dir, "app"),
-            app_dir,
+            os.path.join(app_conf_dir, "app"),
+            app_conf_dir,
             "~",
         ]
 
@@ -82,7 +82,7 @@ class Remoteiot:
         self.conf = self.conf_file_load()
         # Look for devices DB in Google Drive first
         self.gd_file = None
-        gd_secrets_file = self.conf.get_subkey("GoogleDrive", "secrets", os.path.join(app_dir, gd_secrets_file_default))
+        gd_secrets_file = self.conf.get_subkey("GoogleDrive", "secrets", os.path.join(app_conf_dir, gd_secrets_file_default))
         gd_secrets = find_path(gd_secrets_file, self.secrets_paths, self.loggr) if gd_secrets_file else None
         if gd_secrets:
             self.gds, extras = gd_connect(self.loggr, gd_secrets, {"gd_devices_folder_id": None, "gd_devices_file_title": None}, skip_msg="Cannot continue.")
@@ -445,16 +445,16 @@ def cmd_add_named(remote: Remoteiot, args: argparse.Namespace) -> tuple[int, Opt
 
 
 def cmd_add_at_install(remote: Remoteiot, args: argparse.Namespace) -> int:
-    conf = get_conf(filepath=f"{app_dir}/app_conf.yaml")
+    conf = get_conf(filepath=f"{app_conf_dir}/app_conf.yaml")
     site_id = conf.get("Site")
     app_name = conf.get("Name")
     app_type = conf.get("Type")
     if not site_id:
-        raise ValueError(f'App configuration file "{app_dir}/app_conf.yaml" does not have "Site" set.')
+        raise ValueError(f'App configuration file "{app_conf_dir}/app_conf.yaml" does not have "Site" set.')
     if not app_name:
-        raise ValueError(f'App configuration file "{app_dir}/app_conf.yaml" does not have "Name" set.')
+        raise ValueError(f'App configuration file "{app_conf_dir}/app_conf.yaml" does not have "Name" set.')
     if not app_type:
-        raise ValueError(f'App configuration file "{app_dir}/app_conf.yaml" does not have "Type" set.')
+        raise ValueError(f'App configuration file "{app_conf_dir}/app_conf.yaml" does not have "Type" set.')
 
     res, device_id, device_name = remote.remoteiot_add_new_device(site_id, app_type, app_name)
     if not res:

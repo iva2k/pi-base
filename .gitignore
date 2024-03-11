@@ -36,7 +36,6 @@ reports/
 **/__pycache__/
 *.so
 *~
-p_scm.toml
 # By tox and pytest:
 .tox/
 .cache

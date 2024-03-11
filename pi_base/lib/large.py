@@ -4,7 +4,7 @@ import inspect
 import sys
 import os
 
-import tput
+from . import tput
 
 
 class Large:
@@ -61,8 +61,9 @@ class Large:
                 max_cols = 0
                 rows = 0
             else:
+                line = line_in
                 for k, v in conversions:
-                    line = line_in.replace(k, v)
+                    line = line.replace(k, v)
                     if max_cols < len(line):
                         max_cols = len(line)
                 lines += [line]

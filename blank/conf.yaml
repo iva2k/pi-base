@@ -10,6 +10,7 @@ Info:
 Conf:
     Server: false
 Modules:
+    - __init__.py
     - app_utils.py
     - gd_service.py
     - large.py
@@ -21,9 +22,9 @@ Modules:
     - tput.py
     - winserial.py
 Files:
-    - { src: 'secrets/remote_secrets.yaml', dst: 'app/' }
+    - { src: 'blank/__init__.py', dst: 'app/' }
     - { src: 'blank/blank.py', dst: 'app/' }
-    # - { src: 'pi_base/common/a.py', dst: 'modules/renamed.b.py' }
+    - { src: 'secrets/remote_secrets.yaml', dst: 'app/' }
     # - { src: 'secrets/sa_admin_client_secrets.json', dst: 'app/' }
 PostInstall:
     DeleteFiles:

@@ -18,7 +18,7 @@ import sys
 from typing import Optional
 
 # "modpath" must be first of our modules
-from pi_base.modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
+from pi_base.modpath import get_app_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
 from .app_utils import get_conf, find_path
 from .gd_service import gd_connect, FileNotUploadedError
 
@@ -76,21 +76,21 @@ class DeploySiteDB:
         # script_dir = os.path.dirname(os.path.realpath(__file__))
         # workspace = os.path.abspath(os.path.dirname(os.path.dirname(script_dir)))
         script_dir = get_script_dir(__file__)
-        workspace = get_workspace_dir()
+        workspace = get_app_workspace_dir()
         self.config_paths = config_paths or [
             script_dir,
             os.path.join(workspace, "secrets"),
             workspace,
-            # os.path.join(app_dir, 'app'),
-            # app_dir,
+            # os.path.join(app_conf_dir, 'app'),
+            # app_conf_dir,
             "~",
         ]
         self.secrets_paths = secrets_paths or [
             script_dir,
             os.path.join(workspace, "secrets"),
             workspace,
-            # os.path.join(app_dir, 'app'),
-            # app_dir,
+            # os.path.join(app_conf_dir, 'app'),
+            # app_conf_dir,
             "~",
         ]
 

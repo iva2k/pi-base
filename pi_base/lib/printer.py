@@ -51,7 +51,7 @@ import os
 import platform
 import subprocess
 import sys
-from typing import Any, Optional
+from typing import Optional
 from abc import ABC, abstractmethod
 
 from app_utils import AtDict
@@ -67,8 +67,8 @@ logger.setLevel(logging.DEBUG)
 # conn.printFile(printer_name,'/home/pi/Desktop/a.pdf',"",{})
 
 
-def eprint(*args: object, **kwargs: Any) -> None:
-    print(*args, file=sys.stderr, **kwargs)
+def eprint(*args: object, **kwargs: object) -> None:
+    print(*args, **kwargs, file=sys.stderr)
 
 
 def shell(cmd: "list[str]") -> "tuple[int, str, str]":
@@ -655,7 +655,7 @@ def winPrint2() -> None:
         win32print.ClosePrinter(hprinter)
 
 
-def maybe_get_printer_handler(driver_type: str, *args: object, **kwargs: Any) -> Optional[PrinterInterface]:
+def maybe_get_printer_handler(driver_type: str, *args: object, **kwargs: object) -> Optional[PrinterInterface]:
     inst: Optional[PrinterInterface] = None
     if driver_type.lower() == "cups":
         inst = CupsPrinter(*args, **kwargs)
@@ -667,7 +667,7 @@ def maybe_get_printer_handler(driver_type: str, *args: object, **kwargs: Any) ->
     return inst
 
 
-def OsPrinter(*args: object, **kwargs: Any) -> PrinterInterface:
+def OsPrinter(*args: object, **kwargs: object) -> PrinterInterface:
     if os.name == "nt":  # Windows
         driver_type = "Win"
         # driver_type = 'LPrint'  # for debugging LPrint piping on Windows. Can try LPrint on Windows some day.

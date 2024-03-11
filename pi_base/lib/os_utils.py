@@ -8,7 +8,8 @@ import os
 import platform
 import shutil
 import sys
-from typing import Optional
+from typing import AnyStr, Optional
+from collections.abc import Iterator
 
 import psutil
 
@@ -123,3 +124,39 @@ def disk_is_healthy(printer=None) -> tuple[bool, list[str]]:
     # if psutil.disk_partitions()[0].fstype == 'NTFS' and psutil.win32.disk_usage(psutil.disk_partitions()[0].device).total < 10000000000:
     #     if printer: printer("Low disk space on NTFS partition")
     return healthy, summary
+
+
+def walklevel(root_dir, level=1) -> "Iterator[tuple[AnyStr, list[AnyStr], list[AnyStr]]]":
+    """Similar to os.walk() but with a level parameter.
+
+        From https://stackoverflow.com/a/234329
+
+    Args:
+        root_dir (str): _description_
+        level (int, optional): How many levels to return. Defaults to 1.
+
+    Raises:
+        FileNotFoundError: If root_dir directory does not exist
+
+    Yields:
+        Iterator[tuple[AnyStr@walk, list[AnyStr@walk], list[AnyStr@walk]]]: _description_
+
+    Example:
+    from os_utils import walklevel
+    for root, dirs, files in walklevel('python/Lib/email'):
+        print(root, "consumes", end="")
+        print(sum(getsize(join(root, name)) for name in files), end="")
+        print("bytes in", len(files), "non-directory files")
+        if 'CVS' in dirs:
+            dirs.remove('CVS')  # don't visit CVS directories
+
+    """
+    root_dir = root_dir.rstrip(os.path.sep)
+    if not os.path.isdir(root_dir):
+        raise FileNotFoundError(f"No such directory: {root_dir}")
+    num_sep = root_dir.count(os.path.sep)
+    for root, dirs, files in os.walk(root_dir):
+        yield root, dirs, files
+        num_sep_this = root.count(os.path.sep)
+        if num_sep + level <= num_sep_this:
+            del dirs[:]

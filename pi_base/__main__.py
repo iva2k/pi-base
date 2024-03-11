@@ -11,7 +11,21 @@ import os
 import subprocess
 import sys
 
-from .modpath import get_script_dir  # pylint: disable=wrong-import-position
+## Experimental: hacks to use relative import not in module (e.g. CLI)
+# Experiments revealed that it is sufficient to set __package__ variable to enable relative imports.
+# If any future version of Python breaks that behavior, that assumption will need to be revisited.
+# __init__.py files in the relative import tree are not needed for it to work.
+# import importlib
+# module = importlib.import_module("path", os.path.basename(SCRIPT_DIR))
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# ? sys.path.append(os.path.dirname(os.path.realpath(SCRIPT_DIR)))
+# pylint: disable-next=redefined-builtin
+__package__ = os.path.basename(SCRIPT_DIR)  # noqa: A001
+# pylint: disable=wrong-import-position,relative-beyond-top-level
+# ruff: noqa: E402
+
+from .modpath import get_script_dir
 from .make import main as make_main
 
 logging.basicConfig(level=logging.INFO)

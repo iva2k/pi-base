@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
+
 from __future__ import annotations
+
 import os
 import time
-import tput
 import logging
 import platform
 
 from enum import Enum
 from subprocess import Popen, PIPE, DEVNULL
+
+from . import tput
 
 os.system("")  # Enable ANSI color codes  # noqa: S605, S607
 

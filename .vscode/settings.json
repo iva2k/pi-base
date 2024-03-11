@@ -8,23 +8,22 @@
     // Python settings https://code.visualstudio.com/docs/python/settings-reference
     // Settings Profiles are coming <https://code.visualstudio.com/updates/v1_69#_settings-profiles>
     "python.defaultInterpreterPath": "${env:CONDA_ENV}",
-    "python.pythonPath": "${env:CONDA_ENV}",
     "terminal.integrated.env.linux": {
-        "PYTHONPATH": "${workspaceFolder}/scripts:${workspaceFolder}/common"
+        "UNUSED_PYTHONPATH": "${workspaceFolder}/lib:${workspaceFolder}/pi_base/lib"
     },
     "terminal.integrated.env.osx": {
-        "PYTHONPATH": "${workspaceFolder}/scripts:${workspaceFolder}/common"
+        "UNUSED_PYTHONPATH": "${workspaceFolder}/lib:${workspaceFolder}/pi_base/lib"
     },
     "terminal.integrated.env.windows": {
-        "PYTHONPATH": "${workspaceFolder}/scripts;${workspaceFolder}/common"
+        "UNUSED_PYTHONPATH": "${workspaceFolder}/lib;${workspaceFolder}/pi_base/lib"
     },
     "python.analysis.extraPaths": [
-        "${workspaceFolder}/scripts",
-        "${workspaceFolder}/common"
+        "${workspaceFolder}/lib",
+        "${workspaceFolder}/pi_base/lib"
     ],
     "python.autoComplete.extraPaths": [
-        "${workspaceFolder}/scripts",
-        "${workspaceFolder}/common"
+        "${workspaceFolder}/lib",
+        "${workspaceFolder}/pi_base/lib"
     ],
 
     "[python]": {
@@ -38,13 +37,12 @@
         "editor.wordWrap": "off",
         "editor.wordWrapColumn": 200,
     },
-    // "python.experiments.optInto": ["pythonTerminalEnvVarActivation"],
 
     "pylint.args": [
         "--max-line-length=200",
         "--disable=C0103,C0111,C0301,C0302,C0321,W0511,W0702,W0703,W0612,W0613",
         "--init-hook",
-        "import sys; sys.path.append(\"./scripts\"); sys.path.append(\"./common\")"
+        "import sys; sys.path.append(\"./lib\"); sys.path.append(\"./pi_base/lib\");"
     ],
     "autopep8.args": [
         "--max-line-length=200"
@@ -74,5 +72,12 @@
     "esbonio.sphinx.confDir"  : "${workspaceFolder}/docs",
     "esbonio.sphinx.srcDir"   : "${workspaceFolder}/docs",
     "esbonio.server.enabled": true,
-    "mypy.enabled": false
+    "mypy.enabled": false,
+    "ruff.organizeImports": false,
+    "python.analysis.fixAll": [
+        // "ruff"
+        "source.convertImportFormat",
+        "source.unusedImports",
+    ],
+    "python.analysis.typeCheckingMode":"standard"
 }

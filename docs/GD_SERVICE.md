@@ -6,7 +6,7 @@ Based on <https://www.labnol.org/google-api-service-account-220404>.
 
 ### 1. Create a Google Cloud Project
 
-Go to Google Cloud Console <https://console.cloud.google.com> and create a new Google Cloud project. Give your project a name, change the project ID and click the `Create` button.
+Go to Google Cloud Console <https://console.cloud.google.com> (login or switch account as necessary) and create a new Google Cloud project. Give your project a name, change the project ID and click the `Create` button.
 
 For tools in this repository, a project `PiBaseDemo` has been already created.
 

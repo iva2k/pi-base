@@ -23,6 +23,8 @@ import logging
 import os
 import platform
 import shutil
+
+# import sys
 from subprocess import check_output, CalledProcessError
 
 # import sys
@@ -30,9 +32,17 @@ from timeit import default_timer as timer
 import yaml
 
 # "modpath" must be first of our modules
-from .modpath import get_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
-from .lib.deploy_site import DeploySiteDB  # pylint: disable=wrong-import-position
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# ? sys.path.append(os.path.dirname(os.path.realpath(SCRIPT_DIR)))
+# pylint: disable-next=redefined-builtin
+__package__ = os.path.basename(SCRIPT_DIR)  # noqa: A001
+# pylint: disable=wrong-import-position,relative-beyond-top-level
+# ruff: noqa: E402
+
+from .modpath import get_app_workspace_dir, get_script_dir, site_id as develop_site_id, project as develop_project_id
+from .lib.deploy_site import DeploySiteDB
 from .lib.app_utils import find_path
+from .lib.os_utils import walklevel
 
 
 logging.basicConfig(level=logging.INFO)
@@ -40,8 +50,10 @@ logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 # logger.setLevel(logging.DEBUG)
 
 # No root first slash (will be added as necessary):
-app_dir = "home/pi"
+app_conf_dir = "home/pi"
 etc_dir = "etc"
+
+CONF_YAML = "conf.yaml"
 
 
 class Builder:
@@ -60,14 +72,14 @@ class Builder:
         self.comment = ""
         self.type = args.type
         self.site_id = args.site
-        self.base_dir = args.workspace if isinstance(args.workspace, str) else get_workspace_dir()  # Find client project base directory
+        self.app_workspace_dir = args.workspace if isinstance(args.workspace, str) else get_app_workspace_dir()  # Find client project base directory
         self.package_dir = get_script_dir(__file__)  # Find package directory
-        self.stage_dir = os.path.join(self.base_dir, "build", self.site_id, self.type)
+        self.stage_dir = os.path.join(self.app_workspace_dir, "build", self.site_id, self.type)
 
-        self.loggr.debug(f"base_dir    : {self.base_dir}")
-        self.loggr.debug(f"package_dir : {self.package_dir}")
-        self.loggr.debug(f"stage_dir   : {self.stage_dir}")
-        self.loggr.debug(f"app_dir     : {app_dir}")
+        self.loggr.debug(f"app_workspace_dir : {self.app_workspace_dir}")
+        self.loggr.debug(f"package_dir       : {self.package_dir}")
+        self.loggr.debug(f"stage_dir         : {self.stage_dir}")
+        self.loggr.debug(f"app_conf_dir      : {app_conf_dir}")
 
     def rmdir(self, path):
         path = os.path.normpath(path)
@@ -114,7 +126,7 @@ class Builder:
             default_filename,
             [
                 self.package_dir,
-                self.base_dir,
+                self.app_workspace_dir,
             ],
             self.loggr,
         )
@@ -127,8 +139,8 @@ class Builder:
                 self.loggr.error(f"Error opening default config {yaml_file}")
 
         custom_conf_dat = {}
-        filename = "conf.yaml"
-        yaml_file = os.path.join(self.base_dir, self.type, filename)
+        filename = CONF_YAML
+        yaml_file = os.path.join(self.app_workspace_dir, self.type, filename)
         try:
             self.loggr.debug(f"opening {yaml_file}")
             with open(yaml_file, encoding="utf-8") as file:
@@ -144,7 +156,7 @@ class Builder:
         self.app_info = self.conf_dat["Info"]
         self.app_info["Site"] = self.site_id
         self.app_info["Type"] = self.type
-        self.app_info["Version"] = self.ver  # TODO: (now) Generate app version from ?? Add script/subcommand to pi_base bumping app version in conf.yaml.
+        self.app_info["Version"] = self.ver  # TODO: (now) Generate app version from ?? Add script/subcommand to pi_base bumping app version in CONF_YAML.
         site = self.sites_db.find_site_by_id(self.site_id)
         if not site or not site.site_id or site.site_id != site.site_id:
             raise ValueError(f"Site {self.site_id} not found or sites DB not loaded")
@@ -154,7 +166,7 @@ class Builder:
         # If self.app_info->GoogleDrive->secrets is 'auto':
         if "GoogleDrive" in self.app_info and "secrets" in self.app_info["GoogleDrive"] and self.app_info["GoogleDrive"]["secrets"] == "auto":
             self.app_info["GoogleDrive"]["secrets"] = site.sa_client_secrets
-            self.conf_dat["Files"].append({"src": os.path.join(self.base_dir, "secrets", site.sa_client_secrets), "dst": "app/"})
+            self.conf_dat["Files"].append({"src": os.path.join(self.app_workspace_dir, "secrets", site.sa_client_secrets), "dst": "app/"})
             self.loggr.info(f"  + Added {site.sa_client_secrets} file to the build and to app_conf.yaml")
 
         if "PostInstall" in self.conf_dat:
@@ -168,7 +180,7 @@ class Builder:
         """
         self.loggr.info("  + Creating modules folder:")
         # Make target_app/modules folder (make sure it is empty first)
-        target_dir = os.path.normpath(os.path.join(target_app, "modules"))
+        target_dir = os.path.normpath(os.path.join(target_app, "lib"))
         self.loggr.debug(f"Preparing {target_dir}")
         self.rmdir(target_dir)
         self.mkdir(target_dir)
@@ -180,8 +192,8 @@ class Builder:
                 shutil.copy2(src, dst)
                 self.loggr.info(f"    + Copied {item}")
         else:
-            # TODO: (now) Redesign using of base_dir/common to be conditional on it's presence, not on the absence of 'Modules' section in config.
-            src = os.path.normpath(os.path.join(self.base_dir, "common"))
+            # TODO: (now) Redesign using of base_dir/lib to be conditional on it's presence, not on the absence of 'Modules' section in config.
+            src = os.path.normpath(os.path.join(self.app_workspace_dir, "lib"))
             dst = target_dir
             self.loggr.debug(f"Copying {src} to {dst}")
             # symlinks=False, ignore=None, copy_function=copy2, ignore_dangling_symlinks=False
@@ -196,7 +208,7 @@ class Builder:
             items = self.conf_dat["Files"]
             for item in items:
                 src_is_dir = item["src"][-1:] == "/"
-                src = os.path.normpath(os.path.join(self.base_dir, item["src"]))
+                src = os.path.normpath(os.path.join(self.app_workspace_dir, item["src"]))
                 dst_is_dir = item["dst"][-1:] == "/"
                 dst = os.path.normpath(os.path.join(target_app, item["dst"])) + (os.sep if dst_is_dir else "")
                 self.mkdir(dst if dst_is_dir else os.path.dirname(dst))
@@ -247,9 +259,9 @@ class Builder:
                 {"src": os.path.join(self.package_dir, "common", "common_requirements.txt"), "dst": "./"},
                 {"src": os.path.join(self.package_dir, "common", "common_install.sh"), "dst": "./"},
                 # App files:
-                {"src": os.path.join(self.base_dir, self.type, "pkg/"), "dst": "./pkg"},
-                {"src": os.path.join(self.base_dir, self.type, "requirements.txt"), "dst": "./"},
-                {"src": os.path.join(self.base_dir, self.type, "install.sh"), "dst": "./"},
+                {"src": os.path.join(self.app_workspace_dir, self.type, "pkg/"), "dst": "./pkg"},
+                {"src": os.path.join(self.app_workspace_dir, self.type, "requirements.txt"), "dst": "./"},
+                {"src": os.path.join(self.app_workspace_dir, self.type, "install.sh"), "dst": "./"},
             ]
             for item in items:
                 src_is_dir = item["src"][-1:] == "/"
@@ -276,13 +288,21 @@ class Builder:
             self.write_conf(filepath=f"{self.stage_dir}/pkg/{etc_dir}/manager_conf.yaml", conf=self.conf_dat["Conf"])
             self.loggr.info("  + Created manager_conf.yaml")
         # app_info
-        self.write_conf(filepath=f"{self.stage_dir}/pkg/{app_dir}/app_conf.yaml", conf=self.app_info, head=f"# Auto-generated by make.py on: {str(self.now)[:19]}\n\n")
+        self.write_conf(filepath=f"{self.stage_dir}/pkg/{app_conf_dir}/app_conf.yaml", conf=self.app_info, head=f"# Auto-generated by make.py on: {str(self.now)[:19]}\n\n")
         self.loggr.info("  + Created app_conf.yaml")
-        target_app = f"{self.stage_dir}/pkg/{app_dir}"
+        target_app = f"{self.stage_dir}/pkg/{app_conf_dir}"
         self.make_modules(target_app)
         self.make_files_per_conf(target_app)
         self.make_files_from_template(self.stage_dir)
-        self.loggr.info(f"Done Making build of {self.type}.\n")
+        self.loggr.info(f"Done Making build of {self.type}, image files copied to {self.stage_dir}.\n")
+
+
+def reorder_list_item(list_of_str: "list[str]", find_item: str) -> "list[str]":
+    if find_item not in list_of_str:
+        return list_of_str
+
+    index = list_of_str.index(find_item)
+    return [list_of_str[index]] + list_of_str[:index] + list_of_str[index + 1 :]
 
 
 def main(loggr=logger) -> int:
@@ -293,13 +313,24 @@ def main(loggr=logger) -> int:
         loggr.info(f"Running on {system}, release {rel}")
     parser = argparse.ArgumentParser()
 
-    # first element is the default choice
-    types_list = ["blank"]  # TODO: (now) implement automatic list of projects generation, #TODO: (soon) Implement blank project special handling
+    # Find all directories in app_workspace_dir that contain CONF_YAML file:
+    projects = []
+    for dirpath, _, filenames in walklevel(get_app_workspace_dir()):
+        project = os.path.basename(dirpath)
+        if CONF_YAML in filenames and project not in projects:
+            projects += [project]
+    projects.sort()
+
+    # Move develop_project_id into first position (so it will be the default)
+    types_list = reorder_list_item(projects, develop_project_id) if develop_project_id else projects
+
     type_help_text = "Must be one of: all, " + ", ".join(types_list)
 
     db = DeploySiteDB(loggr=loggr)
-    # first element is the default choice
     sites_list = [site.site_id for site in db.sites if site.site_id]
+    sites_list.sort()
+    # first element is the default choice
+    sites_list = reorder_list_item(sites_list, develop_site_id) if develop_site_id else sites_list
     site_help_text = "Must be one of: " + ", ".join(sites_list)
 
     parser.add_argument("-D", "--debug", help="Enable debugging log", action="store_true")
