@@ -26,8 +26,9 @@ debug=0
 
 parent="$(cd -P -- "$(dirname    "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 parent=${parent%/}  ;## trim trailing slash
+caller="$(PWD)"
 
-SOURCE="$(dirname "${parent}")"
+SOURCE="${caller}"
 SOURCE_BASENAME=$(basename "${SOURCE}")
 
 BUILD="${SOURCE}/build"
@@ -376,7 +377,7 @@ function prep_upload () {
 
       echo "Opening SSH connection to ${user}@${host}:${port}..."
       # Open master connection, will ask for the password:
-      [ 1 -eq "$debug" ] && echo "DEBUG \$ ${ssh_git} -M -f -N "${SSH_OPTS[*]}" ${SSH_CTRL[*]@Q} -o ControlPersist=yes \"${user}@${host}\" -p $port"
+      [ 1 -eq "$debug" ] && echo "DEBUG \$ ${ssh_git} -M -f -N \"${SSH_OPTS[*]}\" ${SSH_CTRL[*]@Q} -o ControlPersist=yes \"${user}@${host}\" -p $port"
       # Broken: ${ssh} -M -f -N "${SSH_OPTS[@]}" $SSH_CTRL -o ControlPersist=yes "${user}@${host}" -p "$port"
       ${ssh_git} -M -f -N "${SSH_OPTS[@]}" "${SSH_CTRL[@]}" -o ControlPersist=yes "${user}@${host}" -p "$port"
       # ${ssh} -vvv -M -f -N "${SSH_OPTS[@]}" "${SSH_CTRL[@]}" -o ControlPersist=yes "${user}@${host}" -p "$port"
@@ -446,6 +447,9 @@ function print_info () {
     host_dir
     SITE
     do_key
+    caller
+    BUILD
+    SOURCE
   )
 
   for arg in "${args[@]}"; do
