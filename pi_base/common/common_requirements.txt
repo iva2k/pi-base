@@ -1,23 +1,23 @@
 # TODO: (now) Update this version number along with _version.py:
 pi_base==0.0.4
 
-esptool==3.3
+#esptool==3.3
 bleak==0.19.5
-coolname==2.2.0
-fpdf~=1.7.2
+#coolname==2.2.0
+#fpdf~=1.7.2
 # Gooey~=1.0.8.1 # This pulls in `pip install wxpython>=4.1.0`, which involves compiling a ton of files that takes forever.
-inquirer~=2.9.2
-Pillow~=9.1.0
-qrcode~=7.3.1
-pyinstaller==5.7.0
-pexpect~=4.8.0
-pyinspect
+#inquirer~=2.9.2
+#Pillow~=9.1.0
+#qrcode~=7.3.1
+#pyinstaller==5.7.0
+#pexpect~=4.8.0
+#pyinspect
 
 semver~=2.13.0
 pyserial~=3.5
 pyyaml~=6.0
 
-slack_sdk~=3.21.0
+#slack_sdk~=3.21.0
 
 #? pyzmq
 

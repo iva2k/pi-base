@@ -31,9 +31,9 @@ SEP2="$(printf "%100s\r" "" | tr ' ' '=')"
 # SEP3="$(printf "%100s\r" "" | tr ' ' '-')"
 
 # Determine if we're sourced or executed
-( return 0 2>/dev/null ) && { is_sourced=1; script=$(basename "${BASH_SOURCE[0]}"); } || { is_sourced=0; script=$(basename "$0"); }
+{ is_sourced=0; script=$(basename "$0"); }; ( return 0 2>/dev/null ) && { is_sourced=1; script=$(basename "${BASH_SOURCE[0]}"); }
 
-myreadlink() { [ ! -h "$1" ] && echo "$1" || (local d l; d="$(dirname -- "$1")"; l="$(expr "$(command ls -ld -- "$1")" : '.* -> \(.*\)$')"; cd -P -- "$d" || exit; myreadlink "$l" | sed "s|^\([^/].*\)\$|$d/\1|"); }
+myreadlink() { [ ! -h "$1" ] && { echo "$1"; return; }; (local d l; d="$(dirname -- "$1")"; l="$(expr "$(command ls -ld -- "$1")" : '.* -> \(.*\)$')"; cd -P -- "$d" || exit; myreadlink "$l" | sed "s|^\([^/].*\)\$|$d/\1|"); }
 #parent="$(cd -P -- "$(dirname    "$(greadlink -f "${BASH_SOURCE[0]}" || readlink -f "${BASH_SOURCE[0]}" || readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}")")" &> /dev/null && pwd)"
 parent="$(dirname -- "$(myreadlink "${BASH_SOURCE[0]}")" )"
 parent=$(cd "$parent" || exit; pwd)  ;## resolve absolute path
@@ -164,7 +164,9 @@ function adjust_settings () {
 
 function install_python_packages () {
   echo "${SEP2}INSTALL PYTHON PACKAGES "
-  [ -f "$SOURCE/requirements.txt" ] && pip install -r "$SOURCE/requirements.txt"
+  # Use (PEP-0668) --break-system-packages as we need our packages to be available in system / multi-user applications.
+  # TODO: (soon) Implement python venv and remove --break-system-packages
+  [ -f "$SOURCE/requirements.txt" ] && pip install --break-system-packages -r "$SOURCE/requirements.txt"
   # TODO: (when needed) fail on error here
   echo
 }

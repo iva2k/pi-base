@@ -30,9 +30,9 @@ SEP2="$(printf "%100s\r" "" | tr ' ' '=')"
 # SEP3="$(printf "%100s\r" "" | tr ' ' '-')"
 
 # Determine if we're sourced or executed
-( return 0 2>/dev/null ) && { is_sourced=1; script=$(basename "${BASH_SOURCE[0]}"); } || { is_sourced=0; script=$(basename "$0"); }
+{ is_sourced=0; script=$(basename "$0"); }; ( return 0 2>/dev/null ) && { is_sourced=1; script=$(basename "${BASH_SOURCE[0]}"); }
 
-myreadlink() { [ ! -h "$1" ] && echo "$1" || (local d l; d="$(dirname -- "$1")"; l="$(expr "$(command ls -ld -- "$1")" : '.* -> \(.*\)$')"; cd -P -- "$d" || exit; myreadlink "$l" | sed "s|^\([^/].*\)\$|$d/\1|"); }
+myreadlink() { [ ! -h "$1" ] && { echo "$1"; return; }; (local d l; d="$(dirname -- "$1")"; l="$(expr "$(command ls -ld -- "$1")" : '.* -> \(.*\)$')"; cd -P -- "$d" || exit; myreadlink "$l" | sed "s|^\([^/].*\)\$|$d/\1|"); }
 #parent="$(cd -P -- "$(dirname    "$(greadlink -f "${BASH_SOURCE[0]}" || readlink -f "${BASH_SOURCE[0]}" || readlink "${BASH_SOURCE[0]}" || echo "${BASH_SOURCE[0]}")")" &> /dev/null && pwd)"
 parent="$(dirname -- "$(myreadlink "${BASH_SOURCE[0]}")" )"
 parent=$(cd "$parent" || exit; pwd)  ;## resolve absolute path
@@ -202,6 +202,9 @@ function install_packages () {
   echo "${SEP2}INSTALL PACKAGES "
   [ 0 -eq "$INST_DO_QUICK" ] && sudo apt-get update
 
+  #REMOVE sudo apt-get install -y python-dev python-pip python-cliff
+  sudo apt-get install -y python3-dev python3-pip python3-venv python3-cliff
+
   # For `pip install python-systemd`:
   # sudo apt-get install -y build-essential libsystemd-journal-dev libsystemd-daemon-dev libsystemd-dev
   # Or just install apt package:
@@ -211,20 +214,16 @@ function install_packages () {
   # sudo apt-get install -y libghc-gtk3-dev libwxgtk3.0-gtk3-dev
 
   sudo apt-get install -y fbi ntpdate conspy
-  #REMOVE sudo apt-get install -y python-dev python-pip python-cliff
-  sudo apt-get install -y python3-dev python3-pip python3-cliff
   #UNUSED sudo apt-get install -y python-rpi.gpio python3-rpi.gpio
   sudo apt-get install -y network-manager network-manager-gnome ;# for nmcli
   sudo apt-get install -y samba samba-common-bin
   
   # Serial terminal
   sudo apt-get install -y minicom
-  # minicom -b 115200 -D /dev/ttyUSB0 
-  # To exit: Ctrl+a x
+  # Use: $ minicom -b 115200 -D /dev/ttyUSB0  ;# To exit: Ctrl+a x
+
   sudo apt-get install -y screen
-  # screen /dev/ttyUSB0 115200,cs8
-  # To exit: Ctrl+a \
-  # Show keybindings: Ctrl+a ?
+  # Use: $ screen /dev/ttyUSB0 115200,cs8  ;# To exit: Ctrl+a \  ;# Show keybindings: Ctrl+a ?
 
   # Cleanup:
   sudo apt-get autoremove -y
@@ -431,7 +430,9 @@ function adjust_settings () {
 
 function install_python_packages () {
   echo "${SEP2}INSTALL PYTHON PACKAGES "
-  [ -f "$SOURCE/common_requirements.txt" ] && pip install -r "$SOURCE/common_requirements.txt"
+  # Use (PEP-0668) --break-system-packages as we need our packages to be available in system / multi-user applications.
+  # TODO: (soon) Implement python venv and remove --break-system-packages
+  [ -f "$SOURCE/common_requirements.txt" ] && pip install --break-system-packages -r "$SOURCE/common_requirements.txt"
   # TODO: (when needed) fail on error here
   echo
 }
