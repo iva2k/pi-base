@@ -18,10 +18,12 @@
         "UNUSED_PYTHONPATH": "${workspaceFolder}/lib;${workspaceFolder}/pi_base/lib"
     },
     "python.analysis.extraPaths": [
+        "${workspaceFolder}",
         "${workspaceFolder}/lib",
         "${workspaceFolder}/pi_base/lib"
     ],
     "python.autoComplete.extraPaths": [
+        "${workspaceFolder}",
         "${workspaceFolder}/lib",
         "${workspaceFolder}/pi_base/lib"
     ],
