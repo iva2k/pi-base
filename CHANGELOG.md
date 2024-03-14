@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.5 (unreleased)
+## 0.0.5 (2024-03-14)
 
 * Fix bugs left from move to package.
 
