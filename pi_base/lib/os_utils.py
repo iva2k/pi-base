@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 _our_exe_name = os.path.basename(sys.argv[0])
 
 
-def which(progname, additional_paths: Optional[list[str]] = None, exit_on_fail=False):
+def which(progname, additional_paths: "Optional[list[str]]" = None, exit_on_fail=False):
     if isinstance(progname, str):
         progname = [progname]
     if not additional_paths:
@@ -86,7 +86,7 @@ def partition_device_name(partition: psutil._common.sdiskpart) -> str:
     return device_name
 
 
-def disk_has_space(printer=None, disk_usage_limit: Optional[int] = None) -> tuple[bool, list[str]]:
+def disk_has_space(printer=None, disk_usage_limit: Optional[int] = None) -> "tuple[bool, list[str]]":
     healthy = True
     summary = []
     if disk_usage_limit:
@@ -103,7 +103,7 @@ def disk_has_space(printer=None, disk_usage_limit: Optional[int] = None) -> tupl
     return healthy, summary
 
 
-def disk_is_healthy(printer=None) -> tuple[bool, list[str]]:
+def disk_is_healthy_WIP(printer=None) -> "tuple[bool, list[str]]":
     healthy = True
     summary = []
     # disk_io = psutil.disk_io_counters()
@@ -115,7 +115,7 @@ def disk_is_healthy(printer=None) -> tuple[bool, list[str]]:
     #     if printer: printer("No disk read/write activity")
     device_name = partition_device_name(psutil.disk_partitions()[0])
     disk_counters = psutil.disk_io_counters(perdisk=True)[device_name]
-    disk_errors = disk_counters.errors
+    disk_errors = disk_counters.errors  # TODO: (when needed) FIXME - .errors is not present, digging into code can find .read_count, .write_count, etc.
     if disk_errors is not None and disk_errors > 0:
         healthy = False
         msg = f"{disk_errors} Disk errors detected in {device_name}"
@@ -142,6 +142,7 @@ def walklevel(root_dir, level=1) -> "Iterator[tuple[AnyStr, list[AnyStr], list[A
         Iterator[tuple[AnyStr@walk, list[AnyStr@walk], list[AnyStr@walk]]]: _description_
 
     Example:
+    ```
     from os_utils import walklevel
     for root, dirs, files in walklevel('python/Lib/email'):
         print(root, "consumes", end="")
@@ -149,7 +150,7 @@ def walklevel(root_dir, level=1) -> "Iterator[tuple[AnyStr, list[AnyStr], list[A
         print("bytes in", len(files), "non-directory files")
         if 'CVS' in dirs:
             dirs.remove('CVS')  # don't visit CVS directories
-
+    ```
     """
     root_dir = root_dir.rstrip(os.path.sep)
     if not os.path.isdir(root_dir):
