@@ -6,8 +6,8 @@ from subprocess import check_output
 import sys
 import time
 
-from app_utils import get_conf, get_iface, get_hostname, ping_test, cvt, open_vt, reboot
-from loggr import Loggr
+from .app_utils import get_conf, get_iface, get_hostname, ping_test, cvt, open_vt, reboot
+from .loggr import Loggr
 
 
 SIMULATE_NETWORK_DELAY = 3

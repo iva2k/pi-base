@@ -19,9 +19,10 @@ from collections.abc import Iterable
 
 # "modpath" must be first of our modules
 from pi_base.modpath import app_conf_dir  # pylint: disable=wrong-import-position
+
 # pylint: disable=wrong-import-order
-from app_utils import get_conf, find_path
-from gd_service import gd_connect, GoogleDriveFile
+from .app_utils import get_conf, find_path
+from .gd_service import gd_connect, GoogleDriveFile
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)

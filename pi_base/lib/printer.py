@@ -54,8 +54,8 @@ import sys
 from typing import Optional
 from abc import ABC, abstractmethod
 
-from app_utils import AtDict
-from os_utils import which
+from .app_utils import AtDict
+from .os_utils import which
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
