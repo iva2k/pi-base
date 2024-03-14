@@ -2,12 +2,9 @@
 
 ## 0.0.5 (unreleased)
 
-
-- Nothing changed yet.
-
+* Fix bugs left from move to package.
 
 ## 0.0.4 (2024-03-05)
-
 
 * Add empty section [zest.releaser] to .pypirc
 
@@ -16,7 +13,6 @@
 * Remove setuptools_scm (not using git-based version)
 
 * Move zest-releaser settings to pyproject.toml
-
 
 ## 0.0.3 (2024-03-05)
 
