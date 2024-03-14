@@ -85,6 +85,7 @@ Changelog = "https://github.com/iva2k/pi-base/blob/main/CHANGELOG.md"
 pi-base = "pi_base.__main__:main"
 pi_base = "pi_base.__main__:main"
 # `pi_base/__main__.py` file supports calling module as a script: `python pi_base`
+pi-base-manager = "pi_base.lib.manager:main"
 
 [tool.setuptools]
 include-package-data = true

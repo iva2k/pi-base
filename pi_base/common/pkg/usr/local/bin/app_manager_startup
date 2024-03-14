@@ -65,8 +65,15 @@ do_start () {
   echo "  + DONE Delay $duration after image / sound start " >&2
   chvt "$vt_splash"
 
-  if [ -f "$base/modules/manager.py" ]; then
+  app=
+  if [ -n "$(which pi-base-manager)" ]; then
+    app="$(which pi-base-manager)"
+  elif [ -n "$(which pi-base-manager.exe)" ]; then
+    app="$(which pi-base-manager)"
+  elif [ -f "$base/modules/manager.py" ]; then
     app="$base/modules/manager.py"
+  fi
+  if [ -f "$app" ]; then
     echo "  + Starting '$app'..." >&2
     chvt "$vt_manager"
     # Use python with -u option to make stdout/stderr unbuffered
