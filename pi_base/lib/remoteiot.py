@@ -19,14 +19,13 @@ from collections.abc import Iterable
 
 # "modpath" must be first of our modules
 from pi_base.modpath import app_conf_dir  # pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-order
 from app_utils import get_conf, find_path
 from gd_service import gd_connect, GoogleDriveFile
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 # logger.setLevel(logging.DEBUG)
-
-progname = os.path.basename(sys.argv[0])
 
 g_conf_file_name = "remote_secrets.yaml"
 g_db_file_name = "devices.csv"
@@ -446,7 +445,7 @@ def cmd_add_named(remote: Remoteiot, args: argparse.Namespace) -> tuple[int, Opt
 
 def cmd_add_at_install(remote: Remoteiot, args: argparse.Namespace) -> int:
     conf = get_conf(filepath=f"{app_conf_dir}/app_conf.yaml")
-    site_id = conf.get("Site")
+    site_id = conf.get("Site")  # "Site" is filled at build time by make.py
     app_name = conf.get("Name")
     app_type = conf.get("Type")
     if not site_id:
@@ -479,7 +478,7 @@ def cmd_delete_named(remote: Remoteiot, args: argparse.Namespace) -> int:
     return res
 
 
-def parse_args() -> tuple[argparse.Namespace, argparse.ArgumentParser]:
+def parse_args(progname: str) -> tuple[argparse.Namespace, argparse.ArgumentParser]:
     parser = argparse.ArgumentParser(description="Manage remote access (add)")
 
     # Common optional arguments
@@ -489,34 +488,36 @@ def parse_args() -> tuple[argparse.Namespace, argparse.ArgumentParser]:
     # Positional argument for the command
     subparsers = parser.add_subparsers(title="Commands", dest="command")
 
-    # Parsers for commands
+    # "devices" command
     devices_parser = subparsers.add_parser("devices", help="Get list of remote devices")
-    unique_parser = subparsers.add_parser("unique", help="Find a unique device ID")
-    add_parser = subparsers.add_parser("add", help="Add remote control to this device")
-    add_named_parser = subparsers.add_parser("add_named", help="Add remote control to this device, with given id/name")
-    add_yaml_parser = subparsers.add_parser("add_at_install", help="Add remote control to this device, using app_conf.yaml file during install")
-    query_parser = subparsers.add_parser("query", help="Add remote control to this device")
-    delete_named_parser = subparsers.add_parser("delete_named", help="Delete remote control from device with given id/name")
-
-    # Optional arguments for the "devices" command
     # devices_parser.add_argument('-s', '--show_secret', help='Show secret key', action='store_true')
 
-    # Additional args for "unique" command
+    # "unique" command
+    unique_parser = subparsers.add_parser("unique", help="Find a unique device ID")
     unique_parser.add_argument("site_id", type=str, help="Site ID")
     unique_parser.add_argument("app_type", type=str, help="App type")
     unique_parser.add_argument("app_name", type=str, help="App name")
 
     # 'site_id': 'BASE', 'app_type': 'blank','app_name': 'Blank',
-    # Additional args for "add" command
+    # "add" command
+    add_parser = subparsers.add_parser("add", help="Add remote control to this device")
     add_parser.add_argument("site_id", type=str, help="Site ID")
     add_parser.add_argument("app_type", type=str, help="App type")
     add_parser.add_argument("app_name", type=str, help="App name")
 
-    # Additional args for "add_named" command
+    # "add_named" command
+    add_named_parser = subparsers.add_parser("add_named", help="Add remote control to this device, with given id/name")
     add_named_parser.add_argument("device_id", type=str, help="Device ID")
     add_named_parser.add_argument("device_name", type=str, help="Device name (ignored if re-adding existing device)")
 
-    # Additional args for "delete_named" command
+    # "add_at_install" command
+    add_yaml_parser = subparsers.add_parser("add_at_install", help="Add remote control to this device, using app_conf.yaml file during install")
+
+    # "query" command
+    query_parser = subparsers.add_parser("query", help="Add remote control to this device")
+
+    # "delete_named" command
+    delete_named_parser = subparsers.add_parser("delete_named", help="Delete remote control from device with given id/name")
     delete_named_parser.add_argument("device_id", type=str, help="Device ID")
 
     # Parse the command line arguments
@@ -524,8 +525,11 @@ def parse_args() -> tuple[argparse.Namespace, argparse.ArgumentParser]:
     return args, parser
 
 
-def main() -> int:
-    args, parser = parse_args()
+def _main() -> int:
+    progname = os.path.basename(sys.argv[0])
+    args, parser = parse_args(progname)
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
     logger.debug(f"DEBUG {vars(args)}")
 
     remote = Remoteiot(debug=args.debug)
@@ -556,6 +560,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    rc = main()
+    rc = _main()
     if rc:
         sys.exit(rc)
