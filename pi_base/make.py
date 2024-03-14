@@ -39,7 +39,7 @@ __package__ = os.path.basename(SCRIPT_DIR)  # noqa: A001
 # pylint: disable=wrong-import-position,relative-beyond-top-level
 # ruff: noqa: E402
 
-from .modpath import get_app_workspace_dir, get_script_dir, site_id as develop_site_id, project as develop_project_id
+from pi_base.modpath import get_app_workspace_dir, get_script_dir, site_id as develop_site_id, project as develop_project_id
 from .lib.deploy_site import DeploySiteDB
 from .lib.app_utils import find_path
 from .lib.os_utils import walklevel
@@ -178,27 +178,50 @@ class Builder:
 
         If the list is given in config file 'Modules' section, only the listed files are copied.
         """
-        self.loggr.info("  + Creating modules folder:")
-        # Make target_app/modules folder (make sure it is empty first)
+        self.loggr.info("  + Creating lib folder for modules perf conf.'Modules':")
         target_dir = os.path.normpath(os.path.join(target_app, "lib"))
+        # Make target_app/modules folder (make sure it is empty first)
         self.loggr.debug(f"Preparing {target_dir}")
         self.rmdir(target_dir)
         self.mkdir(target_dir)
         if "Modules" in self.conf_dat:
-            for item in self.conf_dat["Modules"]:
-                src = os.path.normpath(os.path.join(self.package_dir, "lib", item))
-                dst = os.path.normpath(target_dir + os.sep)
+            # Copy only items listed in the "Modules" section of conf.yaml file
+            modules = self.conf_dat.get("Modules", None) or []
+            for item in modules:
+                src = os.path.normpath(os.path.join(self.app_workspace_dir, "lib", item))
+                dst = os.path.normpath(target_dir + os.sep)  # Add '/' for shutil.copy2() to  not make it a name of the target file, but a directory for the target file
                 self.loggr.debug(f"Copying {src} to {dst}")
                 shutil.copy2(src, dst)
                 self.loggr.info(f"    + Copied {item}")
         else:
-            # TODO: (now) Redesign using of base_dir/lib to be conditional on it's presence, not on the absence of 'Modules' section in config.
+            # No "Modules" - by default copy all files from {app_workspace_dir}/lib, if it exists (don't copy subdirectories)
             src = os.path.normpath(os.path.join(self.app_workspace_dir, "lib"))
-            dst = target_dir
-            self.loggr.debug(f"Copying {src} to {dst}")
-            # symlinks=False, ignore=None, copy_function=copy2, ignore_dangling_symlinks=False
-            shutil.copytree(src, dst, dirs_exist_ok=True)
-            self.loggr.info("    + Copied all files from common/")
+            dst = os.path.normpath(target_dir)
+            if os.path.isdir(src):
+                self.loggr.info(f"    + Copying all files from {src} (add an empty conf.'Modules' section to disable)")
+
+                # The optional ignore argument is a callable. If given, it
+                # is called with the `src` parameter, which is the directory
+                # being visited by copytree(), and `names` which is the list of
+                # `src` contents, as returned by os.listdir():
+                def ignore(current_dir: str, names: "list[str]") -> "list[str]":
+                    ignored_names = []
+                    if current_dir != src:
+                        # Do not copy any sub-dirs, and do not traverse deeper
+                        self.loggr.info(f"    - Skipped sudirectory {current_dir}")
+                        return names
+                    # Populate the ignored_names list as needed to skip copyiong these items
+                    # ignored_names += []
+                    for name in names:
+                        item = os.path.join(current_dir, name)
+                        if os.path.isfile(item):
+                            self.loggr.info(f"    + Copied {item}")
+
+                    return ignored_names
+
+                # symlinks=False, copy_function=copy2, ignore_dangling_symlinks=False
+                shutil.copytree(src, dst, ignore=ignore, dirs_exist_ok=True)
+                self.loggr.info(f"    = Copied all files from {src}")
 
     def make_files_per_conf(self, target_app):
         # Make individual files (copy all files to their destinations in target_app)

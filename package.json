@@ -1,7 +1,7 @@
 {
   "description": "Using npm's package.json file purely for simple organization of many shell commands, each can be easily invoked as `npm run <script>` if node.js/npm is installed.",
   "scripts": {
-    "a": "npm run pkg:clean && npm run pkg:build && npm run pkg:extract",
+    "a": "npm run pkg:clean && npm run pkg:build && npm run pkg:extract-all-dist",
     "pkg:clean": "rm -rf dist pi_base.egg-info",
     "pkg:build": "python3 -m build",
     "pkg:extract-all-dist": "(cd dist && tar -zxvf *.tar.gz)",
@@ -14,6 +14,7 @@
     "dev:strict": "pip install -e .[dev] --config-settings editable_mode=strict",
     "dev:uninstall": "pip uninstall pi_base",
     "dev:env": "source venv/Scripts/activate",
+  
     "tox:format": "tox run -e format",
     "tox:lint": "tox run -e lint",
     "tox:types": "tox run -e types",
