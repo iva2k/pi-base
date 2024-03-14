@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.7 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.0.6 (2024-03-14)
 
 * Bump version in pi_base/common/common_requirements.txt.
