@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.10 (unreleased)
+## 0.0.10 (2024-03-15)
 
 * Fix modpath on RPI.
 
