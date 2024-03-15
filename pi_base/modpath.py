@@ -246,6 +246,7 @@ caller_has_develop_file = (caller_dir != workspace_dir) and os.path.isfile(os.pa
 # Now from all the above, do some heuristics to arrive to all the answers.
 
 _app_workspace_path = ""
+# TODO: (soon) Suspecting `pibase_shared_lib_dir` is not needed, as our package is installed, and lib modules are imported by relative import here and by submodule import in the client.
 pibase_shared_lib_dir = os.path.join(module_path, "lib")
 additional_python_paths = []
 if not module_is_from_package or in_pibase_source:
