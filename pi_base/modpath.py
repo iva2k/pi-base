@@ -218,8 +218,7 @@ def print_info():
 module_path = get_script_dir(__file__)  #         # {workspace}/pi_base            # {site_packages}/pi_base-X.X.X/pi_base
 module_dirname = os.path.basename(module_path)  # # pi_base                        # pi_base
 workspace_dir = os.path.dirname(module_path)  #   # {workspace}                    # {site_packages}/pi_base-X.X.X
-module_is_from_package = "/site_packages/" in module_path or "\\site_packages\\" in module_path or os.path.isfile(os.path.join(module_path, "is_editable.md"))
-# TODO: (now) FIXME! We don't detect case when pi_base is installed as editable. Then there is no "site_packages" in its path.
+module_is_from_package = "/dist-packages/" in module_path or "/site_packages/" in module_path or "\\site_packages\\" in module_path or os.path.isfile(os.path.join(module_path, "is_editable.md"))
 
 # From top-level module we can infer:
 # 1. sources of app                      (app_module_dir == app_module_name)
@@ -237,6 +236,7 @@ caller_dir = os.getcwd()
 
 _app_workspace_path = ""
 pibase_shared_lib_dir = os.path.join(workspace_dir, "lib")
+additional_python_paths = []
 if not module_is_from_package or in_pibase_source:
     DEBUG = True
     running_on: str = "pibase_sources"  # This is legacy way of running pi_base.

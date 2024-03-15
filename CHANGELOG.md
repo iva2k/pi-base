@@ -2,9 +2,7 @@
 
 ## 0.0.8 (unreleased)
 
-
-- Nothing changed yet.
-
+* Bugfixes in pi_base/modpath.py.
 
 ## 0.0.7 (2024-03-14)
 

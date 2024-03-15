@@ -93,10 +93,10 @@ It is possible to run each individual layer, e.g. for debugging or verification:
 
 - Service: TBD
 - Service script: `sudo /usr/local/bin/app_manager_startup`
-- Manager: `/usr/bin/python3 -u /home/pi/modules/manager.py --vt 2` (no sudo, it should run as user 'pi', `-u` option for unbuffered stdout and stderr)
+- Manager: `pi-base-manager --vt 2` (no sudo, it should run as user 'pi', `-u` option for unbuffered stdout and stderr)
 - App itself: `/usr/bin/python3 -u /home/pi/app/<app type>.py`
 
-    Some of the layers can be debugged on a workstation (PC or Mac), without RPi image deployed.
+Some of the layers can be debugged on a workstation (PC or Mac), without RPi image deployed:
 
 - App itself: `python3 <app type>/<app type>.py` e.g. `python3 blank/blank.py`
 
