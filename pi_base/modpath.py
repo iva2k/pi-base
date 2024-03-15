@@ -218,7 +218,7 @@ def print_info():
 module_path = get_script_dir(__file__)  #         # {workspace}/pi_base            # {site_packages}/pi_base-X.X.X/pi_base
 module_dirname = os.path.basename(module_path)  # # pi_base                        # pi_base
 workspace_dir = os.path.dirname(module_path)  #   # {workspace}                    # {site_packages}/pi_base-X.X.X
-module_is_from_package = "/dist-packages/" in module_path or "/site_packages/" in module_path or "\\site_packages\\" in module_path or os.path.isfile(os.path.join(module_path, "is_editable.md"))
+module_is_from_package = "/dist-packages/" in module_path or "/site-packages/" in module_path or "\\site-packages\\" in module_path or os.path.isfile(os.path.join(module_path, "is_editable.md"))
 
 # From top-level module we can infer:
 # 1. sources of app                      (app_module_dir == app_module_name)
