@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.10 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.0.9 (2024-03-15)
 
 * Fix modpath on Windows.
