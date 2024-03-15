@@ -1,5 +1,5 @@
 # TODO: (now) Update this version number along with _version.py:
-pi_base>=0.0.6
+pi_base>=0.0.7
 # For now will use ">=" instead of "=="
 
 #esptool==3.3

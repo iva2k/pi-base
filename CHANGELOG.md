@@ -2,9 +2,7 @@
 
 ## 0.0.7 (unreleased)
 
-
-- Nothing changed yet.
-
+* Redo heuristics logic in pi_base/modpath.py.
 
 ## 0.0.6 (2024-03-14)
 
