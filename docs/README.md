@@ -36,7 +36,7 @@ RPi is ready now. Power down the RPi and make necessary connections to the syste
 
 ## Data Backend
 
-As a backend, pi-base currently uses `common/gd_service.py` to store backend files on GoogleDrive.
+As a backend, pi-base currently uses `pi_base/lib/gd_service.py` to store backend files on GoogleDrive.
 
 The connection details are determined by `*_secrets.json` file which is never commited to the git repo, but instead distributed by other secure means. It is included into build and also given to the tester app by `<project>/conf.yaml` files.
 
@@ -69,11 +69,11 @@ New Projects should be created in sub-folders named `<project>` in the repo root
 
 pi-base repo contains the following files and folders:
 
-- pi-base/lib - Various Python modules used by pi-base and available for use in the projects.
-- pi-base/common - Various files shared between all projects, common installation files.
-- pi-base/common/graphics - various graphics design files provided as templates for the projects.
-- pi-base/pictures - photos and screenshots.
-- pi-base/scripts - various utility scripts.
+- pi_base/lib - Various Python modules used by pi-base and available for use in the projects.
+- pi_base/common - Various files shared between all projects, common installation files.
+- pi_base/common/graphics - various graphics design files provided as templates for the projects.
+- pi_base/pictures - photos and screenshots.
+- pi_base/scripts - various utility scripts.
 - blank - A blank starter project with a template for creating new projects ('blank' build type is excluded in `pi_base/make.py`).
 
 ### App Layers
@@ -92,15 +92,15 @@ It is possible to enable Raspberry Pi GUI (change INST_ENABLE_GUI setting in pro
 It is possible to run each individual layer, e.g. for debugging or verification:
 
 - Service: TBD
-- Service script: `/usr/local/bin/app_manager_startup`
-- Manager: `/home/pi/modules/manager.py --vt 2` TODO: TBD sudo?
-- App itself: `/usr/bin/python -u /home/pi/app/<app type>.py`
+- Service script: `sudo /usr/local/bin/app_manager_startup`
+- Manager: `/usr/bin/python3 -u /home/pi/modules/manager.py --vt 2` (no sudo, it should run as user 'pi', `-u` option for unbuffered stdout and stderr)
+- App itself: `/usr/bin/python3 -u /home/pi/app/<app type>.py`
 
     Some of the layers can be debugged on a workstation (PC or Mac), without RPi image deployed.
 
-- App itself: `python <app type>/<app type>.py` e.g. `python blank/blank.py`
+- App itself: `python3 <app type>/<app type>.py` e.g. `python3 blank/blank.py`
 
-Note that `modpath.py` (which main goal is to locate all app resources deployed on the target) is currently crudely tries to be also helpful on the workstation, so development is possible. But it means that some files have to be placed in reachable places before the local app will work correctly. To do so invoke `python pi_base/make.py --type all` to create build directories, and also inspect modpath.py for the hard-coded helpers that may need adjustment.
+Note that `modpath.py` (with its main goal to locate all app resources deployed on the target) is currently crudely tries to be helpful on the workstation, so development is possible. But it means that some files have to be placed in reachable places before the local app will work correctly. To do so invoke `python3 pi_base/make.py --type all` to create build directories, and also inspect modpath.py for the hard-coded helpers that may need adjustment.
 
 ### Remote Debugging
 
@@ -131,7 +131,7 @@ It performs the following steps:
   1. Read `<project>/conf.yaml` file.
   2. Create `build/<site_id>/<project>/` folder and subfolders as needed:
      1. `pkg` subfolder is prepared for it to be copied to the target system `/` (root) during installation.
-  3. Copy all `common/*` files listed in 'Modules' section of `<project>/conf.yaml` file (or whole `common/` folder if there is no 'Modules'section) to pkg/home/pi/modules/.
+  3. Copy all `{app_workspace}/lib/*` files listed in 'Modules' section of `<project>/conf.yaml` file (or whole `{app_workspace}/lib/` folder if there is no 'Modules' section) to pkg/home/pi/lib/.
   4. Copy individual files listed in 'Files' section of `<project>/conf.yaml` file to their selected destinations.
   5. Copy standard template files to `build/<site_id>/<project>/`:
      1. common/common_install.sh
@@ -185,11 +185,11 @@ Service that is installed and enabled on the target RPi that executes /usr/local
 
 #### `/usr/local/bin/app_manager_startup`
 
-Script that shows splashscreen and plays boot chime on the target RPI and then executes /home/pi/modules/manager.py.
+Script that shows splashscreen and plays boot chime on the target RPI and then executes pi-base-manager (it launches pi_base/lib/manager.py from the pi_base package).
 
-#### `/home/pi/modules/manager.py`
+#### `{python packages}/pi_base/lib/manager.py`
 
-Manager script that runs on the target RPi, reads /etc/manager_conf.yaml, performs various startup activities and launches project app.
+Manager script launched by `pi-base-manager` entry point that runs on the target RPi, reads /etc/manager_conf.yaml, performs various startup activities and launches project app.
 
 #### `/home/pi/app/<project>.py`
 

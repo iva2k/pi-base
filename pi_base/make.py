@@ -72,14 +72,14 @@ class Builder:
         self.comment = ""
         self.type = args.type
         self.site_id = args.site
-        self.app_workspace_dir = args.workspace if isinstance(args.workspace, str) else get_app_workspace_dir()  # Find client project base directory
+        self.app_workspace_path = args.workspace if isinstance(args.workspace, str) else get_app_workspace_dir()  # Find client project base directory
         self.package_dir = get_script_dir(__file__)  # Find package directory
-        self.stage_dir = os.path.join(self.app_workspace_dir, "build", self.site_id, self.type)
+        self.stage_dir = os.path.join(self.app_workspace_path, "build", self.site_id, self.type)
 
-        self.loggr.debug(f"app_workspace_dir : {self.app_workspace_dir}")
-        self.loggr.debug(f"package_dir       : {self.package_dir}")
-        self.loggr.debug(f"stage_dir         : {self.stage_dir}")
-        self.loggr.debug(f"app_conf_dir      : {app_conf_dir}")
+        self.loggr.debug(f"app_workspace_path : {self.app_workspace_path}")
+        self.loggr.debug(f"package_dir        : {self.package_dir}")
+        self.loggr.debug(f"stage_dir          : {self.stage_dir}")
+        self.loggr.debug(f"app_conf_dir       : {app_conf_dir}")
 
     def rmdir(self, path):
         path = os.path.normpath(path)
@@ -126,7 +126,7 @@ class Builder:
             default_filename,
             [
                 self.package_dir,
-                self.app_workspace_dir,
+                self.app_workspace_path,
             ],
             self.loggr,
         )
@@ -140,7 +140,7 @@ class Builder:
 
         custom_conf_dat = {}
         filename = CONF_YAML
-        yaml_file = os.path.join(self.app_workspace_dir, self.type, filename)
+        yaml_file = os.path.join(self.app_workspace_path, self.type, filename)
         try:
             self.loggr.debug(f"opening {yaml_file}")
             with open(yaml_file, encoding="utf-8") as file:
@@ -166,7 +166,7 @@ class Builder:
         # If self.app_info->GoogleDrive->secrets is 'auto':
         if "GoogleDrive" in self.app_info and "secrets" in self.app_info["GoogleDrive"] and self.app_info["GoogleDrive"]["secrets"] == "auto":
             self.app_info["GoogleDrive"]["secrets"] = site.sa_client_secrets
-            self.conf_dat["Files"].append({"src": os.path.join(self.app_workspace_dir, "secrets", site.sa_client_secrets), "dst": "app/"})
+            self.conf_dat["Files"].append({"src": os.path.join(self.app_workspace_path, "secrets", site.sa_client_secrets), "dst": "app/"})
             self.loggr.info(f"  + Added {site.sa_client_secrets} file to the build and to app_conf.yaml")
 
         if "PostInstall" in self.conf_dat:
@@ -188,14 +188,14 @@ class Builder:
             # Copy only items listed in the "Modules" section of conf.yaml file
             modules = self.conf_dat.get("Modules", None) or []
             for item in modules:
-                src = os.path.normpath(os.path.join(self.app_workspace_dir, "lib", item))
+                src = os.path.normpath(os.path.join(self.app_workspace_path, "lib", item))
                 dst = os.path.normpath(target_dir + os.sep)  # Add '/' for shutil.copy2() to  not make it a name of the target file, but a directory for the target file
                 self.loggr.debug(f"Copying {src} to {dst}")
                 shutil.copy2(src, dst)
                 self.loggr.info(f"    + Copied {item}")
         else:
-            # No "Modules" - by default copy all files from {app_workspace_dir}/lib, if it exists (don't copy subdirectories)
-            src = os.path.normpath(os.path.join(self.app_workspace_dir, "lib"))
+            # No "Modules" - by default copy all files from {app_workspace_path}/lib, if it exists (don't copy subdirectories)
+            src = os.path.normpath(os.path.join(self.app_workspace_path, "lib"))
             dst = os.path.normpath(target_dir)
             if os.path.isdir(src):
                 self.loggr.info(f"    + Copying all files from {src} (add an empty conf.'Modules' section to disable)")
@@ -231,7 +231,7 @@ class Builder:
             items = self.conf_dat["Files"]
             for item in items:
                 src_is_dir = item["src"][-1:] == "/"
-                src = os.path.normpath(os.path.join(self.app_workspace_dir, item["src"]))
+                src = os.path.normpath(os.path.join(self.app_workspace_path, item["src"]))
                 dst_is_dir = item["dst"][-1:] == "/"
                 dst = os.path.normpath(os.path.join(target_app, item["dst"])) + (os.sep if dst_is_dir else "")
                 self.mkdir(dst if dst_is_dir else os.path.dirname(dst))
@@ -282,9 +282,9 @@ class Builder:
                 {"src": os.path.join(self.package_dir, "common", "common_requirements.txt"), "dst": "./"},
                 {"src": os.path.join(self.package_dir, "common", "common_install.sh"), "dst": "./"},
                 # App files:
-                {"src": os.path.join(self.app_workspace_dir, self.type, "pkg/"), "dst": "./pkg"},
-                {"src": os.path.join(self.app_workspace_dir, self.type, "requirements.txt"), "dst": "./"},
-                {"src": os.path.join(self.app_workspace_dir, self.type, "install.sh"), "dst": "./"},
+                {"src": os.path.join(self.app_workspace_path, self.type, "pkg/"), "dst": "./pkg"},
+                {"src": os.path.join(self.app_workspace_path, self.type, "requirements.txt"), "dst": "./"},
+                {"src": os.path.join(self.app_workspace_path, self.type, "install.sh"), "dst": "./"},
             ]
             for item in items:
                 src_is_dir = item["src"][-1:] == "/"
@@ -336,7 +336,7 @@ def main(loggr=logger) -> int:
         loggr.info(f"Running on {system}, release {rel}")
     parser = argparse.ArgumentParser()
 
-    # Find all directories in app_workspace_dir that contain CONF_YAML file:
+    # Find all directories in app_workspace_path that contain CONF_YAML file:
     projects = []
     for dirpath, _, filenames in walklevel(get_app_workspace_dir()):
         project = os.path.basename(dirpath)
