@@ -195,6 +195,7 @@ def print_info():
         "caller_dir",
         "caller_has_develop_file",
         "_app_workspace_path",
+        "pibase_shared_lib_dir",
         "app_dir",
         "app_conf_dir",
         "app_shared_lib_dir",
@@ -219,10 +220,10 @@ def print_info():
 # From modpath.py we can distinguish only these options:
 # 1. Debugging pi_base modules in pi_base {workspace}
 # 2. If it is ran from a package by a client of pi_base
-# When:                      __file__             # {workspace}/pi_base/modpath.py # {site_packages}/pi_base-X.X.X/pi_base/modpath.
-module_path = get_script_dir(__file__)  #         # {workspace}/pi_base            # {site_packages}/pi_base-X.X.X/pi_base
+# When:                      __file__             # {workspace}/pi_base/modpath.py # {site_packages}/pi_base/pi_base/modpath.
+module_path = get_script_dir(__file__)  #         # {workspace}/pi_base            # {site_packages}/pi_base/pi_base
 module_dirname = os.path.basename(module_path)  # # pi_base                        # pi_base
-workspace_dir = os.path.dirname(module_path)  #   # {workspace}                    # {site_packages}/pi_base-X.X.X
+workspace_dir = os.path.dirname(module_path)  #   # {workspace}                    # {site_packages}/pi_base
 module_is_from_editable = os.path.isfile(os.path.join(module_path, "is_editable.md"))
 module_is_from_package = "/dist-packages/" in module_path or "/site-packages/" in module_path or "\\site-packages\\" in module_path or module_is_from_editable
 
@@ -245,7 +246,7 @@ caller_has_develop_file = (caller_dir != workspace_dir) and os.path.isfile(os.pa
 # Now from all the above, do some heuristics to arrive to all the answers.
 
 _app_workspace_path = ""
-pibase_shared_lib_dir = os.path.join(workspace_dir, "lib")
+pibase_shared_lib_dir = os.path.join(module_path, "lib")
 additional_python_paths = []
 if not module_is_from_package or in_pibase_source:
     DEBUG = True

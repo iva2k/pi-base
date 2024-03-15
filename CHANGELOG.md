@@ -2,9 +2,7 @@
 
 ## 0.0.10 (unreleased)
 
-
-- Nothing changed yet.
-
+* Fix modpath on RPI.
 
 ## 0.0.9 (2024-03-15)
 
