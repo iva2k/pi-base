@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.8 (unreleased)
+## 0.0.8 (2024-03-15)
 
 * Bugfixes in pi_base/modpath.py.
 
