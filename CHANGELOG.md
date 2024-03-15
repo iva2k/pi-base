@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.7 (unreleased)
+## 0.0.7 (2024-03-14)
 
 * Redo heuristics logic in pi_base/modpath.py.
 
