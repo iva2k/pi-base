@@ -126,13 +126,13 @@ def disk_is_healthy_WIP(printer=None) -> "tuple[bool, list[str]]":
     return healthy, summary
 
 
-def walklevel(root_dir, level=1) -> "Iterator[tuple[AnyStr, list[AnyStr], list[AnyStr]]]":
+def walklevel(root_dir: Optional[str] = None, level: int = 1) -> "Iterator[tuple[AnyStr, list[AnyStr], list[AnyStr]]]":
     """Similar to os.walk() but with a level parameter.
 
         From https://stackoverflow.com/a/234329
 
     Args:
-        root_dir (str): _description_
+        root_dir (None|str): Directory to traverse. If None - will use current directory.
         level (int, optional): How many levels to return. Defaults to 1.
 
     Raises:
@@ -142,16 +142,18 @@ def walklevel(root_dir, level=1) -> "Iterator[tuple[AnyStr, list[AnyStr], list[A
         Iterator[tuple[AnyStr@walk, list[AnyStr@walk], list[AnyStr@walk]]]: _description_
 
     Example:
-    ```
-    from os_utils import walklevel
-    for root, dirs, files in walklevel('python/Lib/email'):
-        print(root, "consumes", end="")
-        print(sum(getsize(join(root, name)) for name in files), end="")
-        print("bytes in", len(files), "non-directory files")
-        if 'CVS' in dirs:
-            dirs.remove('CVS')  # don't visit CVS directories
-    ```
+        ```
+        from os_utils import walklevel
+        for root, dirs, files in walklevel('python/Lib/email'):
+            print(root, "consumes", end="")
+            print(sum(getsize(join(root, name)) for name in files), end="")
+            print("bytes in", len(files), "non-directory files")
+            if 'CVS' in dirs:
+                dirs.remove('CVS')  # don't visit CVS directories
+        ```
     """
+    if root_dir is None:
+        root_dir = os.path.realpath(os.getcwd())
     root_dir = root_dir.rstrip(os.path.sep)
     if not os.path.isdir(root_dir):
         raise FileNotFoundError(f"No such directory: {root_dir}")
