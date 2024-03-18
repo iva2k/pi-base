@@ -292,16 +292,45 @@ function enable_services () {
   echo
 }
 
+function do_netconf() {
+  # Copied from raspi-config (size 95856) and modified.
+  INIT="$(ps --no-headers -o comm 1)"
+  # systemctl -q is-enabled NetworkManager > /dev/null 2>&1
+  # NMENABLED=$?
+  # systemctl -q is-enabled dhcpcd > /dev/null 2>&1
+  # DHENABLED=$?
+  NMOPT="$1"
+
+  if [ "$NMOPT" -eq 2 ] ; then # NetworkManager selected
+    ENABLE_SERVICE=NetworkManager
+    DISABLE_SERVICE=dhcpcd
+    # NETCON="NetworkManager"
+  else # dhcpcd selected
+    ENABLE_SERVICE=dhcpcd
+    DISABLE_SERVICE=NetworkManager
+    # NETCON="dhcpcd"
+  fi
+
+  systemctl -q disable "$DISABLE_SERVICE" 2> /dev/null
+  systemctl -q enable "$ENABLE_SERVICE"
+  if [ "$INIT" = "systemd" ]; then
+    systemctl -q stop "$DISABLE_SERVICE" 2> /dev/null
+    systemctl -q --no-block start "$ENABLE_SERVICE"
+  fi
+}
+
 function enable_dhcpd () {
   echo "${SEP2}NETWORK "
-  use_raspi_config do_netconf 1 &
+  # use_raspi_config do_netconf 1 &
+  do_netconf 1
   echo " + enable DHCPD for Network "
   echo
 }
 
 function enable_nmcli () {
   echo "${SEP2}NETWORK "
-  use_raspi_config do_netconf 2 &
+  # use_raspi_config do_netconf 2 &
+  do_netconf 2
   echo " + enable NetworkManager for Network "
   echo
 }
