@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.11 (unreleased)
+## 0.0.11 (2024-03-18)
 
 * Fix common_install.sh failing to change RPI networking type (raspi-config dropped do_netconfig())
 * More typings
