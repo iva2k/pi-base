@@ -9,15 +9,17 @@ Info:
         secrets: 'auto' # Use value from sites DB, also auto-add to 'Files'
 Conf:
     Server: false
-Modules:
-    # All modules in {pi_base}/pi_base/lib are available from pi_base package
-    # List here any modules from {app_workspace}/lib that are needed on the target
+NoModules:
+    # Keep it named "NoModules" or remove, then all files from {app_workspace}/lib will be copied into build image.
+    # Rename this section to "Modules" and keep empty to disable copying ANY files from {app_workspace}/lib into build image.
+    # Rename this section to "Modules" and add a list of files from {app_workspace}/lib that are needed on the target to copy them into build image (include dependencies too).
     # - app_common_stuff.py
+    # NOTE: All modules in {pi_base}/pi_base/lib are available from pi_base package
 Files:
     - { src: 'blank/blank.py', dst: 'app/' }
     - { src: 'secrets/remote_secrets.yaml', dst: 'app/' }
     # - { src: 'secrets/sa_admin_client_secrets.json', dst: 'app/' }
-PostInstall:
+PostInstall:  # TODO: (when needed) Mechanism to delete file after successful install. Think through scenario if install location is not /home/pi/app (e.g. different user, different path, etc.)
     DeleteFiles:
         # - /home/pi/app/sa_admin_client_secrets.json
         - /home/pi/app/remote_secrets.yaml

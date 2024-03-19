@@ -4,6 +4,7 @@
 _start_time_ms=$(($(date +%s%N)/1000000))
 
 # Environment variables passed to ../common/common_install.sh.
+export INST_DEBUG=0
 export INST_DO_QUICK=2 ;# 0=full install, 1=skip some tedious steps, 2=skip most steps
 # Set INST_ENABLE_GUI=0 for console-only mode
 # Set INST_ENABLE_GUI=1 for GUI mode
@@ -53,6 +54,7 @@ function usage() {
   echo " "
   echo "options:"
   echo "  -h | --help                        show this usage information"
+  echo "  -D | --debug                       Print debugging info"
   echo "  -f | --full                        Do full install (no skipping)"
   echo "  -q | --quick                       Do quick install (skip long installs of packages if already was installed)"
   #echo "  -u | --user=<user_name>            (default \"$INST_DFLT_USER\")"
@@ -65,7 +67,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
   -h|--help)
     usage
+    # shellcheck disable=SC2317
     return 0 2>/dev/null || exit 0
+    ;;
+  -D|--debug)
+    INST_DEBUG=1
     ;;
   -f|--full)
     INST_DO_QUICK=0
@@ -76,6 +82,7 @@ while [ $# -gt 0 ]; do
   *)
     echo "Unknown option/command \"$1\"." >&2
     usage
+    # shellcheck disable=SC2317
     return 1 2>/dev/null || exit 1
     ;;
   esac
@@ -139,6 +146,23 @@ function install_packages () {
 
 function install_files () {
   echo "${SEP2}INSTALL FILES "
+
+  # UNUSED
+
+  echo
+}
+
+function set_permissions () {
+  # echo "${SEP2}SET PERMISSIONS "
+
+  # UNUSED
+
+  echo
+}
+
+
+function enable_modules () {
+  echo "${SEP2}ENABLE MODULES "
 
   # UNUSED
 
@@ -236,6 +260,8 @@ print_info
 # [ 1 -ge "$INST_DO_QUICK" ] && install_packages
 [ 1 -ge "$INST_DO_QUICK" ] && install_python_packages
 # install_files
+# set_permissions
+# enable_modules
 # enable_services
 # adjust_settings
 

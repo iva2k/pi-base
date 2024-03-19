@@ -5,6 +5,7 @@ _start_time_ms=$(($(date +%s%N)/1000000))
 
 # Environment variables can be passed to us.
 # If any of those are not set, defaults are used.
+INST_DEBUG=${INST_DEBUG:-0}
 INST_DO_QUICK=${INST_DO_QUICK:-2} ;# 0=full install, 1=skip some tedious steps, 2=skip most steps
 # Set INST_ENABLE_GUI=0 for console-only mode
 # Set INST_ENABLE_GUI=1 for GUI mode
@@ -52,6 +53,7 @@ function usage() {
   echo " "
   echo "options:"
   echo "  -h | --help                        show this usage information"
+  echo "  -D | --debug                       Print debugging info"
   echo "  -f | --full                        Do full install (no skipping)"
   echo "  -q | --quick                       Do quick install (skip long installs of packages if already was installed)"
   #echo "  -u | --user=<user_name>            (default \"$INST_DFLT_USER\")"
@@ -64,7 +66,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
   -h|--help)
     usage
+    # shellcheck disable=SC2317
     return 0 2>/dev/null || exit 0
+    ;;
+  -D|--debug)
+    INST_DEBUG=1
     ;;
   -f|--full)
     INST_DO_QUICK=0
@@ -75,6 +81,7 @@ while [ $# -gt 0 ]; do
   *)
     echo "Unknown option/command \"$1\"." >&2
     usage
+    # shellcheck disable=SC2317
     return 1 2>/dev/null || exit 1
     ;;
   esac
@@ -118,10 +125,10 @@ CONFIG=/boot/config.txt
 ## Wrapper over `raspi-config nonint ...` non-interactive use
 function use_raspi_config () {
   local ret;
-  #echo "DEBUG: raspi-config(nonint $*)"
+  [ 0 -ne "$INST_DEBUG" ] && echo "DEBUG: raspi-config(nonint $*)"
   local result; result=$(raspi-config nonint "$@")
   ret=$?
-  #echo "DEBUG: \$?=$ret result=$result"
+  [ 0 -ne "$INST_DEBUG" ] && echo "DEBUG: \$?=$ret result=$result"
   return "$ret"
 }
 
@@ -249,6 +256,8 @@ function install_files () {
 
 function set_permissions () {
   echo "${SEP2}SET PERMISSIONS "
+  sudo chmod -v 700 "/home/$INST_USER/app"
+  sudo chown -Rv "$INST_USER:$INST_USER" "/home/$INST_USER/app"
   sudo chmod -v 700 "/home/$INST_USER/.ssh"
   sudo chown -Rv "$INST_USER:$INST_USER" "/home/$INST_USER/.ssh"
   sudo chmod -v 600 "/home/$INST_USER/.ssh/authorized_keys"
@@ -337,16 +346,17 @@ function enable_nmcli () {
 
 function install_remoteiot () {
   echo "${SEP2}REMOTE CONTROL "
-  local py_file; py_file="/home/pi/modules/remoteiot.py"
-  if [ -f "$py_file" ]; then
+  local command; command="pi_base device"
+  [ 0 -ne "$INST_DEBUG" ] && command="$command -D"
+  if which "pi_base" ; then
     local output ret last_line re device_id
     re='.* device_id="([^"]*)"'
     device_id=
-    output="$(python $py_file -D query 2>&1)"
+    output="$($command query 2>&1)"
     ret=$?
     if [ $ret -ne 0 ]; then
-      # python $py_file -D add "$SITE_ID" "$APP_TYPE" "$APP_NAME" ;# <-- these vars should come from app_conf.yaml. It's easier to do it in Python.
-      output="$(python $py_file -D add_at_install)" ; # Will gather vars from app_conf.yaml: "$SITE_ID" "$APP_TYPE" "$APP_NAME"
+      # $command add "$SITE_ID" "$APP_TYPE" "$APP_NAME" ;# <-- these vars should come from app_conf.yaml. But it's easier to do it in Python.
+      output="$($command add_at_install)" ; # Will gather vars from app_conf.yaml for us: "$SITE_ID" "$APP_TYPE" "$APP_NAME"
       ret=$?
       if [ $ret -ne 0 ]; then
         echo "Error $ret installing remote control." >&2
@@ -359,7 +369,7 @@ function install_remoteiot () {
       echo " + install remote control, device_id=\"$device_id\" "
     else
       last_line="${output##*$'\n'}"
-      # last_line: This device is connected to remoteiot.com service as device_id="RPI-BASE-blank-001".
+      # last_line: This device is connected to remoteiot.com service as e.g. device_id="RPI-BASE-blank-001".
       if [[ $last_line =~ $re ]]; then device_id="${BASH_REMATCH[1]}"; fi
 
       echo " - skipping remote control install - already installed, device_id=\"$device_id\" "
@@ -369,7 +379,8 @@ function install_remoteiot () {
       INST_HOSTNAME="$device_id"
     fi
   else
-    echo " - Warning: Module \"$py_file\" not found "
+    echo "Error - Package \"pi_base\" not found, cannot install REMOTE_CONTROL." >&2
+    exit 1
   fi
   echo
 }
@@ -557,20 +568,23 @@ function set_audio_sink () {
   # fi
   # use_raspi_config do_audioconf 1  ;# PulseAudio
   # echo " + set Audio Config = PulseAudio"
-
+  audio_mgr=
   if is_pulseaudio ; then
+    audio_mgr="PulseAudio pactl"
     sinks=(69:Headphones 68:HDMI)
   elif aplay -l | grep -q "bcm2835 ALSA"; then
+    audio_mgr="ALSA amixer"
     sinks=(1:Headphones 2:HDMI 0:Auto)
   else
+    audio_mgr="ALSA .asoundrc"
     sinks=(0:Headphones 1:HDMI)
   fi
   sink_rec="${sinks[$sink]}"
   sink_num="${sink_rec%%:*}"
-  sink_name="${sink_rec#*:}"
+  # sink_name="${sink_rec#*:}"
   use_raspi_config do_audio "${sink_num}"
   #? sudo alsactl store
-  echo " + set Audio Output = $sink_name"
+  echo " + set Audio Output = $sink_rec ($audio_mgr)"
   echo
 }
 function set_audio_headphones () {

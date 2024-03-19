@@ -82,7 +82,7 @@ The app on Raspberry Pi consists of few layers:
 
 - `/etc/app_manager_startup.service` - systemd service that starts app_manager_startup script
 - `/usr/local/bin/app_manager_startup` - plays boot sound and shows splashscreen, then starts manager.py on VT2
-- `/home/pi/modules/manager.py` - reads app config yaml file, waits for network, synchronizes time, then starts the app per the yaml config.
+- `/home/pi/lib/manager.py` - reads app config yaml file, waits for network, synchronizes time, then starts the app per the yaml config.
 - `/home/pi/app/<project>.py` - The app is started on VT1 (and VT4 is available for history)
 
 Raspbery Pi on boot will execute the chain of layers to load the app, which takes full control of Raspberry Pi VT1.

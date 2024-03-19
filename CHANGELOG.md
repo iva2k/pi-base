@@ -2,9 +2,9 @@
 
 ## 0.0.14 (unreleased)
 
-
-- Nothing changed yet.
-
+* Enable remote control during install.sh.
+* Show more information in install.sh/common_install.sh.
+* Add INST_DEBUG setting and -D/--debug parameter to install.sh/common_install.sh.
 
 ## 0.0.13 (2024-03-19)
 
