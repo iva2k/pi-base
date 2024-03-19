@@ -538,13 +538,36 @@ function set_audio_WIP () {
   # }  
 }
 
+is_pulseaudio() {
+  pgrep pulseaudio > /dev/null || pgrep pipewire-pulse > /dev/null
+  return $?
+}
+
 # Robust method (should be aware of sink numbers changing...)
 function set_audio_sink () {
   echo "${SEP2}AUDIO OUTPUT "
-  local sink sinks; sink=$1 ; sinks=(Headphones HDMI)
-  use_raspi_config do_audio "${sink}"
+  local sink sinks; sink=$1
+  # Enable PulseAudio
+  # systemctl --global -q disable pipewire-pulse
+  # systemctl --global -q disable wireplumber
+  # systemctl --global -q enable pulseaudio
+  # if [ -e /etc/alsa/conf.d/99-pipewire-default.conf ] ; then
+  #   rm /etc/alsa/conf.d/99-pipewire-default.conf
+  # fi
+  use_raspi_config do_audioconf 1  ;# PulseAudio
+  if is_pulseaudio ; then
+    sinks=(69:Headphones 68:HDMI)
+  elif aplay -l | grep -q "bcm2835 ALSA"; then
+    sinks=(1:Headphones 2:HDMI 0:Auto)
+  else
+    sinks=(0:Headphones 1:HDMI)
+  fi
+  sink_rec="${sinks[$sink]}"
+  sink_num="${sink_rec%%:*}"
+  sink_name="${sink_rec#*:}"
+  use_raspi_config do_audio "${sink_num}"
   #? sudo alsactl store
-  echo " + set Audio Output = ${sinks[$sink]}"
+  echo " + set Audio Output = $sink_name"
   echo
 }
 function set_audio_headphones () {
