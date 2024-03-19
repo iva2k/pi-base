@@ -2,9 +2,8 @@
 
 ## 0.0.12 (unreleased)
 
-
-- Nothing changed yet.
-
+* Add "site" and "device" commands to pi_base CLI.
+* Fix DeploySite issues.
 
 ## 0.0.11 (2024-03-18)
 

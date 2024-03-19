@@ -206,7 +206,7 @@ class Remoteiot:
                 self.gd_file.Upload()
             elif self.db_file:
                 self.db_file_save(self.devices, self.db_file)
-        except Exception as e:
+        except Exception as e:  # pylint: disable:broad-exception-caught
             self.loggr.error(f'Error {type(e)} "{e}" saving device database file')
             return -1
         return 0
@@ -444,8 +444,8 @@ def cmd_add_named(remote: Remoteiot, args: argparse.Namespace) -> tuple[int, Opt
     return res, device_id, device_name
 
 
-def cmd_add_at_install(remote: Remoteiot, args: argparse.Namespace) -> int:
-    conf = get_conf(filepath=f"{app_conf_dir}/app_conf.yaml")
+def cmd_add_at_install(remote: Remoteiot, _args: argparse.Namespace) -> int:
+    conf = get_conf(filepath=os.path.join(app_conf_dir, "app_conf.yaml"))
     site_id = conf.get("Site")  # "Site" is filled at build time by make.py
     app_name = conf.get("Name")
     app_type = conf.get("Type")
@@ -552,7 +552,7 @@ def main() -> int:
         if args.command == "query":
             return cmd_query(remote, args)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable:broad-exception-caught
         logger.error(f'Error {type(e)} "{e}"')
         return -1
 

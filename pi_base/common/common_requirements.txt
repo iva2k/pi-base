@@ -1,5 +1,5 @@
 # TODO: (now) Update this version number along with _version.py:
-pi_base>=0.0.11
+pi_base>=0.0.12
 # For now will use ">=" instead of "=="
 
 pyyaml~=6.0
