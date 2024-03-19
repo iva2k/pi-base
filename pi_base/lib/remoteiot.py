@@ -526,7 +526,7 @@ def parse_args(progname: str) -> tuple[argparse.Namespace, argparse.ArgumentPars
     return args, parser
 
 
-def _main() -> int:
+def main() -> int:
     progname = os.path.basename(sys.argv[0])
     args, parser = parse_args(progname)
     if args.debug:
@@ -561,6 +561,6 @@ def _main() -> int:
 
 
 if __name__ == "__main__":
-    rc = _main()
+    rc = main()
     if rc:
         sys.exit(rc)

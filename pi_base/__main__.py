@@ -27,6 +27,8 @@ __package__ = os.path.basename(SCRIPT_DIR)  # noqa: A001
 
 from .modpath import get_script_dir
 from .make import main as make_main
+from .lib.deploy_site import main as site_main
+from .lib.remoteiot import main as device_main
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
@@ -59,10 +61,42 @@ def upload_command(args):
     return 0
 
 
+def site_command(args):
+    try:
+        sys.argv[1:] = args
+        site_main()
+    except subprocess.CalledProcessError as e:
+        return e.returncode
+    # except ImportError:
+    #     print("Error: make.py not found or unable to import.", file=sys.stderr)
+    #     return 1
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def device_command(args):
+    try:
+        sys.argv[1:] = args
+        device_main()
+    except subprocess.CalledProcessError as e:
+        return e.returncode
+    # except ImportError:
+    #     print("Error: make.py not found or unable to import.", file=sys.stderr)
+    #     return 1
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(loggr=logger) -> int:
     commands = {
         "make": make_command,
         "upload": upload_command,
+        "site": site_command,
+        "device": device_command,
     }
     commands_list = commands.keys()
     command_help_text = "Must be one of: " + ", ".join(commands_list)
