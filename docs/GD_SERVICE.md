@@ -44,8 +44,8 @@ In the Google Cloud Console, go to [`IAM and Admin`](https://console.cloud.googl
 
 We are setting up for uploading files from a local folder to a specific folder in Google Drive.
 
-Go to your Google Drive and create a new folder. Right-click the folder, choose `Share` and add the email address of the service account you created in `step 1` as an `Editor` or a `Contributor` (Add and Edit files) to this folder.
+Go to your Google Drive and create a new folder. Right-click the folder, choose `Share` and add the email address of the service account you created in `step 1` as an `Editor` (Add and Edit files) to this folder.
 
 Thus an appliance project with the `Key File` from `step 2` will be able to access this folder and upload files to it. The appliance project will not have access to any other resources on your Google Drive.
 
-Copy the folder ID (the last portion of the URL in the Browser Address Bar) and paste it into the appliance project configuration file, along with the name of the `Key File`. Add the `Key File` to the appliance project builder specification (such as the appliance project's `conf.yaml` file).
+Copy the folder ID (the last portion of the URL in the Browser Address Bar) and paste it into the `Key File` additional properties. Then add the name of the `Key File` to the appliance project configuration file.
