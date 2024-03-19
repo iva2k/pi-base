@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.14 (unreleased)
+## 0.0.14 (2024-03-19)
 
 * Enable remote control during install.sh.
 * Show more information in install.sh/common_install.sh.
