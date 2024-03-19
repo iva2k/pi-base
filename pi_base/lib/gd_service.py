@@ -513,6 +513,8 @@ def demo(use_sa: bool = True) -> None:
         print(f'Using User Account, secrets file "{demo_secrets_file}"')
         mygd.authenticate_in_browser(demo_secrets_file)
     drive = mygd.get_drive()
+    if not drive:
+        raise ConnectionError("Could not get drive from GoogleDrive")
 
     if False:  # pylint: disable=using-constant-test
         for dir_id in dir_ids:
@@ -525,6 +527,8 @@ def demo(use_sa: bool = True) -> None:
 
     # see https://github.com/iterative/PyDrive2/issues/185#issuecomment-1269331395
     service = mygd.get_service()
+    if not service:
+        raise ConnectionError("Could not get service from GoogleDrive")
     drives = GoogleDriveService.retrieve_all_drives(service) if service else []
     print("-" * 80)
     print(f"All Drives: items:{len(drives)}")

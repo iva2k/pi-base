@@ -48,19 +48,6 @@ class DeploySite:
         self.sa_client_secrets = sa_client_secrets
         self.description = description
 
-    # Enable Subscript Notation:
-    def __delitem__(self, key):
-        self.__delattr__(key)
-
-    def __getitem__(self, key):
-        return self.__getattribute__(key)
-
-    def __setitem__(self, key, value):
-        self.__setattr__(key, value)
-
-    def __contains__(self, key):
-        return hasattr(self, key)
-
 
 class DeploySiteDB:
     """Store of Deployment Sites."""
@@ -107,25 +94,34 @@ class DeploySiteDB:
 
         self.conf = self.conf_file_load()
 
-        # Look for sites DB in Google Drive first
+        # Look for sites DB in GoogleDrive first
         self.gd_file = None
         gd_secrets = self.conf.get_subkey("GoogleDrive", "secrets", None)
         if gd_secrets:
-            gd_secrets = find_path(gd_secrets, self.secrets_paths, self.loggr)
-            self.gds, extras = gd_connect(self.loggr, gd_secrets, {"gd_sites_folder_id": None, "gd_sites_file_title": None}, skip_msg="Cannot continue.")
+            gd_secrets_actual = find_path(gd_secrets, self.secrets_paths, self.loggr)
+            if not gd_secrets_actual:
+                raise FileNotFoundError(f'Cannot find GoogleDrive secrets file "{gd_secrets}".')
+            self.gds, extras = gd_connect(self.loggr, gd_secrets_actual, {"gd_sites_folder_id": None, "gd_sites_file_title": None}, skip_msg="Cannot continue.")
             if not self.gds:
                 raise ValueError("Failed loading GoogleDrive secrets or connecting.")
             self.gd_folder_id = extras["gd_sites_folder_id"] if extras else None
             self.gd_file_title = extras["gd_sites_file_title"] if extras else None
+            if not self.gd_folder_id or not self.gd_file_title:
+                raise ValueError(f'Expected non-empty GoogleDrive gd_folder_id and gd_file_title in GoogleDrive secrets file "{gd_secrets_actual}".')
             self.sites, self.gd_file = self.db_file_load_gd(self.gd_file_title, self.gd_folder_id)
         else:
-            self.sites = self.db_file_load()
+            file = self.conf.get_subkey("LocalFile", "file", g_db_file_name)
+            self.sites = self.db_file_load(file)
 
-    def db_file_load_gd(self, gd_file_title, gd_folder_id):
+    def db_file_load_gd(self, gd_file_title: str, gd_folder_id: str):
         # gd_file_id = 'TBD'
         # in_file_fd = self.gds.open_file_by_id(gd_file_id)
+        if not self.gds:
+            raise ValueError("Expected non-empty self.gds.")
+        self.loggr.info(f'Reading sites database from GoogleDrive "{gd_file_title}" file.')
         in_file_fd = self.gds.maybe_create_file_by_title(gd_file_title, gd_folder_id)
-        self.loggr.info(f'Reading sites database from Google Drive "{gd_file_title}" file.')
+        if not in_file_fd:
+            raise FileNotUploadedError("Failed to create file on GoogleDrive.")
         try:
             content = in_file_fd.GetContentString()
         except FileNotUploadedError as err:
@@ -135,9 +131,9 @@ class DeploySiteDB:
         sites = self.db_file_load_fd(buffered)
         return sites, in_file_fd
 
-    def db_file_load(self) -> list[DeploySite]:
+    def db_file_load(self, default_file: Optional[str] = None) -> list[DeploySite]:
         if not self.db_file:
-            self.db_file = find_path(g_db_file_name, self.config_paths, self.loggr)
+            self.db_file = find_path(default_file or g_db_file_name, self.config_paths, self.loggr)
         if not self.db_file:
             raise ValueError("Please provide sites database file")
 
@@ -176,13 +172,11 @@ class DeploySiteDB:
             else:
                 # Got data row
                 site = DeploySite()
-                # for c in self.cols + self.cols_optional:
-                #     key = c.replace(' ', '_')
-                for col, c in enumerate(columns):
-                    key = c.replace(" ", "_")
-                    val = row_stripped[col] if col < len(row) else None
-                    site[key] = val
                 if site:
+                    for col, c in enumerate(columns):
+                        key = c.replace(" ", "_")
+                        val = row_stripped[col] if col < len(row) else None
+                        setattr(site, key, val)
                     sites += [site]
         if not got_header and not sites:
             # File is empty (perhaps was just created), init the columns
@@ -199,8 +193,9 @@ class DeploySiteDB:
             return self.db_file_save_fd(sites, out_file_fd)
 
     def db_file_save_fd(self, sites, out_file_fd):
+        if not self.db_file_cols:
+            raise ValueError("Expected non-empty list in self.db_file_cols.")
         csvwriter = csv.writer(out_file_fd, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
-
         # Write header
         csvwriter.writerow(self.db_file_cols)
         for site in sites:
@@ -208,7 +203,7 @@ class DeploySiteDB:
             for c_in in self.db_file_cols:
                 c = c_in.lower().lstrip("#").strip()
                 key = c.replace(" ", "_")
-                row += [site.get(key, "")]
+                row += [getattr(site, key, "")]
             csvwriter.writerow(row)
 
     def db_add_site(self, site: DeploySite):
@@ -217,7 +212,7 @@ class DeploySiteDB:
         self.sites += [site]
         try:
             if self.gd_file and self.gds:
-                self.loggr.info(f'Writing site database to Google Drive "{self.gd_file["title"]}" file.')
+                self.loggr.info(f'Writing site database to GoogleDrive "{self.gd_file["title"]}" file.')
 
                 # buffered = io.BytesIO()
                 # buffered.seek(0)
@@ -230,21 +225,21 @@ class DeploySiteDB:
                 self.gd_file.Upload()
             elif self.db_file:
                 self.db_file_save(self.sites, self.db_file)
-        except Exception as e:
+        except Exception as e:  # pylint: disable:broad-exception-caught
             self.loggr.error(f'Error {type(e)} "{e}" saving site database file')
             return -1
         return 0
 
     def find_site_by_id(self, site_id) -> DeploySite | None:
         for site in self.sites:
-            if site_id == site["site_id"]:
+            if site_id == site.site_id:
                 return site
         return None
 
     def unique_site_id(self):
-        site_id_template = self.conf.get("site_id_template", "RPI-{sn:03d}")
-        site_name_template = self.conf.get("site_name_template", "RPI {sn:03d}")
-        # site_group_template = self.conf.get('site_group_template', "RPI {sn:03d}")
+        site_id_template = self.conf.get("site_id_template", None) or "SITE-{sn:03d}"
+        site_name_template = self.conf.get("site_name_template", None) or "SITE {sn:03d}"
+        # site_group_template = self.conf.get('site_group_template', None) or "SITE {sn:03d}"
         site_group = None
         sn = 1
         while sn < MAX_SN:
@@ -264,32 +259,38 @@ class DeploySiteDB:
         self.loggr.info(f"Config file {self.conf_file}")
         return get_conf(self.conf_file)
 
-    def add(self, name: str, site: DeploySite) -> int:
-        pass
+    # def add(self, name: str, site: DeploySite) -> int:
+    #     return 0
 
-    def get(self, name: str) -> tuple[int, DeploySite]:
-        return 0, None
+    # def get(self, name: str) -> tuple[int, DeploySite | None]:
+    #     return 0, None
 
-    def delete(self, name: str) -> int:
-        return 0
+    # def delete(self, name: str) -> int:
+    #     return 0
 
-    def update(self, name: str, site: DeploySite) -> int:
-        return 0
+    # def update(self, name: str, site: DeploySite) -> int:
+    #     return 0
 
 
-def cmd_sites(db, args):
+def cmd_unique(db: DeploySiteDB, _args) -> int:
+    site_id, _site_name, _site_group = db.unique_site_id()
+    print(site_id)
+    return 0
+
+
+def cmd_sites(db: DeploySiteDB, args) -> int:
     show_secret = getattr(args, "show_secret", False)
     for site in db.sites:
         vals = []
         for c in db.cols + db.cols_optional:
             key = c.replace(" ", "_")
             if show_secret or key not in db.cols_secret:
-                vals += [site[key]]
+                vals += [getattr(site, key, "")]
         print(", ".join(vals))
     return 0
 
 
-def cmd_add(db, args):
+def cmd_add(db: DeploySiteDB, args) -> int:
     site = DeploySite(
         site_id=args.site_id,
         site_name=args.site_name,
@@ -306,7 +307,7 @@ def cmd_add(db, args):
     return res
 
 
-def parse_args():
+def _parse_args() -> tuple[argparse.Namespace, argparse.ArgumentParser]:
     parser = argparse.ArgumentParser(description="Manage Deployment Sites (list,add)")
 
     # Common optional arguments
@@ -317,18 +318,23 @@ def parse_args():
     subparsers = parser.add_subparsers(title="Commands", dest="command")
 
     # Parsers for commands
-    sites_parser = subparsers.add_parser("sites", help="Get list of Deployment Sites")
+
+    # "sites" command
+    _sites_parser = subparsers.add_parser("sites", help="Get list of Deployment Sites")
+    # _sites_parser.add_argument('-s', '--show_secret', help='Show secret key', action='store_true')
+
+    # "add" command
     add_parser = subparsers.add_parser("add", help="Add a Deployment Site")
-    get_parser = subparsers.add_parser("get", help="Get Deployment Site")
-
-    # Optional arguments for the "sites" command
-    # sites_parser.add_argument('-s', '--show_secret', help='Show secret key', action='store_true')
-
-    # Additional args for "add" command
     add_parser.add_argument("site_id", type=str, help="Site id")
     add_parser.add_argument("site_name", type=str, help="Site name")
     add_parser.add_argument("sa_client_secrets", type=str, help="Site GoogleDrive ServiceAccount secrets file")
     add_parser.add_argument("-D", "--description", dest="description", help="Site description")
+
+    # "get" command
+    _get_parser = subparsers.add_parser("get", help="Get Deployment Site")
+
+    # "unique" command
+    _unique_parser = subparsers.add_parser("unique", help="Get Unique ID")
 
     # Parse the command line arguments
     args = parser.parse_args()
@@ -336,7 +342,7 @@ def parse_args():
 
 
 def main(loggr=logger):
-    args, parser = parse_args()
+    args, parser = _parse_args()
     if loggr:
         if args.debug:
             loggr.setLevel(logging.DEBUG)
@@ -347,14 +353,14 @@ def main(loggr=logger):
     try:
         if args.command == "sites":
             return cmd_sites(db, args)
-        # if args.command == 'unique':
-        #     return cmd_unique(db, args)
+        if args.command == "unique":
+            return cmd_unique(db, args)
         if args.command == "add":
             return cmd_add(db, args)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable:broad-exception-caught
         if loggr:
-            loggr.error(f'Error {type(e)} "{e}"')
+            loggr.error(f'Error {type(e)} "{e}" in command {args.command}')
         return -1
 
     parser.print_help()
