@@ -2,9 +2,7 @@
 
 ## 0.0.13 (unreleased)
 
-
-- Nothing changed yet.
-
+* Fix broken Audio sink logic for HDMI name in raspi-config.
 
 ## 0.0.12 (2024-03-18)
 
