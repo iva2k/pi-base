@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.16 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.0.15 (2024-03-20)
 
 * Fix INST_REMOTEIOT not working in install.sh.
