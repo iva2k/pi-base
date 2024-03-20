@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.16 (unreleased)
+## 0.0.16 (2024-03-20)
 
 * Fix missing arg to _get_developer_setup() in modpath.py.
 
