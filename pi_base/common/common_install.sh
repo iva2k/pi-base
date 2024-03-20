@@ -375,7 +375,7 @@ function install_remoteiot () {
       echo " - skipping remote control install - already installed, device_id=\"$device_id\" "
     fi
     if [ -n "$device_id" ]; then
-      echo " + Will change hostname to \"$device_id\" "
+      echo " + Changing hostname to \"$device_id\" "
       INST_HOSTNAME="$device_id"
     fi
   else
@@ -694,10 +694,10 @@ disable_vt
 [ 1 -eq "$INST_USE_NMCLI" ] && enable_nmcli
 
 [ 1 -eq "$INST_REMOTEIOT" ] && install_remoteiot ;# Side-effect -> Generated unique name to $INST_HOSTNAME
+use_raspi_config do_hostname "$INST_HOSTNAME"
+echo " + Set hostname to \"$INST_HOSTNAME\" "
 
 configure_wdog
-
-use_raspi_config do_hostname "$INST_HOSTNAME"
 
 # final_overrides
 

@@ -87,6 +87,7 @@ DEBUG = True
 
 APP_DIRNAME = "app"
 PI_BASE_DIR = "/home/pi"
+PI_HOSTNAME = "RPI"
 
 
 def is_raspberrypi() -> bool:
@@ -134,7 +135,7 @@ def get_script_dir(file_or_object_or_func: str | inspect._SourceObjectType, foll
     return os.path.dirname(path)
 
 
-def _get_developer_setup(filename: str, default_site_id: str, default_project: str) -> tuple[bool, str, str, list[str]]:
+def _get_developer_setup(filename: str, default_site_id: str, default_project: str, default_hostname: str) -> tuple[bool, str, str, str, list[str]]:
     """Read a developer config file.
 
     Lines starting with '#' are comments and are ignored.
@@ -169,10 +170,12 @@ def _get_developer_setup(filename: str, default_site_id: str, default_project: s
         if my_site_id and my_project:
             has_file = True
             default_site_id, default_project = my_site_id, my_project
+            if rest:
+                default_hostname, *rest = rest
             if DEBUG:
                 print(f'DEBUG Read develop file "{filename}", site_id={default_site_id}, project={default_project}')
         # else: Ignore the data if either of the 2 fields is missing
-    return has_file, default_site_id, default_project, rest
+    return has_file, default_site_id, default_project, default_hostname, rest
 
 
 def print_info():
@@ -255,6 +258,7 @@ _app_workspace_path = ""
 # TODO: (soon) Suspecting `pibase_shared_lib_dir` is not needed, as our package is installed, and lib modules are imported by relative import here and by submodule import in the client.
 pibase_shared_lib_dir = os.path.join(module_path, "lib")
 additional_python_paths = []
+hostname = PI_HOSTNAME
 if not module_is_from_package or in_pibase_source:
     DEBUG = True
     running_on = (
@@ -267,7 +271,7 @@ if not module_is_from_package or in_pibase_source:
     # Detect developer setup
     # If present, 'develop.txt' file (see 'SAMPLE_develop.txt') defines which app is running and choose where to find app_conf.yaml file
     develop_filename = os.path.realpath(os.path.join(_app_workspace_path, "develop.txt"))
-    has_develop_file, site_id, project, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank")
+    has_develop_file, site_id, project, hostname, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank")
     additional_python_paths = [os.path.realpath(path) for path in additional_python_paths]
     project_dir = os.path.join(_app_workspace_path, f"build/{site_id}/{project}/pkg{PI_BASE_DIR}")
 
@@ -310,7 +314,7 @@ elif app_module_dir in [app_module_name, "lib"]:
     # Detect developer setup
     # If present, 'develop.txt' file (see 'SAMPLE_develop.txt') defines which app is running and choose where to find app_conf.yaml file
     develop_filename = os.path.realpath(os.path.join(_app_workspace_path, "develop.txt"))
-    has_develop_file, site_id, project, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank")
+    has_develop_file, site_id, project, hostname, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank")
     additional_python_paths = [os.path.realpath(path) for path in additional_python_paths]
     project_dir = os.path.join(_app_workspace_path, f"build/{site_id}/{project}/pkg{PI_BASE_DIR}")
 
