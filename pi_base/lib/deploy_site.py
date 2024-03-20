@@ -16,9 +16,12 @@ import os
 # from subprocess import check_output
 import sys
 from typing import Optional
+from collections.abc import Iterable
 
 # "modpath" must be first of our modules
 from pi_base.modpath import get_app_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
+
+# pylint: disable=wrong-import-order
 from .app_utils import get_conf, find_path
 from .gd_service import gd_connect, FileNotUploadedError
 
@@ -26,8 +29,6 @@ from .gd_service import gd_connect, FileNotUploadedError
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 logger.setLevel(logging.DEBUG)
-
-progname = os.path.basename(sys.argv[0])
 
 g_conf_file_name = "deploy_site_db_secrets.yaml"
 g_db_file_name = "sites.csv"
@@ -98,7 +99,7 @@ class DeploySiteDB:
         self.gd_file = None
         gd_secrets = self.conf.get_subkey("GoogleDrive", "secrets", None)
         if gd_secrets:
-            gd_secrets_actual = find_path(gd_secrets, self.secrets_paths, self.loggr)
+            gd_secrets_actual, _paths = find_path(gd_secrets, self.secrets_paths, self.loggr)
             if not gd_secrets_actual:
                 raise FileNotFoundError(f'Cannot find GoogleDrive secrets file "{gd_secrets}".')
             self.gds, extras = gd_connect(self.loggr, gd_secrets_actual, {"gd_sites_folder_id": None, "gd_sites_file_title": None}, skip_msg="Cannot continue.")
@@ -113,27 +114,37 @@ class DeploySiteDB:
             file = self.conf.get_subkey("LocalFile", "file", g_db_file_name)
             self.sites = self.db_file_load(file)
 
-    def db_file_load_gd(self, gd_file_title: str, gd_folder_id: str):
+    def db_file_load_gd(self, gd_file_title: str, gd_folder_id: str, create_if_missing: bool = True):
         # gd_file_id = 'TBD'
         # in_file_fd = self.gds.open_file_by_id(gd_file_id)
         if not self.gds:
             raise ValueError("Expected non-empty self.gds.")
+        sites = None
         self.loggr.info(f'Reading sites database from GoogleDrive "{gd_file_title}" file.')
-        in_file_fd = self.gds.maybe_create_file_by_title(gd_file_title, gd_folder_id)
-        if not in_file_fd:
-            raise FileNotUploadedError("Failed to create file on GoogleDrive.")
-        try:
-            content = in_file_fd.GetContentString()
-        except FileNotUploadedError as err:
+        if create_if_missing:
+            in_file_fd, created = self.gds.maybe_create_file_by_title(gd_file_title, gd_folder_id)
+        else:
+            in_file_fd, created = self.gds.get_file_by_title(gd_file_title, gd_folder_id), False
+
+        if created:
+            sites = []
             self.db_file_cols_init()
-            return [], in_file_fd
-        buffered = io.StringIO(content)
-        sites = self.db_file_load_fd(buffered)
+        elif in_file_fd:
+            try:
+                content = in_file_fd.GetContentString()
+            except FileNotUploadedError as err:
+                self.db_file_cols_init()
+                return [], in_file_fd
+            buffered = io.StringIO(content)
+            sites = self.db_file_load_fd(buffered)
+        else:  # if not in_file_fd:
+            raise FileNotUploadedError("Failed to create file on GoogleDrive.")
+
         return sites, in_file_fd
 
     def db_file_load(self, default_file: Optional[str] = None) -> list[DeploySite]:
         if not self.db_file:
-            self.db_file = find_path(default_file or g_db_file_name, self.config_paths, self.loggr)
+            self.db_file, _paths = find_path(default_file or g_db_file_name, self.config_paths, self.loggr)
         if not self.db_file:
             raise ValueError("Please provide sites database file")
 
@@ -141,7 +152,7 @@ class DeploySiteDB:
             self.loggr.info(f'Reading sites database from "{self.db_file}" file.')
             return self.db_file_load_fd(in_file_fd)
 
-    def db_file_load_fd(self, in_file_fd) -> list[DeploySite]:
+    def db_file_load_fd(self, in_file_fd: Iterable[str]) -> list[DeploySite]:
         csvreader = csv.reader(in_file_fd, delimiter=",", quotechar='"')
         input_row_num = 0
         got_header = False
@@ -187,15 +198,16 @@ class DeploySiteDB:
         self.db_file_cols = [c.title() for c in self.cols + self.cols_optional]
         self.db_file_cols[0] = "# " + self.db_file_cols[0]
 
-    def db_file_save(self, sites, out_file):
+    def db_file_save(self, sites, out_file: str) -> None:
         with open(out_file, "w", newline="", encoding="utf-8") as out_file_fd:
             self.loggr.info(f'Writing sites database to "{out_file}" file.')
-            return self.db_file_save_fd(sites, out_file_fd)
+            self.db_file_save_fd(sites, out_file_fd)
 
     def db_file_save_fd(self, sites, out_file_fd):
         if not self.db_file_cols:
             raise ValueError("Expected non-empty list in self.db_file_cols.")
         csvwriter = csv.writer(out_file_fd, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
         # Write header
         csvwriter.writerow(self.db_file_cols)
         for site in sites:
@@ -253,7 +265,7 @@ class DeploySiteDB:
 
     def conf_file_load(self):
         if not self.conf_file:
-            self.conf_file = find_path(g_conf_file_name, self.config_paths, self.loggr)
+            self.conf_file, _paths = find_path(g_conf_file_name, self.config_paths, self.loggr)
         if not self.conf_file:
             raise ValueError("Please provide config file")
         self.loggr.info(f"Config file {self.conf_file}")
@@ -307,12 +319,13 @@ def cmd_add(db: DeploySiteDB, args) -> int:
     return res
 
 
-def _parse_args() -> tuple[argparse.Namespace, argparse.ArgumentParser]:
+def _parse_args(progname: str) -> tuple[argparse.Namespace, argparse.ArgumentParser]:
     parser = argparse.ArgumentParser(description="Manage Deployment Sites (list,add)")
 
     # Common optional arguments
     # parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
     parser.add_argument("-D", "--debug", help="Debug", action="store_true")
+    # parser.add_argument("-c", "--config", dest="config_file", type=str, help="Config file to use", default="remote_secrets.yaml")
 
     # Positional argument for the command
     subparsers = parser.add_subparsers(title="Commands", dest="command")
@@ -341,8 +354,9 @@ def _parse_args() -> tuple[argparse.Namespace, argparse.ArgumentParser]:
     return args, parser
 
 
-def main(loggr=logger):
-    args, parser = _parse_args()
+def main(loggr=logger) -> int:
+    progname = os.path.basename(sys.argv[0])
+    args, parser = _parse_args(progname)
     if loggr:
         if args.debug:
             loggr.setLevel(logging.DEBUG)

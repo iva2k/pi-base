@@ -2,20 +2,20 @@
 from __future__ import annotations
 
 import datetime
+import importlib
 import json
 import logging
 import os
 import platform
-from subprocess import run, check_output, CalledProcessError
+from subprocess import check_output, run, CalledProcessError
 import threading
 import time
-from typing import Optional, Callable
+from typing import Callable, Optional
 from collections.abc import Generator
 from uuid import getnode as get_mac
 # import zmq
 
 import requests
-import yaml
 
 
 class AtDict(dict):
@@ -224,20 +224,42 @@ def ping_test(url: str = "www.google.com", f_timeout_seconds: Optional[float] = 
 class get_conf:
     """Read configuration file (.yaml or .json)."""
 
-    def __init__(self, filepath: str = "app_conf.yaml") -> None:
-        self.filepath = filepath
+    def __init__(self, filepath: Optional[str] = None) -> None:
+        self.filepath: Optional[str] = None
+        # self.conf: dict[str, bool | int | str | list | dict] = {}
         self.conf = {}
+        if filepath:
+            self.read_file(filepath)
+
+    def read_file(self, filepath: str) -> None:
         with open(filepath, encoding="utf-8") as file:
             ext = os.path.splitext(filepath)[1].lower()
-            if ext == ".yaml":
+            if ext in [".yaml", ".yml"]:
+                # import yaml  # pylint: disable:import-outside-toplevel
+                yaml = importlib.import_module("yaml")
+
                 self.conf = yaml.safe_load(file)
-            elif ext == ".json":
+            elif ext in [".json"]:
                 self.conf = json.load(file)
-            # TODO: (when needed) .ini .xml
+            else:
+                raise NotImplementedError(f"Unsupported file type: {ext}")
+                # TODO: (when needed) Implement for .ini .cfg .conf .xml
+            self.filepath = filepath
 
     def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
         if key in self.conf:
-            return self.conf[key]
+            val = self.conf[key]
+            if isinstance(val, list):
+                raise TypeError(f'Expected "{key}" to be a single value, got a list')
+            return val
+        return default
+
+    def get_list(self, key: str, default: Optional[list[str]] = None) -> Optional[list[str]]:
+        if key in self.conf:
+            val = self.conf[key]
+            if not isinstance(val, list):
+                raise TypeError(f'Expected "{key}" to be a list, got a {type(val)}')
+            return val
         return default
 
     def get_subkey(self, key: str, key2: str, default: Optional[str] = None) -> Optional[str]:
@@ -402,21 +424,21 @@ def path_part_sanitize(part: str, replace: str = "", more: str = "") -> str:
     return out
 
 
-def find_path(path_name: str, paths: list[str], loggr: Optional[logging.Logger] = None, is_dir: bool = False) -> Optional[str]:
+def find_path(path_name: str, paths: list[str], loggr: Optional[logging.Logger] = None, is_dir: bool = False) -> tuple[str | None, list[str]]:
     path_basename = os.path.basename(path_name)
     if path_basename != path_name:
-        paths = [os.path.dirname(path_name)] + paths
+        paths = [os.path.dirname(path_name)]
     for path in paths:
         # Do ~ expansion, and use absolute path
         full_path = os.path.realpath(os.path.expanduser(os.path.join(path, path_basename)))
         if (os.path.isdir if is_dir else os.path.isfile)(full_path):
             if loggr:
                 loggr.debug(f'{"Directory" if is_dir else "File"} "{path_name}" found at "{full_path}".')
-            return full_path
+            return full_path, paths
     if loggr:
-        paths_str = '", "'.join(paths)
-        loggr.warning(f'{"Directory" if is_dir else "File"} "{path_name}" not found. Paths searched: "{paths_str}"')
-    return None
+        paths_str = '", "'.join([f'"{p}"' for p in paths])
+        loggr.warning(f'{"Directory" if is_dir else "File"} "{path_name}" not found. Paths searched: [{paths_str}]')
+    return None, paths
 
 
 def download_and_execute(url: str, downloaded_file_path: str, command: Optional[list[str]] = None, remove_after: bool = False, timeout: int = 30, loggr: Optional[logging.Logger] = None) -> int:

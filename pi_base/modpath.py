@@ -189,6 +189,7 @@ def print_info():
         "app_module_path",
         "app_module_dir",
         "app_module_name",
+        "is_pibase_exe",
         "is_pibase_script",
         "in_pibase_source",
         "project_dir",
@@ -220,22 +221,26 @@ def print_info():
 # From modpath.py we can distinguish only these options:
 # 1. Debugging pi_base modules in pi_base {workspace}
 # 2. If it is ran from a package by a client of pi_base
-# When:                      __file__             # {workspace}/pi_base/modpath.py # {site_packages}/pi_base/pi_base/modpath.
-module_path = get_script_dir(__file__)  #         # {workspace}/pi_base            # {site_packages}/pi_base/pi_base
-module_dirname = os.path.basename(module_path)  # # pi_base                        # pi_base
-workspace_dir = os.path.dirname(module_path)  #   # {workspace}                    # {site_packages}/pi_base
+# When:                      __file__             # {workspace}/pi_base/modpath.py # {site-packages}/pi_base/modpath.py # {dist-packages}/pi_base/modpath.py
+module_path = get_script_dir(__file__)  #         # {workspace}/pi_base            # {site-packages}/pi_base            # {dist-packages}/pi_base
+module_dirname = os.path.basename(module_path)  # # pi_base                        # pi_base                            # pi_base
+workspace_dir = os.path.dirname(module_path)  #   # {workspace}                    # {site-packages}                    # {dist-packages}
 module_is_from_editable = os.path.isfile(os.path.join(module_path, "is_editable.md"))
-module_is_from_package = "/dist-packages/" in module_path or "/site-packages/" in module_path or "\\site-packages\\" in module_path or module_is_from_editable
+# module_is_from_package = module_is_from_editable or "/dist-packages/" in module_path or "/site-packages/" in module_path or "\\site-packages\\" in module_path
+module_is_from_package = module_is_from_editable or workspace_dir.endswith(("/dist-packages", "/site-packages", "\\site-packages"))
 
 # From top-level module we can infer:
-# 1. sources of app                      (app_module_dir == app_module_name)
-# 2. ?sources of {app_workspace}/lib     (app_module_dir == "lib" and ?)
-# 3. ?sources of {workspace}/lib         (app_module_dir == "lib" and ?)
-# 4. ?sources of {workspace}/pi_base/lib (app_module_dir == "lib" and ?)
-# 5. pi_base script with pi_base editable (app_filename == "{venv}\{Scripts|bin}\pi[-_]base{.exe}\__main__.py")
+#                                           app_filename,                app_module_path, app_module_dir, app_module_name
+# 1. sources of app                                                                     , ==app_module_name)
+# 2. ?sources of {app_workspace}/lib                                                    , "lib"
+# 3. ?sources of {workspace}/lib                                                        , "lib"
+# 4. ?sources of {workspace}/pi_base/lib                                                , "lib"
+# 5. pi_base script with pi_base editable  "{venv}\{Scripts|bin}\pi[-_]base{.exe}\__main__.py",
+# 6. pi_base script from package on target "/usr/local/bin/pi_base",    "/usr/local/bin", "bin",          "pi_base"|"pi-base"
 app_filename, app_module_path, app_module_name = get_top_module()
-is_pibase_script = "__main__" in app_filename
 app_module_dir = os.path.basename(app_module_path)
+is_pibase_exe = app_module_name in ["pi_base", "pi-base"]
+is_pibase_script = "__main__" in app_filename
 in_pibase_source = is_pibase_script or app_module_path.startswith(workspace_dir)  # This is surefire way to know that something run from pi_base {workspace}.
 
 # `caller_dir` is the only way to learn where {app_workspace} is when running pi_base script with editable pi_base.
@@ -244,14 +249,15 @@ caller_has_develop_file = (caller_dir != workspace_dir) and os.path.isfile(os.pa
 # caller_has_develop_file keep False if caller is pi_base {workspace}. develop_filename will still be found in workspace_dir.
 
 # Now from all the above, do some heuristics to arrive to all the answers.
-
+running_on: str = "<unknown>"
+has_develop_file, site_id, project, additional_python_paths = False, "", "", []
 _app_workspace_path = ""
 # TODO: (soon) Suspecting `pibase_shared_lib_dir` is not needed, as our package is installed, and lib modules are imported by relative import here and by submodule import in the client.
 pibase_shared_lib_dir = os.path.join(module_path, "lib")
 additional_python_paths = []
 if not module_is_from_package or in_pibase_source:
     DEBUG = True
-    running_on: str = (
+    running_on = (
         "pibase_sources_in_app_workspace" if caller_has_develop_file else "pibase_sources"
     )  # This is either a legacy way of running pi_base, or running pi_base script from editable pi_base package.
 
@@ -271,52 +277,74 @@ if not module_is_from_package or in_pibase_source:
     testscript_dir = os.path.join(_app_workspace_path, "testscripts")
     results_dir: str = os.path.join(_app_workspace_path, "testresults")
 
-elif app_module_dir != APP_DIRNAME:  # has_develop_file:  # module_is_from_package and not in_pibase_source
-    # Running app from repo sources or dev in IDE, with "develop.txt" file in {app_workspace_path}
-
-    if app_module_dir in [app_module_name, "lib"]:
-        DEBUG = True
-        # Running one of {app_workspace}/<project>/<project>.py or {app_workspace}/lib/*.py
-        running_on: str = "sources"
-
-        _app_workspace_path = os.path.dirname(app_module_path)
-
-        # Detect developer setup
-        # If present, 'develop.txt' file (see 'SAMPLE_develop.txt') defines which app is running and choose where to find app_conf.yaml file
-        develop_filename = os.path.realpath(os.path.join(_app_workspace_path, "develop.txt"))
-        has_develop_file, site_id, project, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank")
-        additional_python_paths = [os.path.realpath(path) for path in additional_python_paths]
-        project_dir = os.path.join(_app_workspace_path, f"build/{site_id}/{project}/pkg{PI_BASE_DIR}")
-
-        app_dir = os.path.join(_app_workspace_path, project)
-        app_conf_dir = project_dir
-        app_shared_lib_dir = os.path.join(_app_workspace_path, "lib")
-        testscript_dir = os.path.join(_app_workspace_path, "testscripts")
-        results_dir: str = os.path.join(_app_workspace_path, "testresults")
-    else:
-        # Unknown situation
-        print_info()
-        raise RuntimeError("Unknown situation, cannot determine what is running and how to setup import paths and all locations.")
-
 elif app_module_dir == APP_DIRNAME and not is_raspberrypi():
-    # Running build but not on target
+    # Running from build but not on target
     DEBUG = True
     running_on = "build"
 
     _app_workspace_path = None  # There's no good reason to try to figure out app_workspace_path for running on "build". If anyone asks, cause an exception.
     raise ValueError(f'Running on "{running_on}" is not supported.')
 
-else:  # elif app_module_dir == APP_DIRNAME:
+elif app_module_dir == APP_DIRNAME:
     # Defaults for 'target'
     running_on = "target"
 
     _app_workspace_path = None  # There's no app_workspace_path when running on "target". If anyone asks, cause an exception.
 
-    app_dir = PI_BASE_DIR
+    app_dir = os.path.join(PI_BASE_DIR, APP_DIRNAME)
     app_conf_dir = PI_BASE_DIR
-    app_shared_lib_dir = PI_BASE_DIR + "/lib"
+    app_shared_lib_dir = os.path.join(PI_BASE_DIR, "lib")
     testscript_dir = app_shared_lib_dir  # path where to look for test scripts
     results_dir = PI_BASE_DIR + "/testresults"
+
+# elif app_module_dir != APP_DIRNAME:  # has_develop_file:  # module_is_from_package and not in_pibase_source
+
+elif app_module_dir in [app_module_name, "lib"]:
+    # Running app from repo sources or dev in IDE, with "develop.txt" file in {app_workspace_path}
+    DEBUG = True
+    # Running one of {app_workspace}/<project>/<project>.py or {app_workspace}/lib/*.py
+    running_on: str = "sources"
+
+    _app_workspace_path = os.path.dirname(app_module_path)
+
+    # Detect developer setup
+    # If present, 'develop.txt' file (see 'SAMPLE_develop.txt') defines which app is running and choose where to find app_conf.yaml file
+    develop_filename = os.path.realpath(os.path.join(_app_workspace_path, "develop.txt"))
+    has_develop_file, site_id, project, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank")
+    additional_python_paths = [os.path.realpath(path) for path in additional_python_paths]
+    project_dir = os.path.join(_app_workspace_path, f"build/{site_id}/{project}/pkg{PI_BASE_DIR}")
+
+    app_dir = os.path.join(_app_workspace_path, project)
+    app_conf_dir = project_dir
+    app_shared_lib_dir = os.path.join(_app_workspace_path, "lib")
+    testscript_dir = os.path.join(_app_workspace_path, "testscripts")
+    results_dir: str = os.path.join(_app_workspace_path, "testresults")
+elif is_pibase_exe and is_raspberrypi():
+    # in command "pi_base ..." when pi_base is installed as a package, running on target
+    running_on = "target"
+
+    _app_workspace_path = None  # There's no app_workspace_path when running on "target". If anyone asks, cause an exception.
+
+    app_dir = os.path.join(PI_BASE_DIR, APP_DIRNAME)
+    app_conf_dir = PI_BASE_DIR
+    app_shared_lib_dir = os.path.join(PI_BASE_DIR, "lib")
+    testscript_dir = app_shared_lib_dir  # path where to look for test scripts
+    results_dir = PI_BASE_DIR + "/testresults"
+
+# elif is_pibase_exe and not is_raspberrypi():
+#    pass
+else:
+    # Unknown situation
+    app_dir = caller_dir
+    app_conf_dir = caller_dir
+    app_shared_lib_dir = caller_dir
+    testscript_dir = caller_dir
+    results_dir: str = caller_dir
+
+    if not DEBUG:
+        print_info()
+    # raise RuntimeError("Unknown situation, cannot determine what is running and how to setup import paths and all locations.")
+    print("pi_base.modpath: Cannot determine running environment and how to setup import paths and all locations.", file=sys.stderr)
 
 if DEBUG:
     print_info()

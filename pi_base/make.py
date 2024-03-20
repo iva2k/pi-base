@@ -122,7 +122,7 @@ class Builder:
         # Load default config, if present
         default_conf_dat = {}
         default_filename = "default_conf.yaml"
-        yaml_file = find_path(
+        yaml_file, _paths = find_path(
             default_filename,
             [
                 self.package_dir,

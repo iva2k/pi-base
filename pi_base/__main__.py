@@ -54,41 +54,44 @@ def make_command(args):
 def upload_command(args):
     script_dir = get_script_dir(__file__)
     prog = os.path.join(script_dir, "upload.sh")
-    try:
-        subprocess.run(["bash", prog] + args, check=True)
-    except subprocess.CalledProcessError as e:
-        return e.returncode
+    run_result = subprocess.run(["bash", prog] + args, shell=True, text=True, check=False, capture_output=True)
+    if run_result.returncode:
+        message = " ".join([line.strip() for line in run_result.stderr.split("\n") if line.strip()])
+        print(f'Error {run_result.returncode} "{message}" in command "{args.command}"', file=sys.stderr)
+        return run_result.returncode
     return 0
 
 
 def site_command(args):
+    returncode = 0
     try:
         sys.argv[1:] = args
-        site_main()
+        returncode = site_main()
     except subprocess.CalledProcessError as e:
         return e.returncode
     # except ImportError:
     #     print("Error: make.py not found or unable to import.", file=sys.stderr)
     #     return 1
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f'Error: "{e}" in command "{args.command}"', file=sys.stderr)
         return 1
-    return 0
+    return returncode
 
 
 def device_command(args):
+    returncode = 0
     try:
         sys.argv[1:] = args
-        device_main()
+        returncode = device_main()
     except subprocess.CalledProcessError as e:
         return e.returncode
     # except ImportError:
     #     print("Error: make.py not found or unable to import.", file=sys.stderr)
     #     return 1
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f'Error: "{e}" in command "{args.command}"', file=sys.stderr)
         return 1
-    return 0
+    return returncode
 
 
 def main(loggr=logger) -> int:

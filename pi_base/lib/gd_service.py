@@ -280,7 +280,8 @@ class GoogleDriveService:
         new_folder.Upload()
         return new_folder
 
-    def maybe_create_file_by_title(self, title: str, parent_directory_id: str) -> Optional[GoogleDriveFile]:
+    def maybe_create_file_by_title(self, title: str, parent_directory_id: str) -> tuple[GoogleDriveFile | None, bool]:
+        created = False
         file = self.get_file_by_title(title, parent_directory_id)
         if not file:
             drive = self.get_drive()
@@ -288,8 +289,9 @@ class GoogleDriveService:
                 file = drive.CreateFile({"parents": [{"id": parent_directory_id}], "title": title})  # Create GoogleDriveFile instance with title.
                 # file.SetContentString(contents) # Set content of the file from given string.
                 # file.Upload()
+                created = True
 
-        return file
+        return file, created
 
     def get_file_by_title(self, title: str, parent_directory_id: str) -> Optional[GoogleDriveFile]:
         # based on drive_get_id_of_title() from https://docs.iterative.ai/PyDrive2/quickstart/#return-file-id-via-file-title
