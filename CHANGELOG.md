@@ -2,9 +2,7 @@
 
 ## 0.0.17 (unreleased)
 
-
-- Nothing changed yet.
-
+* Bump version in common_requirements.txt
 
 ## 0.0.16 (2024-03-20)
 
