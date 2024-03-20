@@ -271,7 +271,7 @@ if not module_is_from_package or in_pibase_source:
     # Detect developer setup
     # If present, 'develop.txt' file (see 'SAMPLE_develop.txt') defines which app is running and choose where to find app_conf.yaml file
     develop_filename = os.path.realpath(os.path.join(_app_workspace_path, "develop.txt"))
-    has_develop_file, site_id, project, hostname, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank")
+    has_develop_file, site_id, project, hostname, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank", PI_HOSTNAME)
     additional_python_paths = [os.path.realpath(path) for path in additional_python_paths]
     project_dir = os.path.join(_app_workspace_path, f"build/{site_id}/{project}/pkg{PI_BASE_DIR}")
 
@@ -314,7 +314,7 @@ elif app_module_dir in [app_module_name, "lib"]:
     # Detect developer setup
     # If present, 'develop.txt' file (see 'SAMPLE_develop.txt') defines which app is running and choose where to find app_conf.yaml file
     develop_filename = os.path.realpath(os.path.join(_app_workspace_path, "develop.txt"))
-    has_develop_file, site_id, project, hostname, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank")
+    has_develop_file, site_id, project, hostname, additional_python_paths = _get_developer_setup(develop_filename, "BASE", "blank", PI_HOSTNAME)
     additional_python_paths = [os.path.realpath(path) for path in additional_python_paths]
     project_dir = os.path.join(_app_workspace_path, f"build/{site_id}/{project}/pkg{PI_BASE_DIR}")
 

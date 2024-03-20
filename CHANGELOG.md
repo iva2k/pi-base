@@ -2,9 +2,7 @@
 
 ## 0.0.16 (unreleased)
 
-
-- Nothing changed yet.
-
+* Fix missing arg to _get_developer_setup() in modpath.py.
 
 ## 0.0.15 (2024-03-20)
 
