@@ -630,6 +630,7 @@ function print_info () {
   
   local args; args=(
     SOURCE
+    INST_DEBUG
     INST_DO_QUICK
     INST_ENABLE_GUI
     INST_ENABLE_USB_BOOT
