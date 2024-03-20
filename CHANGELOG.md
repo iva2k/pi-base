@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.17 (unreleased)
+## 0.0.17 (2024-03-20)
 
 * Bump version in common_requirements.txt
 
