@@ -62,6 +62,9 @@ sites.csv
 # Allow example files (make sure to not have any secrets in *EXAMPLE* files!:
 !*EXAMPLE*
 
+# Work stuff
+_import/
+
 # Secure info
 pi_base/common/pkg/etc/wpa_supplicant/wpa_supplicant.conf
 
