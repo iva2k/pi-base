@@ -34,7 +34,7 @@ from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from pydrive2.files import GoogleDriveFile, MediaIoReadable, ApiRequestError, FileNotUploadedError
 
-from .app_utils import get_conf  # pylint: disable=relative-beyond-top-level
+from .app_utils import GetConf  # pylint: disable=relative-beyond-top-level
 
 __all__ = [
     # Unused imports for export
@@ -373,7 +373,7 @@ def gd_connect(
     if gd_secrets:
         if os.path.isfile(gd_secrets):
             try:
-                secrets = get_conf(filepath=gd_secrets)
+                secrets = GetConf(filepath=gd_secrets)
                 for k, v_in in extra_fields_with_values.items():
                     if extra_mode == "override" and v_in is None:
                         v = secrets.get(prefix + k)
@@ -384,25 +384,25 @@ def gd_connect(
                     extra[k] = v
             except Exception as err:
                 if loggr:
-                    loggr.error(f'Error {type(err)} "{err}" loading GD Account file "{gd_secrets}". {skip_msg}')
+                    loggr.error(f'Error {type(err)} "{err}" loading GoogleDrive Account file "{gd_secrets}". {skip_msg}')
         elif loggr:
-            loggr.warning(f'GD Account file "{gd_secrets}" not found. {skip_msg}')
+            loggr.warning(f'GoogleDrive Account file "{gd_secrets}" not found. {skip_msg}')
 
         # Validate that all requested extra items are present
         for k, v in extra.items():
             if not v:
                 if loggr:
-                    loggr.warning(f'GD Folder ID ({prefix + k}) is not configured in the secrets file "{gd_secrets}". {skip_msg}')
+                    loggr.warning(f'GoogleDrive Folder ID ({prefix + k}) is not configured in the secrets file "{gd_secrets}". {skip_msg}')
                 return None, {}
 
         try:
             gds = GoogleDriveService()
             gds.authenticate_sa(gd_secrets)
             if loggr:
-                loggr.info("Authenticated with GD.")
+                loggr.info("Authenticated with GoogleDrive.")
         except Exception as err:
             if loggr:
-                loggr.error(f'Failed authenticating with GD, error "{err}". {skip_msg}')
+                loggr.error(f'Failed authenticating with GoogleDrive, error "{err}". {skip_msg}')
             return None, {}
     return gds, extra
 

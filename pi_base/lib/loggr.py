@@ -138,7 +138,8 @@ class Vt:
         if self.use_sudo and proc:
             if self.loggr:
                 self.loggr.debug(f'VT({self.vt_number}) Close Popen({" ".join(cmd)})')
-            file.close()
+            if file:
+                file.close()
             proc.wait()
 
     def flush(self):
@@ -148,7 +149,7 @@ class Vt:
             self.vt.flush()
 
 
-class Loggr:
+class Loggr(logging.Logger):
     """Multi-logger, helps organize output and logs.
 
     Optionally sends logs to:
@@ -157,7 +158,8 @@ class Loggr:
     3. journal
     """
 
-    def __init__(self, use_vt_number=None, use_stdout=True, use_journal_name=None, use_sudo=False, level=logging.DEBUG, primary_loggr=None):
+    def __init__(self, use_vt_number=None, use_stdout=True, use_journal_name=None, use_sudo=False, level: int = logging.DEBUG, primary_loggr=None):
+        super().__init__(name="Loggr", level=level)
         self.level = level
         self.primary_loggr = primary_loggr
         self.stdout_term = None  # Define TERM for stdout
@@ -182,7 +184,7 @@ class Loggr:
                 self.journal.addHandler(log_ch)
             self.setLevel(level)
 
-    def setLevel(self, level):
+    def setLevel(self, level: int):
         self.level = level
         if self.journal:
             # self.journal.setLevel(level) # TODO: (when needed) Need a more elegant way to set separate log levels
@@ -194,33 +196,35 @@ class Loggr:
         if len(tstr) > 0:
             self.print(*tstr)
 
-    def log(self, level, color_code, *tstr):
+    # @override
+    # def log(self, level, msg, *args, **kwargs): ...
+    def log(self, level: int, msg: str, *tstr, color_code: ColorCodes | str = ColorCodes.DEFAULT, **kwargs):
         """Print message(s), with log level that can be masked."""
         if not level:
             level = logging.NOTSET
         if level >= self.level:
             level_str = f"{logging.getLevelName(level):8s}"
             if self.vt:
-                self.vt.print(level_str, *tstr)
+                self.vt.print(level_str, msg, *tstr, **kwargs)
             if self.use_stdout:
-                self.color_print(f"{level_str}: {' '.join(tstr)}", color_code=color_code)
+                self.color_print(f"{level_str}: {' '.join([msg] + list(tstr))}", color_code=color_code)
             if self.journal:
                 self.journal.log(level, *tstr)
 
-    def critical(self, *tstr):
-        self.log(logging.CRITICAL, ColorCodes.RED, *tstr)
+    def critical(self, msg, *tstr, **kwargs):
+        self.log(logging.CRITICAL, msg, *tstr, ColorCodes.RED, **kwargs)
 
-    def error(self, *tstr):
-        self.log(logging.ERROR, ColorCodes.YELLOW, *tstr)
+    def error(self, msg, *tstr, **kwargs):
+        self.log(logging.ERROR, msg, *tstr, ColorCodes.YELLOW, **kwargs)
 
-    def warning(self, *tstr):
-        self.log(logging.WARNING, ColorCodes.BLUE, *tstr)
+    def warning(self, msg, *tstr, **kwargs):
+        self.log(logging.WARNING, msg, *tstr, ColorCodes.BLUE, **kwargs)
 
-    def info(self, *tstr):
-        self.log(logging.INFO, ColorCodes.CYAN, *tstr)
+    def info(self, msg, *tstr, **kwargs):
+        self.log(logging.INFO, msg, *tstr, ColorCodes.CYAN, **kwargs)
 
-    def debug(self, *tstr):
-        self.log(logging.DEBUG, ColorCodes.DEFAULT, *tstr)
+    def debug(self, msg, *tstr, **kwargs):
+        self.log(logging.DEBUG, msg, *tstr, ColorCodes.DEFAULT, **kwargs)
 
     def print(self, *tstr, end: str = "\n", sep=" ", **kwargs):
         """Print message(s), unmasked."""
@@ -295,7 +299,7 @@ class Loggr:
             end         : String to print at the end of the text
             filter_text : Text that should appear as colored
         """
-        color_code = color_code.value
+        color_code = color_code.value if isinstance(color_code, ColorCodes) else color_code
         if filter_text == "":
             filter_text = text
         elif filter_text not in text:
@@ -418,7 +422,7 @@ def position_check():
 
 
 def vt_check():
-    loggr = Loggr(use_vt_number=4, use_journal_name=None, use_stdout=None, use_sudo=True)
+    loggr = Loggr(use_vt_number=4, use_journal_name=None, use_stdout=False, use_sudo=True)
     loggr.cls("0,0")
     loggr.position(10, 10, "10,10")
     loggr.position(0, 10, "0,10")
@@ -439,7 +443,7 @@ def journal_check():
     g_logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
     g_logger.setLevel(logging.DEBUG)
 
-    loggr = Loggr(use_vt_number=None, use_journal_name="testloggrjournal", use_stdout=None)
+    loggr = Loggr(use_vt_number=None, use_journal_name="testloggrjournal", use_stdout=False)
     # These should appear only in journal, not on the console:
     # loggr.critical("loggr critical")
     loggr.error("loggr error")

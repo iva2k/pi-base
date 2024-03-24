@@ -8,7 +8,7 @@ from typing import Callable
 
 # "modpath" must be first of our modules
 from pi_base.modpath import app_conf_dir  # pylint: disable=wrong-import-position
-from pi_base.lib.app_utils import eth0_mac, get_conf, get_pi_model, get_pi_revision, reboot
+from pi_base.lib.app_utils import eth0_mac, GetConf, get_pi_model, get_pi_revision, reboot
 from pi_base.lib.large import Large
 from pi_base.lib.loggr import Loggr
 
@@ -127,7 +127,7 @@ def main():
         pi_revision = ""
 
     # os.chdir(app_conf_dir)
-    conf = get_conf(filepath=f"{app_conf_dir}/app_conf.yaml")
+    conf = GetConf(filepath=f"{app_conf_dir}/app_conf.yaml")
     name = conf.get("Name")
     app_type = conf.get("Type")
     version = conf.get("Version")
@@ -151,21 +151,21 @@ def main():
             break
 
         # Device ID given. Run test:
-        conf = test.conf(device_id)
+        test_conf = test.conf(device_id)
 
         # Clear previous pass/fail large result, show "busy".
         large.print("busy")
-        loggr.print(f"\nTesting {conf}")
+        loggr.print(f"\nTesting {test_conf}")
 
         result = test.run(device_id)
 
         # Clear "busy", print large result:
         result_str = "pass" if result else "fail"
         large.print(result_str)
-        loggr.print(f"\nDone testing {conf}\nresult: {result_str}\n")
+        loggr.print(f"\nDone testing {test_conf}\nresult: {result_str}\n")
 
         # Log history VT
-        history.print(f"{conf} result: {result_str}")
+        history.print(f"{test_conf} result: {result_str}")
 
     test.post()
     return 0

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import signal
-
 from subprocess import check_output
 import sys
 import time
 
-from .app_utils import get_conf, get_iface, get_hostname, ping_test, cvt, open_vt, reboot
+from .app_utils import GetConf, get_iface, get_hostname, ping_test, cvt, open_vt, reboot
 from .loggr import Loggr
 
 
@@ -24,7 +23,7 @@ def get_seed():
 
 class Manager:
     def __init__(self, vt_app=1, vt_me=2):
-        self.l = Loggr(use_vt_number=vt_me, use_stdout=False, use_journal_name="manager.py")
+        self.loggr = Loggr(use_vt_number=vt_me, use_stdout=False, use_journal_name="manager.py")
 
         self.mandead = False
         self.conf = None
@@ -42,11 +41,11 @@ class Manager:
 
     def signal_term_handler(self, signum, frame):
         self.mandead = True
-        self.l.position(0, 47, "Manager killed!  ")
+        self.loggr.position(0, 47, "Manager killed!  ")
 
     def execute(self):
-        self.l.civis()  # Cursor invisible
-        self.l.cls()
+        self.loggr.civis()  # Cursor invisible
+        self.loggr.cls()
         cvt(self.vt_me)
 
         row = 0
@@ -68,12 +67,18 @@ class Manager:
         else:
             row = self.run(row)
 
-        # self.l.position(0, row, "Process manager.py Done.")
-        self.l.position(0, 48, "Process manager.py Done.")
+        # self.loggr.position(0, row, "Process manager.py Done.")
+        self.loggr.position(0, 48, "Process manager.py Done.")
 
     def config(self, row=0):
-        self.conf = get_conf(filepath="/etc/manager_conf.yaml")
-        self.info = get_conf(filepath="/home/pi/app_conf.yaml")
+        filepath = "/etc/manager_conf.yaml"
+        self.conf = GetConf(filepath=filepath)
+        if not self.conf:
+            raise FileNotFoundError(f'Error, file "{filepath}" not found')
+        filepath = "/home/pi/app_conf.yaml"
+        self.info = GetConf(filepath=filepath)
+        if not self.info:
+            raise FileNotFoundError(f'Error, file "{filepath}" not found')
 
         station = get_hostname()
         version = self.info.get("Version")
@@ -86,9 +91,9 @@ class Manager:
             "ver": version,
         }
         message = "\n".join([(line % values).ljust(line_width) for line in info_lines])
-        self.l.position(0, row, message)
+        self.loggr.position(0, row, message)
         row += 5
-        # self.l.position(0, row)
+        # self.loggr.position(0, row)
         return row
 
     def wait_for_network(self, row=0, timeout=30):
@@ -105,12 +110,12 @@ class Manager:
         count = 0
         while True:
             if count > timeout:
-                self.l.cnorm()  # Cursor normal
-                self.l.position(0, row + 6, "Network does not appear to be connected.")
-                self.l.print("Please connect Ethernet network, or configure Wi-Fi (sudo raspi-config > 1 System Options > S1 Wireless LAN).")
+                self.loggr.cnorm()  # Cursor normal
+                self.loggr.position(0, row + 6, "Network does not appear to be connected.")
+                self.loggr.print("Please connect Ethernet network, or configure Wi-Fi (sudo raspi-config > 1 System Options > S1 Wireless LAN).")
                 while True:
                     input_str = input("Start raspi-config ('no' will reboot) [Y/n]? ").strip()
-                    self.l.civis()  # Cursor invisible
+                    self.loggr.civis()  # Cursor invisible
                     if input_str.lower() in ["n", "no"]:
                         break
                     if input_str.lower() in ["", "y", "yes"]:
@@ -123,13 +128,13 @@ class Manager:
                         for cmd in cmds:
                             try:
                                 result = check_output(cmd, shell=True)
-                                self.l.print(f"$> {cmd}\n{result}")
+                                self.loggr.print(f"$> {cmd}\n{result}")
                             except Exception as err:  # noqa: PERF203
-                                self.l.print(f"$> {cmd}\nError {err}")
+                                self.loggr.print(f"$> {cmd}\nError {err}")
                                 continue
-                        self.l.cls()
+                        self.loggr.cls()
                         break
-                self.l.print("\n\nRebooting...")
+                self.loggr.print("\n\nRebooting...")
                 reboot("r")
                 time.sleep(5)
                 sys.exit(0)
@@ -150,7 +155,7 @@ class Manager:
                 "conn": ("Yes" + " " * 20) if self.internet_connected else f"Waiting for network {count}...  ",
             }
             message = "\n".join([(line % values).ljust(line_width) for line in start_lines])
-            self.l.position(0, row, message)
+            self.loggr.position(0, row, message)
             if self.internet_connected:
                 break
             count += 1
@@ -163,32 +168,32 @@ class Manager:
             "conn": f"Yes (took {count} seconds to acquire IP Address)" if self.internet_connected else f"No  (Timeout waiting {count} seconds)",
         }
         message = "\n".join([(line % values).ljust(line_width) for line in start_lines])
-        self.l.position(0, row, message)
+        self.loggr.position(0, row, message)
         row += 5
-        # self.l.position(0, row)
+        # self.loggr.position(0, row)
         return row
 
     def get_time(self, row=0):
         ntp_url = "pool.ntp.org"
-        # TODO: (when needed) use self.l.tput() to erase till end of line.
+        # TODO: (when needed) use self.loggr.tput() to erase till end of line.
         time_str = "  Time sync           : %s                       "
-        self.l.position(0, row, time_str % "Getting time from NTP server...")
+        self.loggr.position(0, row, time_str % "Getting time from NTP server...")
         time.sleep(2)  # DEBUG Emulate delay getting NTP time
         try:
             result = check_output(f'sudo ntpdate "{ntp_url}"', shell=True)
-            self.l.position(0, row, time_str % (f"Yes (Synchronized time with NTP server {ntp_url})"))
+            self.loggr.position(0, row, time_str % (f"Yes (Synchronized time with NTP server {ntp_url})"))
             self.ntp_synced = True
         except:
-            self.l.position(0, row, time_str % (f"No  (Error getting time from NTP server {ntp_url})",))
+            self.loggr.position(0, row, time_str % (f"No  (Error getting time from NTP server {ntp_url})",))
         row += 2
-        # self.l.position(0, row)
+        # self.loggr.position(0, row)
         return row
 
     def run_server_mode(self, row=0):
         mode_str = "  App mode            : %s                       "
-        self.l.position(0, row, mode_str % ("Server" if self.server else "Station",))
+        self.loggr.position(0, row, mode_str % ("Server" if self.server else "Station",))
         row += 1
-        # self.l.position(0, row)
+        # self.loggr.position(0, row)
         return row
 
     def run(self, row=0):
@@ -199,9 +204,11 @@ class Manager:
             "  Status              : %(status)s               \n"
         )
 
+        if not self.info:
+            raise ValueError("Expected info to be set")
         app_path = f'/usr/bin/python -u /home/pi/app/{self.info.get("Type")}.py'
-        # self.l.info(f'Starting app {app_path} on VT={self.vt_app}')
-        self.l.position(
+        # self.loggr.info(f'Starting app {app_path} on VT={self.vt_app}')
+        self.loggr.position(
             0,
             row,
             run_str
@@ -214,15 +221,15 @@ class Manager:
         )
 
         # Set cursor couple rows down to catch any blabber from open_vt()
-        self.l.position(0, row + 5)
+        self.loggr.position(0, row + 5)
 
-        result = open_vt(self.vt_app, app_path, do_sudo=True, do_chvt=True, loggr=self.l)
-        # self.l.debug("DONE Starting app %s on VT=%d, result=%s" % (app_path, self.vt_app, result))
+        result = open_vt(self.vt_app, app_path, do_sudo=True, do_chvt=True, loggr=self.loggr)
+        # self.loggr.debug("DONE Starting app %s on VT=%d, result=%s" % (app_path, self.vt_app, result))
 
         # Let open_vt() get through and blabber all stuff out.
         time.sleep(2)
 
-        self.l.position(
+        self.loggr.position(
             0,
             row,
             run_str

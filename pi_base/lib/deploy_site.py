@@ -22,7 +22,7 @@ from collections.abc import Iterable
 from pi_base.modpath import get_app_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
 
 # pylint: disable=wrong-import-order
-from .app_utils import get_conf, find_path
+from .app_utils import GetConf, find_path
 from .gd_service import gd_connect, FileNotUploadedError
 
 
@@ -97,7 +97,7 @@ class DeploySiteDB:
 
         # Look for sites DB in GoogleDrive first
         self.gd_file = None
-        gd_secrets = self.conf.get_subkey("GoogleDrive", "secrets", None)
+        gd_secrets = self.conf.get_sub("GoogleDrive", "secrets")
         if gd_secrets:
             gd_secrets_actual, _paths = find_path(gd_secrets, self.secrets_paths, self.loggr)
             if not gd_secrets_actual:
@@ -111,7 +111,7 @@ class DeploySiteDB:
                 raise ValueError(f'Expected non-empty GoogleDrive gd_folder_id and gd_file_title in GoogleDrive secrets file "{gd_secrets_actual}".')
             self.sites, self.gd_file = self.db_file_load_gd(self.gd_file_title, self.gd_folder_id)
         else:
-            file = self.conf.get_subkey("LocalFile", "file", g_db_file_name)
+            file = self.conf.get_sub("LocalFile", "file", default=g_db_file_name)
             self.sites = self.db_file_load(file)
 
     def db_file_load_gd(self, gd_file_title: str, gd_folder_id: str, create_if_missing: bool = True):
@@ -249,9 +249,9 @@ class DeploySiteDB:
         return None
 
     def unique_site_id(self):
-        site_id_template = self.conf.get("site_id_template", None) or "SITE-{sn:03d}"
-        site_name_template = self.conf.get("site_name_template", None) or "SITE {sn:03d}"
-        # site_group_template = self.conf.get('site_group_template', None) or "SITE {sn:03d}"
+        site_id_template = self.conf.get("site_id_template", "SITE-{sn:03d}")
+        site_name_template = self.conf.get("site_name_template", "SITE {sn:03d}")
+        # site_group_template = self.conf.get('site_group_template', "SITE {sn:03d}")
         site_group = None
         sn = 1
         while sn < MAX_SN:
@@ -269,7 +269,7 @@ class DeploySiteDB:
         if not self.conf_file:
             raise ValueError("Please provide config file")
         self.loggr.info(f"Config file {self.conf_file}")
-        return get_conf(self.conf_file)
+        return GetConf(self.conf_file)
 
     # def add(self, name: str, site: DeploySite) -> int:
     #     return 0

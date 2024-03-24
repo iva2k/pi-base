@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import asyncio
 import datetime
+from functools import wraps
 import importlib
+import inspect
 import json
 import logging
 import os
@@ -10,7 +13,7 @@ import platform
 from subprocess import check_output, run, CalledProcessError
 import threading
 import time
-from typing import Callable, Optional
+from typing import Any, Callable, Optional, overload, TypeVar
 from collections.abc import Generator
 from uuid import getnode as get_mac
 # import zmq
@@ -22,8 +25,14 @@ class AtDict(dict):
     # See https://stackoverflow.com/a/1328686
     # See more complete implementation https://github.com/Infinidat/munch/tree/develop "pip install munch" `from munch import Munch as AtDict; __all__ = ["AtDict"]`
     __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
+
+    # __setattr__ = dict.__setitem__
+    # __delattr__ = dict.__delitem__
+    def __setattr__(self, key, value):
+        super().__setitem__(key, value)
+
+    def __delattr__(self, item):
+        super().__delitem__(item)
 
 
 def get_os_name() -> str:
@@ -218,10 +227,68 @@ def ping_test(url: str = "www.google.com", f_timeout_seconds: Optional[float] = 
         return False
 
 
+def _fix_aiohttp():
+    """Silence annoying aiohttp RuntimeError upon exit on Windows.
+
+    See https://github.com/aio-libs/aiohttp/issues/4324#issuecomment-733884349
+    """
+    if platform.system() == "Windows":
+        my_asyncio = importlib.import_module("asyncio")
+
+        def silence_event_loop_closed(func):
+            @wraps(func)
+            def wrapper(self, *args, **kwargs):
+                try:
+                    return func(self, *args, **kwargs)
+                except RuntimeError as e:
+                    if str(e) != "Event loop is closed":
+                        raise
+
+            return wrapper
+
+        # pylint: disable-next=protected-access
+        my_asyncio.proactor_events._ProactorBasePipeTransport.__del__ = silence_event_loop_closed(my_asyncio.proactor_events._ProactorBasePipeTransport.__del__)  # noqa: SLF001
+
+
+def _fix_aiohttp1():
+    """Silence annoying aiohttp RuntimeError upon exit on Windows, by adding sleep during event loop shutdown."""
+    if platform.system() == "Windows":
+        my_asyncio = importlib.import_module("asyncio")
+        origin_shutdown = my_asyncio.BaseEventLoop.shutdown_default_executor
+
+        async def _shutdown(self):
+            await origin_shutdown(self)
+            await my_asyncio.sleep(1)
+
+        my_asyncio.BaseEventLoop.shutdown_default_executor = _shutdown
+
+
+_fix_aiohttp()
+# _fix_aiohttp1()
+
+
+def run_async(future):
+    """Run the given future (result of an async function call) on an event loop until completion."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(future)
+
+
+def run_maybe_async(maybe_future):
+    """If the given maybe_future (result of a function call - either async, but not awaited or sync) is not awaited async call, run it on event loop until completion."""
+    if inspect.isawaitable(maybe_future):
+        return run_async(maybe_future)
+    else:
+        return maybe_future
+
+
 # app_info
 
 
-class get_conf:
+class GetConf:
     """Read configuration file (.yaml or .json)."""
 
     def __init__(self, filepath: Optional[str] = None) -> None:
@@ -246,27 +313,103 @@ class get_conf:
                 # TODO: (when needed) Implement for .ini .cfg .conf .xml
             self.filepath = filepath
 
-    def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
+    def __setitem__(self, key, val):
+        self.conf[key] = val
+
+    # Allow list and dict types so .get() can get the whoie section
+    # _T = TypeVar("_T", str, float, int, bool, list, dict)
+    # _VT = TypeVar("_VT", str, float, int, bool, list, dict)
+    _T = TypeVar("_T")
+    _VT = TypeVar("_VT", bound=Any)
+
+    @overload
+    def get(self, key: str, default: None = None, t: type[_VT] = str, check: bool = False) -> _VT | None:
+        ...
+
+    @overload
+    def get(self, key: str, default: _T, t: type[_VT] = str, check: bool = False) -> _VT | _T:
+        ...
+
+    def get(self, key: str, default: _T | None = None, t: Optional[type[_VT]] = str, check: bool = False) -> _VT | _T | dict | None:
         if key in self.conf:
+            # return self.conf[key]
             val = self.conf[key]
-            if isinstance(val, list):
-                raise TypeError(f'Expected "{key}" to be a single value, got a list')
+            if t and not isinstance(val, t):
+                if check:
+                    raise TypeError(f'Expected "{key}" to be of type "{t}", got a "{type(val)}"')
+                if default is not None and not isinstance(val, type(default)):
+                    return default
             return val
         return default
 
-    def get_list(self, key: str, default: Optional[list[str]] = None) -> Optional[list[str]]:
-        if key in self.conf:
-            val = self.conf[key]
-            if not isinstance(val, list):
-                raise TypeError(f'Expected "{key}" to be a list, got a {type(val)}')
-            return val
-        return default
+    @overload
+    def get_subkey(self, key: str, key2: str, default: None = None, t: type[_VT] = str, check: bool = False) -> _VT | None:
+        ...
 
-    def get_subkey(self, key: str, key2: str, default: Optional[str] = None) -> Optional[str]:
+    @overload
+    def get_subkey(self, key: str, key2: str, default: _T, t: type[_VT] = str, check: bool = False) -> _VT | _T:
+        ...
+
+    def get_subkey(self, key: str, key2: str, default: _T | None = None, t: Optional[type[_VT]] = str, check: bool = False) -> _VT | _T | dict | None:
         if key in self.conf:
             conf = self.conf[key]
             if conf and key2 in conf:
-                return conf[key2]
+                # return conf[key2]
+                val = conf[key2]
+                if t and not isinstance(val, t):
+                    # if (not isinstance(val, t)) if t else isinstance(val, list):
+                    if check:
+                        raise TypeError(f'Expected "{key}.{key2}" to be of type "{t}", got a "{type(val)}"')
+                    if default is not None and not isinstance(val, type(default)):
+                        return default
+                return val
+        return default
+
+    @overload
+    def get_sub(self, *keys: str, default: None = None, t: type[_VT] = str, check: bool = False) -> _VT | None:
+        ...
+
+    @overload
+    def get_sub(self, *keys: str, default: _T, t: type[_VT] = str, check: bool = False) -> _VT | _T:
+        ...
+
+    def get_sub(self, *keys: str, default: _T | None = None, t: Optional[type[_VT]] = str, check: bool = False) -> _VT | _T | dict | None:
+        """Get sub-key of any depth, presented by `keys` list.
+
+        Note: always provide default value and t type by name, otherwise they will be used as keys.
+
+        Args:
+            keys (str): keys to traverse to get the value.
+            default (_T | None, optional): Default value to return if one of the keys is not found in the data. Defaults to None.
+            t (Optional[type[_VT]], optional): Type of data expected to return. Defaults to str.
+            check (bool, optional): Enforce t type of return data. Defaults to False.
+
+        Raises:
+            TypeError: If check=True and data type does not match t.
+
+        Returns:
+            _VT | _T | None: Value of the data as selected by the keys, or default.
+        """
+        val = default if len(keys) == 0 else self.conf
+        try:
+            for key in keys:
+                if not val or not isinstance(val, dict):  # More generic: if not val or not hasattr(val, "__getitem__"):
+                    return default
+                if key in val:
+                    val = val[key]
+                else:
+                    return default
+            if len(keys) > 0 and val != self.conf:
+                if t and not isinstance(val, t):
+                    keys_str = ".".join(keys)
+                    if check:
+                        raise TypeError(f'Expected "{keys_str}" to be of type "{t}", got a "{type(val)}"')
+                    if default is not None and not isinstance(val, type(default)):
+                        return default
+                return val
+        except Exception:  # pylint: disable=broad-exception-caught
+            if check:
+                raise
         return default
 
     def dump(self) -> None:
@@ -439,6 +582,53 @@ def find_path(path_name: str, paths: list[str], loggr: Optional[logging.Logger] 
         paths_str = '", "'.join([f'"{p}"' for p in paths])
         loggr.warning(f'{"Directory" if is_dir else "File"} "{path_name}" not found. Paths searched: [{paths_str}]')
     return None, paths
+
+
+def translate_config_paths(config_paths: list[str], translations: Optional[list[tuple[str, str | Callable[[str], str]]]] = None) -> list[str]:
+    """Translate config_paths - replace shortcuts given in translations with their full paths.
+
+    It does NOT check paths existence or correctness.
+
+    Args:
+        config_paths (list[str]): Paths to translate.
+        translations (list[tuple[str, str]], optional): Translations list, each item is (from, to).
+            It is recommended to start shortcut strings with ">" char which is distinguished from any valid path. Defaults to:
+              - "./": Current working directory
+              - ">root/": Root directory (where this module is located)
+              - ">base/": Base directory (2 directories up from root)
+              - ">app_conf_dir/": App config directory (load from pi_base.modpath when given in config_paths)
+
+    Returns:
+        list[str]: Translated paths.
+    """
+
+    def get_app_conf_dir(_shortcut: str) -> str:
+        # from pi_base.modpath import app_conf_dir  # pylint: disable=wrong-import-position
+        modpath = importlib.import_module("pi_base.modpath")
+        return modpath.app_conf_dir
+
+    def translate_one(path: str, translations: Optional[list[tuple[str, str | Callable[[str], str]]]] = None) -> str:
+        if not translations:
+            return path
+        for t in translations:
+            p, v = t
+            p = p.rstrip("/")
+            if path == p or path.startswith(p + "/"):
+                if callable(v):
+                    v = v(p + "/")
+                path = v + path[len(p) :]
+        return path
+
+    if not translations:
+        root = os.path.dirname(os.path.realpath(__file__))
+        base = os.path.abspath(os.path.join(root, os.pardir, os.pardir))
+        translations = [
+            ("./", os.getcwd()),
+            (">root/", root),
+            (">base/", base),
+            (">app_conf_dir/", get_app_conf_dir),
+        ]
+    return [translate_one(p, translations) for p in config_paths]
 
 
 def download_and_execute(url: str, downloaded_file_path: str, command: Optional[list[str]] = None, remove_after: bool = False, timeout: int = 30, loggr: Optional[logging.Logger] = None) -> int:

@@ -8,21 +8,20 @@ from __future__ import annotations
 
 import argparse
 import csv
-import importlib
 import io
 import logging
 import os
 import socket
 from subprocess import check_output, run
 import sys
-from typing import IO, Callable, Optional
+from typing import IO, Optional
 from collections.abc import Iterable
 
 # "modpath" must be first of our modules
 # from pi_base.modpath import app_conf_dir  # pylint: disable=wrong-import-position
 
 # pylint: disable=wrong-import-order
-from .app_utils import get_conf, find_path
+from .app_utils import GetConf, find_path, translate_config_paths
 from .gd_service import gd_connect, GoogleDriveFile
 
 
@@ -37,54 +36,7 @@ MAX_SN = 1000
 APP_CONF = "app_conf.yaml"
 
 
-def translate_config_paths(config_paths: list[str], translations: Optional[list[tuple[str, str | Callable[[str], str]]]] = None) -> list[str]:
-    """Translate config_paths - replace shortcuts given in translations with their full paths.
-
-    It does NOT check paths existence or correctness.
-
-    Args:
-        config_paths (list[str]): Paths to translate.
-        translations (list[tuple[str, str]], optional): Translations list, each item is (from, to).
-            It is recommended to start shortcut strings with ">" char which is distinguished from any valid path. Defaults to:
-              - "./": Current working directory
-              - ">root/": Root directory (where this module is located)
-              - ">base/": Base directory (2 directories up from root)
-              - ">app_conf_dir/": App config directory (load from pi_base.modpath when given in config_paths)
-
-    Returns:
-        list[str]: Translated paths.
-    """
-
-    def get_app_conf_dir(_shortcut: str) -> str:
-        # from pi_base.modpath import app_conf_dir  # pylint: disable=wrong-import-position
-        modpath = importlib.import_module("pi_base.modpath")
-        return modpath.app_conf_dir
-
-    def translate_one(path: str, translations: Optional[list[tuple[str, str | Callable[[str], str]]]] = None) -> str:
-        if not translations:
-            return path
-        for t in translations:
-            p, v = t
-            p = p.rstrip("/")
-            if path == p or path.startswith(p + "/"):
-                if callable(v):
-                    v = v(p + "/")
-                path = v + path[len(p) :]
-        return path
-
-    if not translations:
-        root = os.path.dirname(os.path.realpath(__file__))
-        base = os.path.abspath(os.path.join(root, os.pardir, os.pardir))
-        translations = [
-            ("./", os.getcwd()),
-            (">root/", root),
-            (">base/", base),
-            (">app_conf_dir/", get_app_conf_dir),
-        ]
-    return [translate_one(p, translations) for p in config_paths]
-
-
-class RemoteiotConfig(get_conf):
+class RemoteiotConfig(GetConf):
     """Abstract base class for Remoteiot config."""
 
 
@@ -118,7 +70,7 @@ class RemoteiotConfigFromFile(RemoteiotConfig):
         super().__init__(found_config_file)
 
         self.conf["config_paths"] = config_paths
-        file_paths = self.get_list("file_paths") or []
+        file_paths = self.get("file_paths", default=[], t=list)
         if file_paths:
             self.conf["file_paths"] = translate_config_paths(file_paths)
         else:
@@ -160,7 +112,7 @@ class RemoteiotConfigFromValues(RemoteiotConfig):
 
 
 class Remoteiot:
-    def __init__(self, config: get_conf, loggr: Optional[logging.Logger] = logger, debug: bool = False) -> None:
+    def __init__(self, config: GetConf, loggr: Optional[logging.Logger] = logger, debug: bool = False) -> None:
         if not loggr:
             raise ValueError("Please provide loggr argument")
 
@@ -180,11 +132,12 @@ class Remoteiot:
         self.db_file: Optional[str] = None
         self.gd_file: Optional[GoogleDriveFile] = None
         # Look for devices DB in Google Drive first
-        gd_secrets_file = self.conf.get_subkey("GoogleDrive", "secrets", None)
-        local_db_filename = self.conf.get_subkey("LocalDBFile", "db_file", None)
+        gd_secrets_file = self.conf.get_sub("GoogleDrive", "secrets")
+        local_db_filename = self.conf.get_sub("LocalDBFile", "db_file")
         if gd_secrets_file:
-            file_paths = self.conf.get_list("file_paths") or []
-            gd_secrets, paths = find_path(gd_secrets_file, file_paths)
+            file_paths = self.conf.get("file_paths", default=[], t=list)
+            file_paths = translate_config_paths(file_paths)
+            gd_secrets, paths = find_path(gd_secrets_file, file_paths, self.loggr)
             if not gd_secrets:
                 paths_searched = (", paths searched [" + ", ".join([f'"{p}"' for p in paths]) + "]") if paths else ""
                 if local_db_filename:
@@ -232,7 +185,9 @@ class Remoteiot:
     def db_file_load(self, db_filename: str) -> list[dict[str, Optional[str]]]:
         if not db_filename:
             db_filename = g_db_file_name
-        db_filename_found, paths = find_path(db_filename, self.conf.get_list("file_paths") or [], self.loggr)
+        file_paths = self.conf.get("file_paths", default=[], t=list)
+        file_paths = translate_config_paths(file_paths)
+        db_filename_found, paths = find_path(db_filename, file_paths, self.loggr)
         if not db_filename_found:
             paths_searched = (", paths searched [" + ", ".join([f'"{p}"' for p in paths]) + "]") if paths else ""
             # raise FileNotFoundError(f"No device database file found{paths_searched}.")
@@ -360,8 +315,8 @@ class Remoteiot:
         return None
 
     def unique_device_id(self, site_id: str, app_type: str, app_name: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
-        device_id_template = self.conf.get("device_id_template") or "RPI-{sn:03d}"
-        device_name_template = self.conf.get("device_name_template") or "RPI {sn:03d}"
+        device_id_template = self.conf.get("device_id_template", "RPI-{sn:03d}")
+        device_name_template = self.conf.get("device_name_template", "RPI {sn:03d}")
         # device_group_template = self.conf.get('device_group_template', "RPI {sn:03d}")
         device_group = None
         values: dict[str, int | str] = {
@@ -566,12 +521,13 @@ def cmd_add_named(remote: Remoteiot, args: argparse.Namespace) -> tuple[int, Opt
 
 def cmd_add_at_install(remote: Remoteiot, _args: argparse.Namespace) -> int:
     # filepath = os.path.join(app_conf_dir, "app_conf.yaml")
-    file_paths = remote.conf.get_list("file_paths") or []
+    file_paths = remote.conf.get("file_paths", default=[], t=list)
+    file_paths = translate_config_paths(file_paths)
     filepath, paths = find_path(APP_CONF, file_paths, loggr=logger)
     if not filepath:
         paths_searched = (", paths searched [" + ", ".join([f'"{p}"' for p in paths]) + "]") if paths else ""
         raise FileNotFoundError(f'Cannot find app config file "{APP_CONF}"{paths_searched}.')
-    conf = get_conf(filepath)
+    conf = GetConf(filepath)
     site_id = conf.get("Site")  # "Site" is filled at build time by make.py
     app_name = conf.get("Name")
     app_type = conf.get("Type")

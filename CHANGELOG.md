@@ -2,9 +2,17 @@
 
 ## 0.0.18 (unreleased)
 
-
-- Nothing changed yet.
-
+* Breaking change: rename pi_base.lib.app_utils.get_conf class to GetConf
+* Breaking change: remove get_conf/GetConf methods get_list() and get_subkey_list()
+* Implement GetConf.get_sub() with arbitrary number of nested keys
+* Add typings to GetConf methods get() and get_subkey()
+* Add __setitem__() to GetConf - makes overrides of conf files possible
+* Change pi_base.lib.app_utls.AtDict class to lint cleanly
+* Add pi_base.lib.app_utils._fix_aiohttp() to fix stray RuntimeError from aiohttp v 3.9 on Windows (supposedly fixed by aiohttp>=v4.0, but no versions available yet)
+* Add run_maybe_async() and run_async() helpers to pi_base.lib.app_utils
+* Move translate_config_paths() from pi_base.lib.remoteiot to pi_base.lib.app_utils
+* Add file presence checks to pi_base/lib/manager.py
+* Change pi_base.lib.loggr.Loggr class to be subclass of logging.Logger, adjust method signatures
 
 ## 0.0.17 (2024-03-20)
 
