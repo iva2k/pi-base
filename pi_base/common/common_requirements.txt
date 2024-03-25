@@ -3,6 +3,7 @@ pi_base>=0.0.18
 # For now will use ">=" instead of "=="
 
 pyyaml~=6.0
+pydantic~=2.6.4
 semver~=2.13.0
 
 #bleak==0.19.5

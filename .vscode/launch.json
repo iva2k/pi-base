@@ -136,6 +136,52 @@
       "justMyCode": true
     },
     {
+      "name": "Python: Dummy DB List",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "pi_base/lib/db_file.py",
+      "args": [
+        "-D",
+        "--config", "secrets/dummy_db_file_secrets.yaml",
+        "list"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Dummy DB Unique ID",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "pi_base/lib/db_file.py",
+      "args": [
+        "-D",
+        "--config", "secrets/dummy_db_file_secrets.yaml",
+        "unique"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Python: Dummy DB Add 02",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "pi_base/lib/db_file.py",
+      "args": [
+        "-D",
+        "--config", "secrets/dummy_db_file_secrets.yaml",
+        "add",
+        "RPI-002",
+        "RPI 002",
+        "secret key here 2",
+        "description 2",
+        "notes 2",
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+
+
+    {
       "name": "Python: Deployment Sites List",
       "type": "debugpy",
       "request": "launch",

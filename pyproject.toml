@@ -55,6 +55,7 @@ dependencies = [
   "pyyaml~=6.0",
   "types-PyYAML~=6.0",
   "pydrive2~=1.14.0",
+  "pydantic~=2.6.4",
   # "click~=8.1.7",
   # "cliff~=4.6.0",
   # "pyserial~=3.5",
@@ -128,6 +129,8 @@ dev = [
   "pi_base[release]",
   "pi_base[build]",
 
+  # Dev utilities:
+  "python_package_size~=1.0.1",
   # For vscode extensions:
   "esbonio==0.16.4",
   # "docutils==0.20.1",
