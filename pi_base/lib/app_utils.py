@@ -535,17 +535,72 @@ def eth0_mac() -> Optional[str]:
 
 
 def strftimedelta(format_str: str, td: datetime.timedelta) -> str:
-    zero_td = datetime.timedelta(0)
-    # Create a datetime object with a dummy date
-    dummy_date = datetime.datetime(1900, 1, 1, tzinfo=datetime.timezone.utc)
-    # Add the timedelta object to the dummy date to get a datetime object
-    td_datetime = dummy_date + td
-    # Format the datetime object using strftime() and the given format string
-    if td >= zero_td:
-        formatted_td = td_datetime.strftime(format_str)
-    else:
-        formatted_td = "-" + (zero_td - td_datetime).strftime(format_str)
-    return formatted_td
+    """Formats a timedelta object into a string based on the provided format string.
+
+    It is intended to be similar to time.strftime and datetime.strftime() methods,
+    but due to inherent nature of time delta, this function does not support the
+    following format specifiers:
+
+    %a, %A, %b, %B, %c, %d, %I, %j, %m, %p, %U, %w, %W, %x, %X, %y, %Y, %z, %Z
+
+    The format string can include specifiers for days (%d), hours (%H), minutes (%M),
+    seconds (%S), and microseconds (%f). If a higher unit specifier is not present
+    in the format string, its value is converted and added to the next lower unit
+    that is included. For example, if the format string only includes minutes and
+    seconds, days and hours are converted to minutes.
+
+    If the timedelta is negative, a minus sign is prefixed to the largest unit
+    specified in the format string. This function correctly handles transferring
+    values between units and formatting negative timedeltas.
+
+    Parameters:
+    - format_str (str): The format string defining how the timedelta should be
+      formatted. It supports the following specifiers: %d (days), %H (hours),
+      %M (minutes), %S (seconds), and %f (microseconds).
+    - td (datetime.timedelta): The timedelta object to format.
+
+    Returns:
+    - str: The formatted string representation of the timedelta.
+
+    Example:
+    >>> from datetime import timedelta
+    >>> td = timedelta(days=1, hours=2, minutes=30)
+    >>> strftimedelta('%H:%M:%S', td)
+    '26:30:00'
+    """
+    # Handle negative timedelta
+    is_negative = td.total_seconds() < 0
+    td = abs(td)
+
+    # Calculate hours and minutes from seconds
+    seconds = td.seconds
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Mapping for format specifiers to their corresponding values
+    format_specifiers = {"%d": td.days, "%H": hours, "%M": minutes, "%S": seconds, "%f": td.microseconds}
+
+    # Find the largest specifier in the format, and transfer the values down to it.
+    # Mapping for format specifiers to transfer their corresponding values down
+    specifiers_transfer = {"%d": 24, "%H": 60, "%M": 60, "%S": 1000000, "%f": 0}
+    largest_specifier = None
+    transfer = 0
+    for specifier, value in specifiers_transfer.items():
+        if specifier in format_str:
+            largest_specifier = specifier
+            format_specifiers[specifier] += transfer
+            break
+        transfer = (transfer + format_specifiers[specifier]) * value
+        del format_specifiers[specifier]
+
+    # Replace format specifiers in the format_str with their corresponding values
+    for specifier, value in format_specifiers.items():
+        formatted_value = f"{value:02}" if specifier != "%f" else f"{value:06}"
+        if specifier == largest_specifier and is_negative:
+            formatted_value = "-" + formatted_value
+        format_str = format_str.replace(specifier, formatted_value)
+
+    return format_str
 
 
 def path_sanitize(path_str: str, replace: str = "", more: str = "") -> str:
