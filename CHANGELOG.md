@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.20 (unreleased)
+## 0.0.20 (2024-03-24)
 
 * Add "version" command to pi_base script.
 * Add missing msg arg for journal.log() in Loggr.log().
