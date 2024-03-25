@@ -5,7 +5,7 @@ import sys
 
 
 # Do not edit this line:
-__version__ = "0.0.19.dev0"
+__version__ = "0.0.19"
 # instead, use commands from zest.releaser
 
 
