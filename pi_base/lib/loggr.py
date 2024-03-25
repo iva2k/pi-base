@@ -212,19 +212,19 @@ class Loggr(logging.Logger):
                 self.journal.log(level, *tstr)
 
     def critical(self, msg, *tstr, **kwargs):
-        self.log(logging.CRITICAL, msg, *tstr, ColorCodes.RED, **kwargs)
+        self.log(logging.CRITICAL, msg, *tstr, color_code=ColorCodes.RED, **kwargs)
 
     def error(self, msg, *tstr, **kwargs):
-        self.log(logging.ERROR, msg, *tstr, ColorCodes.YELLOW, **kwargs)
+        self.log(logging.ERROR, msg, *tstr, color_code=ColorCodes.YELLOW, **kwargs)
 
     def warning(self, msg, *tstr, **kwargs):
-        self.log(logging.WARNING, msg, *tstr, ColorCodes.BLUE, **kwargs)
+        self.log(logging.WARNING, msg, *tstr, color_code=ColorCodes.BLUE, **kwargs)
 
     def info(self, msg, *tstr, **kwargs):
-        self.log(logging.INFO, msg, *tstr, ColorCodes.CYAN, **kwargs)
+        self.log(logging.INFO, msg, *tstr, color_code=ColorCodes.CYAN, **kwargs)
 
     def debug(self, msg, *tstr, **kwargs):
-        self.log(logging.DEBUG, msg, *tstr, ColorCodes.DEFAULT, **kwargs)
+        self.log(logging.DEBUG, msg, *tstr, color_code=ColorCodes.DEFAULT, **kwargs)
 
     def print(self, *tstr, end: str = "\n", sep=" ", **kwargs):
         """Print message(s), unmasked."""
