@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.19 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.0.18 (2024-03-24)
 
 * Breaking change: rename pi_base.lib.app_utils.get_conf class to GetConf
