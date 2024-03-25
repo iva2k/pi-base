@@ -13,6 +13,7 @@
 * Move translate_config_paths() from pi_base.lib.remoteiot to pi_base.lib.app_utils
 * Add file presence checks to pi_base/lib/manager.py
 * Change pi_base.lib.loggr.Loggr class to be subclass of logging.Logger, adjust method signatures
+* Clean rewrite of strftimedelta() in pi_base.lib.app_utils
 * Add pi_base.lib.db_file.DbFile generic database file service, with GoogleDrive and local file backend
 
 ## 0.0.17 (2024-03-20)

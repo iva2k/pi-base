@@ -54,13 +54,14 @@ def eprint(*args, **kwargs):
 
 
 class DbFileSchema:
-    def __init__(self, items_name: str, item_name: str, col_id: str, cols: list[str], cols_optional: list[str], cols_secret: list[str], id_template: dict[str, str | dict]) -> None:
+    def __init__(self, items_name: str, item_name: str, col_id: str, cols: dict[str, str], cols_optional: dict[str, str], cols_secret: list[str], id_template: dict[str, str | dict]) -> None:
         self.items_name = items_name or "items"
         self.item_name = item_name or "item"  # TODO: (when needed) Or maybe create and use .plural(1) .plural("many") class "Plural" instance?
         self.col_id = col_id or "id"
-        self.cols = cols or ["name"]
-        self.cols.insert(0, self.col_id)
-        self.cols_optional = cols_optional or ["description", "notes"]
+        self.cols = cols or {"name": "str"}
+        if self.col_id not in self.cols:
+            raise ValueError(f'col_id "{col_id}" must be present in cols')
+        self.cols_optional = cols_optional or {"description": "str", "notes": "str"}
         self.cols_secret = cols_secret or []  # ['key']
         self.id_template = id_template
 
@@ -211,9 +212,9 @@ class DbFile(Generic[_T]):
                     self.db_file_cols = row  # save header for when writing to the self.db_file
 
                     for c in self.schema.cols:
-                        key = c.replace(" ", "_")
+                        key = c.replace("_", " ")
                         if c not in columns:
-                            raise ValueError(f'Cannot find column {c} in {self.schema.items_name} database file "{self.db_file}"')
+                            raise ValueError(f'Cannot find column {c} in {self.schema.items_name} database file "{self.db_file or self.gd_file}"')
 
             else:
                 # Got data row
@@ -231,7 +232,7 @@ class DbFile(Generic[_T]):
         return items
 
     def db_file_cols_init(self):
-        self.db_file_cols = [c.title() for c in self.schema.cols + self.schema.cols_optional]
+        self.db_file_cols = [c.title() for c in list(self.schema.cols.keys()) + list(self.schema.cols_optional.keys())]
         self.db_file_cols[0] = "# " + self.db_file_cols[0]
 
     def db_file_save(self, items, out_file: str) -> None:
@@ -240,6 +241,7 @@ class DbFile(Generic[_T]):
             self.db_file_save_fd(items, out_file_fd)
 
     def db_file_save_fd(self, items, out_file_fd):
+        # TODO: (now) Implement upgrading the file on write - add all columns in the Schema to self.db_file_cols, not just the required ones (which are validated on read)
         if not self.db_file_cols:
             raise ValueError("Expected non-empty list in self.db_file_cols.")
         csvwriter = csv.writer(out_file_fd, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -251,7 +253,8 @@ class DbFile(Generic[_T]):
             for c_in in self.db_file_cols:
                 c = c_in.lower().lstrip("#").strip()
                 key = c.replace(" ", "_")
-                row += [getattr(item, key, "")]
+                val = getattr(item, key, "")
+                row += [str(val)]
             csvwriter.writerow(row)
 
     def db_file_save_back(self) -> int:
@@ -315,17 +318,39 @@ class DbFile(Generic[_T]):
         return tuple(None for _ in range(len(templates)))
 
 
-def create_dynamic_model(schema: DbFileSchema) -> type:
-    cols = [schema.col_id] + schema.cols + schema.cols_optional
-    field_type = "str"
-    fields = {
-        field_name: (eval(field_type), ...) for field_name in cols
-    }  # TODO: (when needed) harden the `eval` security, once the field_type is extracted from schema which is loaded from yaml file.
+def create_dynamic_model(schema: DbFileSchema) -> type | None:
     name = " ".join([p.capitalize() for p in schema.item_name.split("_")])
-    return create_model(name, **fields)
+    cols = {**schema.cols, **schema.cols_optional}
+
+    type_mapping = {
+        "int": int,
+        "bool": bool,
+        "str": str,
+        "float": float,
+        # Add more types here as needed
+    }
+    fields = {}
+    optional_fields = []
+    for field_name, field_type in cols.items():
+        if field_type not in type_mapping:
+            raise ValueError(f'Unknown type "{field_type}" for column "{field_name}" in schema for "{name}"')
+        key = field_name.replace(" ", "_")
+        if field_name in schema.cols_optional:
+            fields[key] = (type_mapping[field_type], None)
+            optional_fields.append(key)
+        else:
+            fields[key] = (type_mapping[field_type], ...)
+
+    # Tweak pydantic validation per https://stackoverflow.com/a/63794841/2694949
+    def schema_extra(schema, _model):
+        for column in optional_fields:
+            original_type = schema["properties"][column]["type"]
+            schema["properties"][column].update({"type": ["null", original_type]})
+
+    return create_model(name, **fields, __config__={"schema_extra": schema_extra})
 
 
-def get_db(args: argparse.Namespace) -> DbFile:
+def get_db(loggr: logging.Logger, args: argparse.Namespace) -> DbFile:
     config_paths = [
         # ">root/",
         # ">base/secrets/",
@@ -354,28 +379,40 @@ def get_db(args: argparse.Namespace) -> DbFile:
         "app_name": app_name,
     }
 
+    col_id = conf.get_sub("Schema", "col_id", default="id")
+    cols = conf.get_sub("Schema", "cols", default={"id": "str", "name": "str", "key": "str"}, t=dict)
+    cols_optional = conf.get_sub("Schema", "cols_optional", default={"description": "str", "notes": "str"}, t=dict)
+    cols_secret = conf.get_sub("Schema", "cols_secret", default=["key"], t=list)
     schema = DbFileSchema(
         items_name=conf.get_sub("Schema", "items_name", default="items"),
         item_name=conf.get_sub("Schema", "item_name", default="item"),
-        col_id=conf.get_sub("Schema", "col_id", default="id"),
-        cols=conf.get_sub("Schema", "cols", default=["name", "key"], t=list),
-        cols_optional=conf.get_sub("Schema", "cols_optional", default=["description", "notes"], t=list),
-        cols_secret=conf.get_sub("Schema", "cols_secret", default=["key"], t=list),
+        col_id=col_id,
+        cols=cols,
+        cols_optional=cols_optional,
+        cols_secret=cols_secret,
         id_template=id_template,
     )
 
     t = create_dynamic_model(schema)
-    return DbFile[t](config=conf, schema=schema, model_type=t, loggr=logger, debug=args.debug)
+    return DbFile[t](config=conf, schema=schema, model_type=t, loggr=loggr, debug=args.debug)
 
 
 def cmd_list(db: DbFile, args: argparse.Namespace) -> int:
     show_secret = getattr(args, "show_secret", False)
+    header = []
+    for c in list(db.schema.cols.keys()) + list(db.schema.cols_optional.keys()):
+        key = c.replace("_", " ").title()
+        header.append(key)
+    print(", ".join(header))
     for item in db.items:
         vals = []
-        for c in db.schema.cols + db.schema.cols_optional:
+        for c in list(db.schema.cols.keys()) + list(db.schema.cols_optional.keys()):
             key = c.replace(" ", "_")
-            if show_secret or key not in db.schema.cols_secret:
-                vals += [getattr(item, key, "")]
+            if show_secret or c not in db.schema.cols_secret:
+                val = getattr(item, key, "")
+                vals.append(str(val))
+            else:
+                vals.append("*" * 8)
         print(", ".join(vals))
     return 0
 
@@ -388,7 +425,7 @@ def cmd_unique(db: DbFile, args: argparse.Namespace) -> int:
 
 def cmd_add(db: DbFile, args: argparse.Namespace) -> int:
     item_type = db.model_type
-    new_item_data = dict(zip(db.schema.cols + db.schema.cols_optional, args.fields))
+    new_item_data = dict(zip(list(db.schema.cols.keys()) + list(db.schema.cols_optional.keys()), args.fields))
     item = item_type(**new_item_data)
     try:
         res = db.db_add_item(item)
@@ -396,8 +433,9 @@ def cmd_add(db: DbFile, args: argparse.Namespace) -> int:
         eprint(f"{err}")
         res = 1
     if not res:
-        details = getattr(item, db.schema.cols[1]) if len(db.schema.cols) > 1 else ""
-        print(f'Added new {db.schema.item_name} to {db.schema.items_name} Database item_id={getattr(item, db.schema.col_id)} "{details}"')
+        field = list(db.schema.cols.keys())[1]
+        details = getattr(item, field) if len(list(db.schema.cols.keys())) > 1 else ""
+        print(f'Added new {db.schema.item_name} to {db.schema.items_name} Database item_id={getattr(item, db.schema.col_id)} {field}: "{details}"')
     return res
 
 
@@ -441,11 +479,11 @@ def main(loggr: logging.Logger = logger) -> int:
 
     try:
         if args.command == "list":
-            return cmd_list(get_db(args), args)
+            return cmd_list(get_db(loggr, args), args)
         if args.command == "unique":
-            return cmd_unique(get_db(args), args)
+            return cmd_unique(get_db(loggr, args), args)
         if args.command == "add":
-            return cmd_add(get_db(args), args)
+            return cmd_add(get_db(loggr, args), args)
 
     except Exception as e:  # pylint: disable:broad-exception-caught
         if loggr:
