@@ -25,6 +25,7 @@ __package__ = os.path.basename(SCRIPT_DIR)  # noqa: A001
 # pylint: disable=wrong-import-position,relative-beyond-top-level
 # ruff: noqa: E402
 
+from ._version import __version__
 from .modpath import get_script_dir
 from .make import main as make_main
 from .lib.deploy_site import main as site_main
@@ -33,6 +34,11 @@ from .lib.remoteiot import main as device_main
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 # logger.setLevel(logging.DEBUG)
+
+
+def version_command(args):
+    print(f"Version: {__version__}")
+    return 0
 
 
 def make_command(args):
@@ -54,10 +60,10 @@ def make_command(args):
 def upload_command(args):
     script_dir = get_script_dir(__file__)
     prog = os.path.join(script_dir, "upload.sh")
-    run_result = subprocess.run(["bash", prog] + args, shell=True, text=True, check=False, capture_output=True)
+    run_result = subprocess.run(["bash", prog] + args, shell=True, text=True, check=False, capture_output=False)
     if run_result.returncode:
-        message = " ".join([line.strip() for line in run_result.stderr.split("\n") if line.strip()])
-        print(f'Error {run_result.returncode} "{message}" in command "{args.command}"', file=sys.stderr)
+        # message = " ".join([line.strip() for line in run_result.stderr.split("\n") if line.strip()])
+        print(f'Error {run_result.returncode} in command "{args.command}"', file=sys.stderr)
         return run_result.returncode
     return 0
 
@@ -96,6 +102,7 @@ def device_command(args):
 
 def main(loggr=logger) -> int:
     commands = {
+        "version": version_command,
         "make": make_command,
         "upload": upload_command,
         "site": site_command,
