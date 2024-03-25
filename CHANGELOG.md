@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.20 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.0.19 (2024-03-24)
 
 * Fix Loggr color_code= args
