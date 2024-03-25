@@ -209,7 +209,7 @@ class Loggr(logging.Logger):
             if self.use_stdout:
                 self.color_print(f"{level_str}: {' '.join([msg] + list(tstr))}", color_code=color_code)
             if self.journal:
-                self.journal.log(level, *tstr)
+                self.journal.log(level, msg, *tstr)
 
     def critical(self, msg, *tstr, **kwargs):
         self.log(logging.CRITICAL, msg, *tstr, color_code=ColorCodes.RED, **kwargs)

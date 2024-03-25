@@ -2,9 +2,8 @@
 
 ## 0.0.20 (unreleased)
 
-
-- Nothing changed yet.
-
+* Add "version" command to pi_base script.
+* Add missing msg arg for journal.log() in Loggr.log().
 
 ## 0.0.19 (2024-03-24)
 
