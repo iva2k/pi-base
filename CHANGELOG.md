@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.18 (unreleased)
+## 0.0.18 (2024-03-24)
 
 * Breaking change: rename pi_base.lib.app_utils.get_conf class to GetConf
 * Breaking change: remove get_conf/GetConf methods get_list() and get_subkey_list()
