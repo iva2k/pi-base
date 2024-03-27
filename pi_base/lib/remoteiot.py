@@ -88,27 +88,23 @@ class RemoteiotConfigFromValues(RemoteiotConfig):
         device_id_template: Optional[str] = None,
         device_name_template: Optional[str] = None,
         config_paths: Optional[list[str]] = None,
+        file_paths: Optional[list[str]] = None,
     ) -> None:
         super().__init__(filepath=None)
         self.conf = {}
         self.conf["sevice_key"] = service_key  # for Remoteiot API
-        self.conf["GoogleDrive"] = {
-            "secrets": gd_secrets_file,
-            "db_file": db_file_name,
-        }
+        if gd_secrets_file:
+            self.conf["GoogleDrive"] = {
+                "secrets": gd_secrets_file,
+            }
+        if db_file_name:
+            self.conf["LocalDBFile"] = {
+                "db_file": db_file_name,
+            }
         self.conf["device_id_template"] = device_id_template
         self.conf["device_name_template"] = device_name_template
         self.conf["config_paths"] = config_paths
-        # Contents of config file:
-        # service_key: "<enter remoteiot.com service key here>"
-        # GoogleDrive:
-        #     secrets: 'sa_client_secrets.json'
-        #     db_file: 'devices.csv'  # TODO: (now) REMOVE. It and folder_id should be taken from sa_client_secrets.json file:
-        #          "pibase_gd_devices_folder_id": "",
-        #          "pibase_gd_devices_file_title": "devices.csv",
-
-        # device_id_template: "RPI--G1OT-{sn:03d}"
-        # device_name_template: "Automated tester {sn:03d}"
+        self.conf["file_paths"] = file_paths or config_paths
 
 
 class Remoteiot:

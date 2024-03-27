@@ -407,7 +407,7 @@ function prep_upload () {
       else
         # Get password into SSHPASSWD env variable
         get_password SSHPASSWD "Enter SSH password for ${user}@${host}"
-        # pass="$sshpass -eSSHPASSWD " ;# Does not work!  # TODO: (now) Fix sshpass not working under VSCode on windows.
+        # pass="$sshpass -eSSHPASSWD " ;# Does not work!  # TODO: (when needed) Fix sshpass not working with scp under VSCode on windows.
         pass=" $sshpass -p $SSHPASSWD " ;# Works. But it is UNSECURE! Note the space before the command - to at least hide it from bash history.
       fi
     else

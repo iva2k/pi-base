@@ -7,5 +7,4 @@ Apps In This Section of the Repo
 
 ## blank
 
-TODO: (now) Implement:
-Since `blank` project is excluded from `pi_base/make.py`, we need a hack to include it back for testing purposes.
+An example project with a dummy test loop.

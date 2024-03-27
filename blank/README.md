@@ -24,26 +24,15 @@ This directory contains an empty pi-base project - a template for creating new p
    mv ${proj}/blank.py ${proj}/${proj}.py
    ```
 
-4. TODO: (now) Implement automatic folders globbing, instead of a fixed list: Add "\<name\>" to list of types in "make.py" "choice_list" variable:
-
-    ```diff
-    - choice_list = ['blank']
-    + choice_list = ['blank', '<name>']
-    ```
-
-    ```bash
-    sed -i pi_base/make.py -re "s/^(\\s*choice_list\\s*=.*)(].*)\$/\\1, '${proj}'\\2/"
-    ```
-
-5. Edit "\<name\>/conf.yaml" file to change "blank" to "\<name\>"
+4. Edit "\<name\>/conf.yaml" file to change "blank" to "\<name\>"
 
     ```bash
     sed -i ${proj}/conf.yaml -re "s/blank/${proj}/g"
     ```
 
-6. Edit Info > Name field in "\<name\>/conf.yaml" file to describe what the new project is intended to do.
+5. Edit Info > Name field in "\<name\>/conf.yaml" file to describe what the new project is intended to do.
 
-7. Add "\<name\>" project files to git:
+6. Add "\<name\>" project files to git:
 
     ```bash
     git add ${proj}/*
@@ -51,4 +40,4 @@ This directory contains an empty pi-base project - a template for creating new p
     git push
     ```
   
-8. Setup is Done! Now add functionality to "\<name\>/\<name\>.py" file.
+7. Setup is Done! Now add functionality to "\<name\>/\<name\>.py" file.
