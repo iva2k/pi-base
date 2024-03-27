@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.21 (unreleased)
+## 0.0.21 (2024-03-26)
 
 * Automatically bump package version in pi_base/common/common_requirements.txt during release
 
