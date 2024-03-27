@@ -153,9 +153,7 @@ TODO: (soon) Add ability to (optionally) call `build/<site_id>/<project>/install
 
 #### `<project>/install.sh`
 
-Note: Make sure to call the `build/<site_id>/<project>/install.sh` file on the target. Calling source `<project>/install.sh` will produce incorrect install.
-
-TODO: (now) Add detecting when `install.sh` is run not from `build` but from `<project>` folder.
+Note: Make sure to call the `build/<site_id>/<project>/install.sh` file on the target. Calling source `<project>/install.sh` won't install.
 
 Script that downloads and installs all necessary packages and configures the target RPi.
 

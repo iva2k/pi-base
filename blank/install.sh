@@ -3,7 +3,7 @@
 # Install software in this folder to the system.
 _start_time_ms=$(($(date +%s%N)/1000000))
 
-# Environment variables passed to ../common/common_install.sh.
+# Environment variables passed to common_install.sh.
 export INST_DEBUG=0
 export INST_DO_QUICK=2 ;# 0=full install, 1=skip some tedious steps, 2=skip most steps
 # Set INST_ENABLE_GUI=0 for console-only mode
@@ -43,6 +43,11 @@ parent=${parent%/}  ;## trim trailing slash
 SOURCE="${parent}"
 #SOURCE_NAME=$(basename "${SOURCE}")
 #SOURCE_PARENT=$(dirname "${SOURCE}")10
+
+if [ ! -f "${SOURCE}/common_install.sh" ]; then
+  echo "Please run this script only from build directory on Raspberry Pi."
+  exit 1
+fi
 
 # Parse arguments
 #args="$@"
@@ -243,9 +248,7 @@ function print_info () {
 #echo "DEBUG SUDO_USER="$INST_DFLT_USER" SUDO_UID=$(id -u "$INST_DFLT_USER")"
 
 ## Install common package (uses INST_* env variables)
-if [ -x "${SOURCE}/../common/common_install.sh" ]; then
-  "${SOURCE}/../common/common_install.sh"
-elif [ -x "${SOURCE}/common_install.sh" ]; then
+if [ -x "${SOURCE}/common_install.sh" ]; then
   "${SOURCE}/common_install.sh"
 else
   echo "common_install.sh file not found."
