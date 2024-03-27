@@ -81,14 +81,16 @@ class Manager:
             raise FileNotFoundError(f'Error, file "{filepath}" not found')
 
         station = get_hostname()
-        version = self.info.get("Version")
+        version = self.info.get("Version", "(n/a)")
+        build = self.info.get("Build", "(n/a)")
         self.server = self.conf.get("Server")
         line_width = 64
-        info_lines = ["[ Manager on VT%(vt)d ]", "", "  Station id          : %(name)s", "  Software version    : %(ver)s"]
+        info_lines = ["[ Manager on VT%(vt)d ]", "", "  Station id          : %(name)s", "  Software version    : %(ver)s", "  Build number        : %(build)s"]
         values = {
             "vt": self.vt_me,
             "name": station,
             "ver": version,
+            "build": build,
         }
         message = "\n".join([(line % values).ljust(line_width) for line in info_lines])
         self.loggr.position(0, row, message)

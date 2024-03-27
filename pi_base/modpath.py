@@ -45,9 +45,9 @@ pi_base package source
   + template_blank/| pi-base project template # TODO: (when needed) Implement
   + projectN/      | user projects
   + pi_base/       | pi-base stuff
-    + common/      | #TODO: (now) maybe better name, or reorg the pieces differently
+    + common/      | pi-base common files for all client projects
     + lib/         | pi-base modules
-    + scripts/     | pi-base helper scripts #TODO: (now) dissolve into other places
+    + scripts/     | pi-base helper scripts
 ```
 
 Package customer repo:

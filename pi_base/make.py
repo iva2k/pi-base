@@ -25,7 +25,7 @@ import platform
 import shutil
 
 # import sys
-from subprocess import check_output, CalledProcessError
+from subprocess import run, PIPE, check_output, CalledProcessError
 
 # import sys
 from timeit import default_timer as timer
@@ -55,6 +55,14 @@ etc_dir = "etc"
 
 CONF_YAML = "conf.yaml"
 
+def get_git_hash() -> str:
+    try:
+        result = run(["git", "rev-parse", "--short", "HEAD"], stdout=PIPE, check=False)  # noqa: S607
+        githash = "-" + result.stdout.decode().strip()
+    except CalledProcessError:
+        githash = ""
+    return githash
+
 
 class Builder:
     def __init__(self, args, system, sites_db: DeploySiteDB, loggr=logger):
@@ -68,7 +76,6 @@ class Builder:
         self.now = datetime.datetime.now()
         self.conf_dat = {}
         self.error = 0
-        self.ver = "0.0.0"
         self.comment = ""
         self.type = args.type
         self.site_id = args.site
@@ -156,7 +163,10 @@ class Builder:
         self.app_info = self.conf_dat["Info"]
         self.app_info["Site"] = self.site_id
         self.app_info["Type"] = self.type
-        self.app_info["Version"] = self.ver  # TODO: (now) Generate app version from ?? Add script/subcommand to pi_base bumping app version in CONF_YAML.
+        datestamp = datetime.datetime.now().strftime("%Y-%m%d-%H%M")
+        githash = get_git_hash()
+        self.app_info["Version"] = self.app_info.get("Version", datestamp)  # Generate app version from date if not specified.
+        self.app_info["Build"] = datestamp + githash
         site = self.sites_db.find_site_by_id(self.site_id)
         if not site or not site.site_id or site.site_id != site.site_id:
             raise ValueError(f"Site {self.site_id} not found or sites DB not loaded")

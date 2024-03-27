@@ -1,7 +1,7 @@
 Info:
     Name: 'Blank'
-    Type: blank
-    Version: '%s'
+    Type: 'blank'
+    Version: '0.0.0'
     Settings:
         debug: True
         verbose: True
