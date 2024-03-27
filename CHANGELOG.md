@@ -2,9 +2,7 @@
 
 ## 0.0.22 (unreleased)
 
-
-- Nothing changed yet.
-
+* Remove hard dependency on `pkg` subfolder in app project folder
 
 ## 0.0.21 (2024-03-26)
 

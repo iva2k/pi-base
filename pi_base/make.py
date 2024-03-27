@@ -292,10 +292,12 @@ class Builder:
                 {"src": os.path.join(self.package_dir, "common", "common_requirements.txt"), "dst": "./"},
                 {"src": os.path.join(self.package_dir, "common", "common_install.sh"), "dst": "./"},
                 # App files:
-                {"src": os.path.join(self.app_workspace_path, self.type, "pkg/"), "dst": "./pkg"},
                 {"src": os.path.join(self.app_workspace_path, self.type, "requirements.txt"), "dst": "./"},
                 {"src": os.path.join(self.app_workspace_path, self.type, "install.sh"), "dst": "./"},
             ]
+            app_pkg = os.path.join(self.app_workspace_path, self.type, "pkg/")
+            if os.path.isdir(app_pkg):
+                items.append({"src": app_pkg, "dst": "./pkg"})
             for item in items:
                 src_is_dir = item["src"][-1:] == "/"
                 src = os.path.normpath(item["src"])

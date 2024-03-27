@@ -61,7 +61,7 @@ Either clone this git repo directly to RPi, or enable SSH on the RPi and then up
 New Projects should be created in sub-folders named `<project>` in the repo root folder. Project sub-folder should contain:
 
 - Builder configuration file `conf.yaml`.
-- `pkg` folder with folders tree containg any files to be copied to RPi root file system during install. Add an empty `.gitkeep` file if there are no files/folders to copy, as missing `pkg` sub-folder will prevent `pi_base/make.py` from working properly # TODO: (now) fix hard dependency.
+- Optioanl: `pkg` folder with folders tree containg any files to be copied to RPi root file system during install.
 - `install.sh` - should set up environment variables and invoke common_install.sh for majority of installation, and perform any custom steps.
 - `requirements.txt` - contains list of python modules to be installed
 - `<project>.py` - main file to be executed on RPI
