@@ -18,7 +18,7 @@ import sys
 from typing import Generic, Optional, TypeVar
 from collections.abc import Iterable
 
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, create_model, ConfigDict
 
 # "modpath" must be first of our modules
 # from pi_base.modpath import get_app_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
@@ -52,18 +52,45 @@ logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
+_ST = TypeVar("_ST")
+
 
 class DbFileSchema:
-    def __init__(self, items_name: str, item_name: str, col_id: str, cols: dict[str, str], cols_optional: dict[str, str], cols_secret: list[str], id_template: dict[str, str | dict]) -> None:
-        self.items_name = items_name or "items"
-        self.item_name = item_name or "item"  # TODO: (when needed) Or maybe create and use .plural(1) .plural("many") class "Plural" instance?
-        self.col_id = col_id or "id"
-        self.cols = cols or {"name": "str"}
+    @classmethod
+    def type_mapping(cls) -> dict[str, type]:
+        return {
+            "int": int,
+            "bool": bool,
+            "str": str,
+            "float": float,
+            # Add more types here as needed
+        }
+
+    def __init__(self, schema_conf: dict, id_template_values_add: Optional[dict[str, str | dict]] = None) -> None:
+        self.version = self.ensure_type("version", int, schema_conf.get("version", 0))
+        self.upgrade_from = self.ensure_type("upgrade_from", int, schema_conf.get("upgrade_from", max(0, self.version - 1)))
+        self.upgrade_ok = self.ensure_type("upgrade_ok", bool, schema_conf.get("upgrade_ok", self.upgrade_from < self.version))
+
+        self.items_name = self.ensure_type("items_name", str, schema_conf.get("items_name", "items"))
+        self.item_name = self.ensure_type("item_name", str, schema_conf.get("item_name", "item"))  # TODO: (when needed) Or maybe create and use .plural(1) .plural("many") class "Plural" instance?
+        self.col_id = self.ensure_type("col_id", str, schema_conf.get("col_id", "id"))
+        self.cols = self.ensure_type("cols", dict, schema_conf.get("cols", {"name": "str"}))
         if self.col_id not in self.cols:
-            raise ValueError(f'col_id "{col_id}" must be present in cols')
-        self.cols_optional = cols_optional or {"description": "str", "notes": "str"}
-        self.cols_secret = cols_secret or []  # ['key']
-        self.id_template = id_template
+            raise ValueError(f'col_id "{self.col_id}" must be present in cols')
+        self.cols_optional = self.ensure_type("cols_optional", dict, schema_conf.get("cols_optional", {"description": "str", "notes": "str"}))
+        self.cols_secret = self.ensure_type("cols_secret", list, schema_conf.get("cols_secret", []))
+        self.id_template = self.ensure_type("id_template", dict, schema_conf.get("id_template", {}))
+        if id_template_values_add:
+            if "values" not in self.id_template:
+                self.id_template["values"] = id_template_values_add
+            else:
+                self.ensure_type("id_template.values", dict, self.id_template["values"])
+                self.id_template["values"].update(id_template_values_add)
+
+    def ensure_type(self, field: str, t: type[_ST], val) -> _ST:
+        if not isinstance(val, t):
+            raise TypeError(f'Expected {t.__name__}, got {type(val).__name__} in "{field}"')
+        return val
 
 
 # Generic type for data model classes
@@ -235,13 +262,68 @@ class DbFile(Generic[_T]):
         self.db_file_cols = [c.title() for c in list(self.schema.cols.keys()) + list(self.schema.cols_optional.keys())]
         self.db_file_cols[0] = "# " + self.db_file_cols[0]
 
+    def _upgrade_needed(self, upgrade_ok=False) -> tuple[bool, list[str]]:
+        cols = {**self.schema.cols, **self.schema.cols_optional}
+        if not self.db_file_cols:
+            return True, list(cols.keys())
+        db_cols = [c.lower().lstrip("#").strip() for c in self.db_file_cols]
+        cols_missing = [c for c in cols if c not in db_cols]
+        if upgrade_ok and any(cols_missing):
+            return True, cols_missing
+        # Look if any of the cols_missing have data in items.
+        # If no data, adding a column may be postponed
+        for item in self.items:
+            for c in cols_missing:
+                if getattr(item, c, ""):
+                    return True, cols_missing  # If we find data in any cols_missing, then upgrade is needed.
+        return False, []
+
+    def db_file_upgrade_maybe(self) -> None:
+        """Upgrade the file Schema on write if allowed and needed.
+
+        Add all columns in the Schema to self.db_file_cols if not already there.
+        """
+        version = self.schema.version
+        upgrade_ok = self.schema.upgrade_ok
+        # upgrade_from = self.schema.upgrade_from
+        needed, cols_missing = self._upgrade_needed(upgrade_ok)
+        if needed:
+            if not upgrade_ok and self.db_file_cols:
+                raise ValueError(f"Cannot write {self.schema.items_name} database to {self.db_file} - schema upgrade to v{version} is needed, but not allowed by Schema.upgrade _ok={upgrade_ok}")
+            self.db_file_cols_init()
+        if not self.db_file_cols:
+            raise ValueError("Expected non-empty list in self.db_file_cols.")
+        if needed:
+            cols = {**self.schema.cols, **self.schema.cols_optional}
+            columns = [c.lower().lstrip("#").strip() for c in self.db_file_cols]
+            type_mapping = DbFileSchema.type_mapping()
+            for i, item in enumerate(self.items):
+                item_data = {}
+                for c in columns:
+                    key = c.replace(" ", "_")
+                    field_type = cols[key]
+                    if field_type not in type_mapping:
+                        raise ValueError(f'Unknown type "{field_type}" for column "{key}" in schema for {self.schema.items_name} database')
+                    t = type_mapping[field_type]
+                    val = getattr(item, key, None)
+                    if val is None:
+                        if c in cols_missing:
+                            # Here we rely on type `t` to give us a sensible default for cols_missing data.
+                            # A better approach is to define default values in the Schema - for migration (and same default can be used for new items when data is not provided).
+                            # Another approach is to devise a mechanism to indicate missing data in CSV file, like "NULL" in SQL.
+                            val = t()
+                        else:
+                            val = ""
+                    item_data[key] = val
+                self.items[i] = self.model_type(**item_data)
+
     def db_file_save(self, items, out_file: str) -> None:
+        self.db_file_upgrade_maybe()
         with open(out_file, "w", newline="", encoding="utf-8") as out_file_fd:
             self.loggr.info(f'Writing {self.schema.items_name} database to "{out_file}" file.')
             self.db_file_save_fd(items, out_file_fd)
 
     def db_file_save_fd(self, items, out_file_fd):
-        # TODO: (now) Implement upgrading the file on write - add all columns in the Schema to self.db_file_cols, not just the required ones (which are validated on read)
         if not self.db_file_cols:
             raise ValueError("Expected non-empty list in self.db_file_cols.")
         csvwriter = csv.writer(out_file_fd, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -254,12 +336,15 @@ class DbFile(Generic[_T]):
                 c = c_in.lower().lstrip("#").strip()
                 key = c.replace(" ", "_")
                 val = getattr(item, key, "")
+                if val is None:
+                    val = ""
                 row += [str(val)]
             csvwriter.writerow(row)
 
     def db_file_save_back(self) -> int:
         try:
             if self.gd_file and self.gds:
+                self.db_file_upgrade_maybe()
                 self.loggr.info(f'Writing {self.schema.items_name} database to GoogleDrive "{self.gd_file["title"]}" file.')
 
                 # buffered = io.BytesIO()
@@ -321,14 +406,8 @@ class DbFile(Generic[_T]):
 def create_dynamic_model(schema: DbFileSchema) -> type | None:
     name = " ".join([p.capitalize() for p in schema.item_name.split("_")])
     cols = {**schema.cols, **schema.cols_optional}
+    type_mapping = DbFileSchema.type_mapping()
 
-    type_mapping = {
-        "int": int,
-        "bool": bool,
-        "str": str,
-        "float": float,
-        # Add more types here as needed
-    }
     fields = {}
     optional_fields = []
     for field_name, field_type in cols.items():
@@ -347,7 +426,9 @@ def create_dynamic_model(schema: DbFileSchema) -> type | None:
             original_type = schema["properties"][column]["type"]
             schema["properties"][column].update({"type": ["null", original_type]})
 
-    return create_model(name, **fields, __config__={"schema_extra": schema_extra})
+    # pydantic v1: config = ConfigDict(schema_extra=schema_extra)
+    config = ConfigDict(json_schema_extra=schema_extra)
+    return create_model(name, **fields, __config__=config)
 
 
 def get_db(loggr: logging.Logger, args: argparse.Namespace) -> DbFile:
@@ -370,30 +451,22 @@ def get_db(loggr: logging.Logger, args: argparse.Namespace) -> DbFile:
     app_type = "APP_TYPE"
     app_name = "APP_NAME"
 
-    id_template = conf.get_sub("Schema", "id_template", default={}, t=dict)
-    if not isinstance(id_template, dict):
-        raise TypeError(f"Expected dict in Schema.id_template, got {type(id_template)}")
-    id_template["values"] = {
+    schema_conf = conf.get_sub("Schema", default={}, t=dict)
+    if not schema_conf:
+        raise ValueError(f'Could not find "Schema" section in "{filename}"')
+    if not isinstance(schema_conf, dict):
+        raise TypeError(f'Expected "Schema" section to be a dict, got {type(schema_conf)} in "{filename}"')
+
+    id_template_values_add = {
         "site_id": site_id,
         "app_type": app_type,
         "app_name": app_name,
     }
-
-    col_id = conf.get_sub("Schema", "col_id", default="id")
-    cols = conf.get_sub("Schema", "cols", default={"id": "str", "name": "str", "key": "str"}, t=dict)
-    cols_optional = conf.get_sub("Schema", "cols_optional", default={"description": "str", "notes": "str"}, t=dict)
-    cols_secret = conf.get_sub("Schema", "cols_secret", default=["key"], t=list)
-    schema = DbFileSchema(
-        items_name=conf.get_sub("Schema", "items_name", default="items"),
-        item_name=conf.get_sub("Schema", "item_name", default="item"),
-        col_id=col_id,
-        cols=cols,
-        cols_optional=cols_optional,
-        cols_secret=cols_secret,
-        id_template=id_template,
-    )
+    schema = DbFileSchema(schema_conf, id_template_values_add)
 
     t = create_dynamic_model(schema)
+    if not t:
+        raise ValueError(f'Could not create dynamic model for "{schema.items_name}" database')
     return DbFile[t](config=conf, schema=schema, model_type=t, loggr=loggr, debug=args.debug)
 
 
