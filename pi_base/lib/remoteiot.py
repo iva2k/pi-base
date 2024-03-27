@@ -120,6 +120,8 @@ class Remoteiot:
         self.debug = debug
         self.loggr = loggr
 
+        self.sudo = "" if os.name == "nt" else "sudo"
+
         # Describe columns in the device database:
         self.cols = ["key", "device id", "device name"]
         self.cols_optional = ["device group", "notes"]
@@ -386,7 +388,7 @@ class Remoteiot:
         service_key = self.conf.get("service_key")
         if not service_key:
             raise ValueError("Configuration does not have Remoteiot service key.")
-        cmd = f"curl -s -L 'https://remoteiot.com/install/install.sh' | sudo bash -s '{service_key}' '{device_id}' '{device_name}'"
+        cmd = f"curl -s -L 'https://remoteiot.com/install/install.sh' | {self.sudo} bash -s '{service_key}' '{device_id}' '{device_name}'"
         if device_group:
             cmd += f" '{device_group}'"
         cmd_log = cmd.replace(service_key, "*" * 10)
@@ -401,12 +403,11 @@ class Remoteiot:
         return 0
 
     def remoteiot_uninstall(self) -> int:
-        if self.debug and os.name == "nt":
-            return 0  # Pretend completed ok # TODO: (now) Remove when done debugging
+        # if self.debug and os.name == "nt": return 0  # Pretend completed ok
         service_key = self.conf.get("service_key")
         if not service_key:
             raise ValueError("Configuration does not have Remoteiot service key.")
-        cmd = f"curl -s -L 'https://remoteiot.com/install/uninstall.sh' | sudo bash -s '{service_key}'"
+        cmd = f"curl -s -L 'https://remoteiot.com/install/uninstall.sh' | {self.sudo} bash -s '{service_key}'"
         cmd_log = cmd.replace(service_key, "*" * 10)
         self.loggr.info(f"Uninstalling remoteiot, cmd={cmd_log} ...")
         p = check_output(cmd, shell=True, text=True)
