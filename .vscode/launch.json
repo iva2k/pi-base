@@ -17,6 +17,7 @@
       "args": [
         "-v",
       ],
+      "windows": { "program": "${env:CONDA_PREFIX}\\Scripts\\prerelease.exe"},
       "console": "integratedTerminal",
       "justMyCode": false
     },

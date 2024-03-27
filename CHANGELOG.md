@@ -2,14 +2,12 @@
 
 ## 0.0.21 (unreleased)
 
-
-- Nothing changed yet.
-
+* Automatically bump package version in pi_base/common/common_requirements.txt during release
 
 ## 0.0.20 (2024-03-24)
 
-* Add "version" command to pi_base script.
-* Add missing msg arg for journal.log() in Loggr.log().
+* Add "version" command to pi_base script
+* Add missing msg arg for journal.log() in Loggr.log()
 
 ## 0.0.19 (2024-03-24)
 
@@ -37,26 +35,26 @@
 
 ## 0.0.16 (2024-03-20)
 
-* Fix missing arg to _get_developer_setup() in modpath.py.
+* Fix missing arg to _get_developer_setup() in modpath.py
 
 ## 0.0.15 (2024-03-20)
 
-* Fix INST_REMOTEIOT not working in install.sh.
+* Fix INST_REMOTEIOT not working in install.sh
 
 ## 0.0.14 (2024-03-19)
 
-* Enable remote control during install.sh.
-* Show more information in install.sh/common_install.sh.
-* Add INST_DEBUG setting and -D/--debug parameter to install.sh/common_install.sh.
+* Enable remote control during install.sh
+* Show more information in install.sh/common_install.sh
+* Add INST_DEBUG setting and -D/--debug parameter to install.sh/common_install.sh
 
 ## 0.0.13 (2024-03-19)
 
-* Fix broken Audio sink logic for HDMI name in raspi-config.
+* Fix broken Audio sink logic for HDMI name in raspi-config
 
 ## 0.0.12 (2024-03-18)
 
-* Add "site" and "device" commands to pi_base CLI.
-* Fix DeploySite issues.
+* Add "site" and "device" commands to pi_base CLI
+* Fix DeploySite issues
 
 ## 0.0.11 (2024-03-18)
 
@@ -65,27 +63,27 @@
 
 ## 0.0.10 (2024-03-15)
 
-* Fix modpath on RPI.
+* Fix modpath on RPI
 
 ## 0.0.9 (2024-03-15)
 
-* Fix modpath on Windows.
+* Fix modpath on Windows
 
 ## 0.0.8 (2024-03-15)
 
-* Bugfixes in pi_base/modpath.py.
+* Bugfixes in pi_base/modpath.py
 
 ## 0.0.7 (2024-03-14)
 
-* Redo heuristics logic in pi_base/modpath.py.
+* Redo heuristics logic in pi_base/modpath.py
 
 ## 0.0.6 (2024-03-14)
 
-* Bump version in pi_base/common/common_requirements.txt.
+* Bump version in pi_base/common/common_requirements.txt
 
 ## 0.0.5 (2024-03-14)
 
-* Fix bugs left from move to package.
+* Fix bugs left from move to package
 
 ## 0.0.4 (2024-03-05)
 

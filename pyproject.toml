@@ -201,6 +201,10 @@ python-file-with-version = "pi_base/_version.py"
 history-file = "CHANGELOG.md"
 history_format = "md"
 run-pre-commit = false
+hook_package_dir = "."
+"prereleaser.middle" = [
+  "pi_base.scripts.version.prerelease_middle"
+]
 
 [tool.check-manifest]
 ignore = ["package.json", "lib/swd.*", "lib/cyclone.*"]
