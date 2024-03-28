@@ -10,6 +10,7 @@ import logging
 import os
 import subprocess
 import sys
+from typing import Callable
 
 ## Experimental: hacks to use relative import not in module (e.g. CLI)
 # Experiments revealed that it is sufficient to set __package__ variable to enable relative imports.
@@ -36,12 +37,12 @@ logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 # logger.setLevel(logging.DEBUG)
 
 
-def version_command(args):
+def version_command(command: str, args: "list[str]"):
     print(f"Version: {__version__}")
     return 0
 
 
-def make_command(args):
+def make_command(command: str, args: "list[str]"):
     try:
         sys.argv[1:] = args
         # from make import main as make_main
@@ -57,18 +58,18 @@ def make_command(args):
     return 0
 
 
-def upload_command(args):
+def upload_command(command: str, args: "list[str]"):
     script_dir = get_script_dir(__file__)
     prog = os.path.join(script_dir, "upload.sh")
     run_result = subprocess.run(["bash", prog] + args, shell=True, text=True, check=False, capture_output=False)
     if run_result.returncode:
         # message = " ".join([line.strip() for line in run_result.stderr.split("\n") if line.strip()])
-        print(f'Error {run_result.returncode} in command "{args.command}"', file=sys.stderr)
+        print(f'Error {run_result.returncode} in command "{command}"', file=sys.stderr)
         return run_result.returncode
     return 0
 
 
-def site_command(args):
+def site_command(command: str, args: "list[str]"):
     returncode = 0
     try:
         sys.argv[1:] = args
@@ -79,12 +80,12 @@ def site_command(args):
     #     print("Error: make.py not found or unable to import.", file=sys.stderr)
     #     return 1
     except Exception as e:
-        print(f'Error: "{e}" in command "{args.command}"', file=sys.stderr)
+        print(f'Error: "{e}" in command "{command}"', file=sys.stderr)
         return 1
     return returncode
 
 
-def device_command(args):
+def device_command(command: str, args: "list[str]"):
     returncode = 0
     try:
         sys.argv[1:] = args
@@ -95,13 +96,13 @@ def device_command(args):
     #     print("Error: make.py not found or unable to import.", file=sys.stderr)
     #     return 1
     except Exception as e:
-        print(f'Error: "{e}" in command "{args.command}"', file=sys.stderr)
+        print(f'Error: "{e}" in command "{command}"', file=sys.stderr)
         return 1
     return returncode
 
 
-def main(loggr=logger) -> int:
-    commands = {
+def main(loggr: logging.Logger = logger) -> int:
+    commands: dict[str, Callable[[str, list[str]], int]] = {
         "version": version_command,
         "make": make_command,
         "upload": upload_command,
@@ -122,7 +123,7 @@ def main(loggr=logger) -> int:
         logger.setLevel(logging.DEBUG)
 
     if args.command in commands:
-        res = commands[args.command](args.args)
+        res = commands[args.command](args.command, args.args)
     else:
         parser.print_help()
         return 1
