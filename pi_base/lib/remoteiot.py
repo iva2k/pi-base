@@ -22,7 +22,7 @@ from collections.abc import Iterable
 
 # pylint: disable=wrong-import-order
 from .app_utils import GetConf, find_path, translate_config_paths
-from .gd_service import gd_connect, GoogleDriveFile
+from .gd_service import gd_connect, GoogleDriveFile  # pyright: ignore[reportAttributeAccessIssue]
 
 
 logging.basicConfig(level=logging.INFO)

@@ -198,7 +198,7 @@ class Loggr(logging.Logger):
         if len(tstr) > 0:
             self.print(*tstr)
 
-    # @override
+    # @overload
     # def log(self, level: int, msg: object, *args: object, **kwargs: Mapping[str, Any]): ...
     def log(self, level: int, msg: object, *tstr: object, color_code: ColorCodes | str = ColorCodes.DEFAULT, **kwargs: Mapping[str, Any]):
         """Print message(s), with log level that can be masked."""

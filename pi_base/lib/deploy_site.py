@@ -15,15 +15,15 @@ import os
 # import socket
 # from subprocess import check_output
 import sys
-from typing import Optional
-from collections.abc import Iterable
+from typing import Any, Optional
+from collections.abc import Iterable, Mapping
 
 # "modpath" must be first of our modules
 from pi_base.modpath import get_app_workspace_dir, get_script_dir  # pylint: disable=wrong-import-position
 
 # pylint: disable=wrong-import-order
 from .app_utils import GetConf, find_path
-from .gd_service import gd_connect, FileNotUploadedError
+from .gd_service import gd_connect, FileNotUploadedError  # pyright: ignore[reportAttributeAccessIssue]
 
 
 logging.basicConfig(level=logging.INFO)
@@ -36,8 +36,9 @@ g_db_file_name = "sites.csv"
 MAX_SN = 1000
 
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+def eprint(*args: object, **kwargs: Mapping[str, Any]) -> None:
+    kwargs1 = {"file": sys.stderr, **kwargs}
+    print(*args, **kwargs1)
 
 
 class DeploySite:

@@ -51,7 +51,8 @@ import os
 import platform
 import subprocess
 import sys
-from typing import Optional
+from typing import Any, Optional
+from collections.abc import Mapping
 from abc import ABC, abstractmethod
 
 from .app_utils import AtDict
@@ -67,8 +68,9 @@ logger.setLevel(logging.DEBUG)
 # conn.printFile(printer_name,'/home/pi/Desktop/a.pdf',"",{})
 
 
-def eprint(*args: object, **kwargs: object) -> None:
-    print(*args, **kwargs, file=sys.stderr)
+def eprint(*args: object, **kwargs: Mapping[str, Any]) -> None:
+    kwargs1 = {"file": sys.stderr, **kwargs}
+    print(*args, **kwargs1)
 
 
 def shell(cmd: "list[str]") -> "tuple[int, str, str]":
@@ -600,7 +602,7 @@ def winPrint1() -> None:
     file_name = "document.pdf"
     printer_handle = win32print.OpenPrinter(printer_name)
     try:
-        win32print.StartDocPrinter(printer_handle, 1, ("test of raw data", None, "RAW"))
+        win32print.StartDocPrinter(printer_handle, 1, ("test of raw data", None, "RAW"))  # pyright: ignore[reportArgumentType]
         try:
             win32print.StartPagePrinter(printer_handle)
             with open(file_name, "rb") as f:

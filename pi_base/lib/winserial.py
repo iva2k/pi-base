@@ -34,7 +34,7 @@ if os.name == "nt":
 
             Overriding Serial class method to extract _fd_port_handle for fileno() method.
             """
-            if self._port is None:
+            if self._port is None or self.name is None:  # pyright: ignore[reportAttributeAccessIssue]
                 raise SerialException("Port must be configured before it can be used.")
             if self.is_open:
                 raise SerialException("Port is already open.")
@@ -71,7 +71,7 @@ if os.name == "nt":
             #         win32.OPEN_EXISTING,
             #         win32.FILE_ATTRIBUTE_NORMAL | win32.FILE_FLAG_OVERLAPPED,
             #         0)
-            if self._port_handle == win32.INVALID_HANDLE_VALUE:
+            if self._port_handle == win32.INVALID_HANDLE_VALUE:  # pyright: ignore[reportAttributeAccessIssue]
                 self._port_handle = None  # 'cause __del__ is called anyway
                 raise SerialException(f"could not open port {self.portstr!r}: {ctypes.WinError()!r}")
 
@@ -89,7 +89,7 @@ if os.name == "nt":
                 self._orgTimeouts = win32.COMMTIMEOUTS()
                 win32.GetCommTimeouts(self._port_handle, ctypes.byref(self._orgTimeouts))
 
-                self._reconfigure_port()
+                self._reconfigure_port()  # pyright: ignore[reportAttributeAccessIssue]
 
                 # Clear buffers:
                 # Remove anything that was there
@@ -97,7 +97,7 @@ if os.name == "nt":
             except:
                 # try:
                 with contextlib.suppress(Exception):
-                    self._close()
+                    self._close()  # pyright: ignore[reportAttributeAccessIssue]
                 # except:
                 #     # ignore any exception when closing the port
                 #     # also to keep original exception that happened when setting up
@@ -113,8 +113,8 @@ if os.name == "nt":
         def setDTRAndRTS(self, dtr, rts):
             comDCB = win32.DCB()
             win32.GetCommState(self._port_handle, ctypes.byref(comDCB))
-            comDCB.fRtsControl = win32.RTS_CONTROL_ENABLE if rts else win32.RTS_CONTROL_DISABLE
-            comDCB.fDtrControl = win32.DTR_CONTROL_ENABLE if dtr else win32.DTR_CONTROL_DISABLE
+            comDCB.fRtsControl = win32.RTS_CONTROL_ENABLE if rts else win32.RTS_CONTROL_DISABLE  # pyright: ignore[reportAttributeAccessIssue]
+            comDCB.fDtrControl = win32.DTR_CONTROL_ENABLE if dtr else win32.DTR_CONTROL_DISABLE  # pyright: ignore[reportAttributeAccessIssue]
             win32.SetCommState(self._port_handle, ctypes.byref(comDCB))
             self._rts_state = rts
             self._dtr_state = dtr

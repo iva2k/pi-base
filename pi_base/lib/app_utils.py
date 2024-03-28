@@ -14,8 +14,7 @@ from subprocess import check_output, run, CalledProcessError
 import threading
 import time
 from typing import Any, Callable, Optional, overload, TypeVar, TYPE_CHECKING
-from collections.abc import Mapping
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 from uuid import getnode as get_mac
 # import zmq
 

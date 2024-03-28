@@ -74,7 +74,7 @@ def find_file(search_dir_list, filename, descr="input", loggr=logger):
     return None
 
 
-def partition_device_name(partition: psutil._common.sdiskpart) -> str:
+def partition_device_name(partition: psutil._common.sdiskpart) -> str:  # pyright: ignore[reportAttributeAccessIssue]
     device_name = partition.device
     if device_name == "/dev/root" and os.name != "nt":
         with open("/proc/mounts", encoding="ascii") as f:
@@ -116,10 +116,11 @@ def disk_is_healthy_WIP(printer=None) -> "tuple[bool, list[str]]":
     #     if printer: printer("No disk read/write activity")
     device_name = partition_device_name(psutil.disk_partitions()[0])
     disk_counters = psutil.disk_io_counters(perdisk=True)[device_name]
-    disk_errors = disk_counters.errors  # TODO: (when needed) FIXME - .errors is not present, digging into code can find .read_count, .write_count, etc.
+    # disk_errors = disk_counters.errors  # TODO: (when needed) FIXME - .errors is not present, digging into code can find .read_count, .write_count, etc.
+    disk_errors = 1
     if disk_errors is not None and disk_errors > 0:
         healthy = False
-        msg = f"{disk_errors} Disk errors detected in {device_name}"
+        msg = f"{disk_errors} Disk errors detected in {device_name} || NOTE: THIS IS A DUMMY ERROR FOR WIP - NEED TO IMPLEMENT THE FUNCTION!"
         summary += [msg]
         # if printer: printer(msg)
 

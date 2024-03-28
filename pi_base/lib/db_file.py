@@ -16,8 +16,7 @@ import logging
 import os
 import sys
 from typing import Any, Generic, Optional, TypeVar
-from collections.abc import Mapping
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 
 from pydantic import BaseModel, create_model, ConfigDict
 
@@ -43,7 +42,7 @@ __package__ = ".".join([os.path.basename(os.path.dirname(SCRIPT_DIR)), os.path.b
 # ruff: noqa: E402, TID252
 
 from ..lib.app_utils import AtDict, GetConf, find_path, translate_config_paths
-from ..lib.gd_service import gd_connect, GoogleDriveFile, FileNotUploadedError
+from ..lib.gd_service import gd_connect, GoogleDriveFile, FileNotUploadedError  # pyright: ignore[reportAttributeAccessIssue]
 
 
 logging.basicConfig(level=logging.INFO)
@@ -51,8 +50,9 @@ logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 # logger.setLevel(logging.DEBUG)
 
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+def eprint(*args: object, **kwargs: Mapping[str, Any]) -> None:
+    kwargs1 = {"file": sys.stderr, **kwargs}
+    print(*args, **kwargs1)
 
 
 _ST = TypeVar("_ST")
