@@ -175,7 +175,9 @@
         "RPI 002",
         "secret key here 2",
         "description 2",
+        "long description 2",
         "notes 2",
+        "2.2",
       ],
       "console": "integratedTerminal",
       "justMyCode": false

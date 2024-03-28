@@ -40,7 +40,7 @@ __package__ = ".".join([os.path.basename(os.path.dirname(SCRIPT_DIR)), os.path.b
 # pylint: disable=wrong-import-position,relative-beyond-top-level
 # ruff: noqa: E402, TID252
 
-from ..lib.app_utils import GetConf, find_path, translate_config_paths
+from ..lib.app_utils import AtDict, GetConf, find_path, translate_config_paths
 from ..lib.gd_service import gd_connect, GoogleDriveFile, FileNotUploadedError
 
 
@@ -75,9 +75,14 @@ class DbFileSchema:
         self.item_name = self.ensure_type("item_name", str, schema_conf.get("item_name", "item"))  # TODO: (when needed) Or maybe create and use .plural(1) .plural("many") class "Plural" instance?
         self.col_id = self.ensure_type("col_id", str, schema_conf.get("col_id", "id"))
         self.cols = self.ensure_type("cols", dict, schema_conf.get("cols", {"name": "str"}))
+        self.cols_optional = self.ensure_type("cols_optional", dict, schema_conf.get("cols_optional", {"description": "str", "notes": "str"}))
+
+        self.col_id = self.col_id.strip().replace(" ", "_")
+        self.cols = {k.strip().replace(" ", "_"): v for k, v in self.cols.items()}
+        self.cols_optional = {k.strip().replace(" ", "_"): v for k, v in self.cols_optional.items()}
+
         if self.col_id not in self.cols:
             raise ValueError(f'col_id "{self.col_id}" must be present in cols')
-        self.cols_optional = self.ensure_type("cols_optional", dict, schema_conf.get("cols_optional", {"description": "str", "notes": "str"}))
         self.cols_secret = self.ensure_type("cols_secret", list, schema_conf.get("cols_secret", []))
         self.id_template = self.ensure_type("id_template", dict, schema_conf.get("id_template", {}))
         if id_template_values_add:
@@ -259,7 +264,7 @@ class DbFile(Generic[_T]):
         return items
 
     def db_file_cols_init(self):
-        self.db_file_cols = [c.title() for c in list(self.schema.cols.keys()) + list(self.schema.cols_optional.keys())]
+        self.db_file_cols = [c.replace("_", " ").title() for c in list(self.schema.cols.keys()) + list(self.schema.cols_optional.keys())]
         self.db_file_cols[0] = "# " + self.db_file_cols[0]
 
     def _upgrade_needed(self, upgrade_ok=False) -> tuple[bool, list[str]]:
@@ -289,7 +294,9 @@ class DbFile(Generic[_T]):
         needed, cols_missing = self._upgrade_needed(upgrade_ok)
         if needed:
             if not upgrade_ok and self.db_file_cols:
-                raise ValueError(f"Cannot write {self.schema.items_name} database to {self.db_file} - schema upgrade to v{version} is needed, but not allowed by Schema.upgrade _ok={upgrade_ok}")
+                raise ValueError(
+                    f"Cannot write {self.schema.items_name} database to {self.db_file or self.gd_file} - schema upgrade to v{version} is needed, but not allowed by Schema.upgrade _ok={upgrade_ok}"
+                )
             self.db_file_cols_init()
         if not self.db_file_cols:
             raise ValueError("Expected non-empty list in self.db_file_cols.")
@@ -306,16 +313,14 @@ class DbFile(Generic[_T]):
                         raise ValueError(f'Unknown type "{field_type}" for column "{key}" in schema for {self.schema.items_name} database')
                     t = type_mapping[field_type]
                     val = getattr(item, key, None)
-                    if val is None:
-                        if c in cols_missing:
-                            # Here we rely on type `t` to give us a sensible default for cols_missing data.
-                            # A better approach is to define default values in the Schema - for migration (and same default can be used for new items when data is not provided).
-                            # Another approach is to devise a mechanism to indicate missing data in CSV file, like "NULL" in SQL.
-                            val = t()
-                        else:
-                            val = ""
+                    if val is None and key in cols_missing:
+                        # Here we rely on type `t` to give us a sensible default for cols_missing data.
+                        # A better approach is to define default values in the Schema - for migration (and same default can be used for new items when data is not provided).
+                        # Another approach is to devise a mechanism to indicate missing data in CSV file, like "NULL" in SQL.
+                        val = t()
                     item_data[key] = val
                 self.items[i] = self.model_type(**item_data)
+            self.loggr.info(f'Upgraded file "{self.db_file or self.gd_file}" to Schema v{version}.')
 
     def db_file_save(self, items, out_file: str) -> None:
         self.db_file_upgrade_maybe()
@@ -384,22 +389,35 @@ class DbFile(Generic[_T]):
         return None
 
     def unique_item_id(self) -> tuple:
+        if self.schema.col_id not in self.schema.id_template:
+            raise ValueError(f'Column "{self.schema.col_id}" not found in {self.schema.id_template}')
+        _iter = self.schema.id_template.get("_iterator")
+        # if not _iter:
+        #     raise ValueError('Item "_iterator" not found in Schema.id_template')
+        _iter = AtDict(**(_iter or {"key": "sn", "fr": 0, "to": 32767, "step": 1}))
+        if not _iter.fr:
+            _iter.fr = 0
+        if not _iter.to:
+            _iter.to = 32767
+        if not _iter.step:
+            _iter.step = 1
+
         if "values" in self.schema.id_template and isinstance(self.schema.id_template["values"], dict):
             values: dict[str, int | str] = copy.copy(self.schema.id_template["values"])
         else:
             values = {}
-        values["sn"] = 1
+        values[_iter.key] = _iter.fr
 
-        if self.schema.col_id not in self.schema.id_template:
-            raise ValueError(f'Column "{self.schema.col_id}" not found in {self.schema.id_template}')
-        while int(values["sn"]) < self.MAX_SN:  # TODO: (now) move MAX_SN into self.schema.id_template
+        while int(values["sn"]) < _iter.to:
             templates: dict[str, str] = {}
             for k, v in self.schema.id_template.items():
+                if k.startswith("__") or k in ["_iterator"]:
+                    continue
                 if isinstance(v, str):
                     templates[k] = v.format(**values)
             if not self.find_item_by_id(templates[self.schema.col_id]):
                 return tuple(templates.values())
-            values["sn"] = int(values["sn"]) + 1
+            values[_iter.key] = int(values[_iter.key]) + _iter.step
         return tuple(None for _ in range(len(templates)))
 
 

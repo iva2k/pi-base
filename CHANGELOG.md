@@ -5,6 +5,8 @@
 * Remove hard dependency on `pkg` subfolder in app project folder
 * Report error when `install.sh` is run not from `build` folder
 * Add missing columns on write (upgrade schema) in DbFile
+* Add _iterator to DbFile id_template config
+* Fix space in DbFile cols in Schema
 
 ## 0.0.21 (2024-03-26)
 
