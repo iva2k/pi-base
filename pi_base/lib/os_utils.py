@@ -8,7 +8,8 @@ import os
 import platform
 import shutil
 import sys
-from typing import AnyStr, Optional
+from typing import Optional
+
 from collections.abc import Iterator
 
 import psutil
@@ -121,15 +122,16 @@ def disk_is_healthy_WIP(printer=None) -> "tuple[bool, list[str]]":
         msg = f"{disk_errors} Disk errors detected in {device_name}"
         summary += [msg]
         # if printer: printer(msg)
+
     # if psutil.disk_partitions()[0].fstype == 'NTFS' and psutil.win32.disk_usage(psutil.disk_partitions()[0].device).total < 10000000000:
     #     if printer: printer("Low disk space on NTFS partition")
     return healthy, summary
 
 
-def walklevel(root_dir: Optional[str] = None, level: int = 1) -> "Iterator[tuple[AnyStr, list[AnyStr], list[AnyStr]]]":
+def walklevel(root_dir: Optional[str] = None, level: int = 1) -> "Iterator[tuple[str, list[str], list[str]]]":
     """Similar to os.walk() but with a level parameter.
 
-        From https://stackoverflow.com/a/234329
+    From https://stackoverflow.com/a/234329
 
     Args:
         root_dir (None|str): Directory to traverse. If None - will use current directory.
@@ -139,7 +141,7 @@ def walklevel(root_dir: Optional[str] = None, level: int = 1) -> "Iterator[tuple
         FileNotFoundError: If root_dir directory does not exist
 
     Yields:
-        Iterator[tuple[AnyStr@walk, list[AnyStr@walk], list[AnyStr@walk]]]: _description_
+        Iterator[tuple[str, list[str], list[str]]]: _description_
 
     Example:
         ```

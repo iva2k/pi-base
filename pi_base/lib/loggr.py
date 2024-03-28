@@ -9,6 +9,8 @@ import platform
 
 from enum import Enum
 from subprocess import Popen, PIPE, DEVNULL
+from typing import Any
+from collections.abc import Mapping
 
 from . import tput
 
@@ -98,7 +100,7 @@ class Vt:
     #         self.vt.write(self.tput_clear)
     #         self.flush()
 
-    def print(self, *tstr, end="\n", sep=" "):
+    def print(self, *tstr: object, sep=" ", end="\n"):
         proc = None
         file = None
         if self.use_sudo and self.term:
@@ -197,43 +199,45 @@ class Loggr(logging.Logger):
             self.print(*tstr)
 
     # @override
-    # def log(self, level, msg, *args, **kwargs): ...
-    def log(self, level: int, msg: str, *tstr, color_code: ColorCodes | str = ColorCodes.DEFAULT, **kwargs):
+    # def log(self, level: int, msg: object, *args: object, **kwargs: Mapping[str, Any]): ...
+    def log(self, level: int, msg: object, *tstr: object, color_code: ColorCodes | str = ColorCodes.DEFAULT, **kwargs: Mapping[str, Any]):
         """Print message(s), with log level that can be masked."""
         if not level:
             level = logging.NOTSET
+        kwargs1 = {"sep": " ", "end": "\n", **kwargs}
         if level >= self.level:
             level_str = f"{logging.getLevelName(level):8s}"
             if self.vt:
-                self.vt.print(level_str, msg, *tstr, **kwargs)
+                self.vt.print(level_str, msg, *tstr, **kwargs1)
             if self.use_stdout:
-                self.color_print(f"{level_str}: {' '.join([msg] + list(tstr))}", color_code=color_code)
+                self.color_print(f"{level_str}: {' '.join([str(item) for item in [msg] + list(tstr)])}", color_code=color_code)
             if self.journal:
                 self.journal.log(level, msg, *tstr)
 
-    def critical(self, msg, *tstr, **kwargs):
+    def critical(self, msg: object, *tstr: object, **kwargs: Mapping[str, Any]):
         self.log(logging.CRITICAL, msg, *tstr, color_code=ColorCodes.RED, **kwargs)
 
-    def error(self, msg, *tstr, **kwargs):
+    def error(self, msg: object, *tstr: object, **kwargs: Mapping[str, Any]):
         self.log(logging.ERROR, msg, *tstr, color_code=ColorCodes.YELLOW, **kwargs)
 
-    def warning(self, msg, *tstr, **kwargs):
+    def warning(self, msg: object, *tstr: object, **kwargs: Mapping[str, Any]):
         self.log(logging.WARNING, msg, *tstr, color_code=ColorCodes.BLUE, **kwargs)
 
-    def info(self, msg, *tstr, **kwargs):
+    def info(self, msg: object, *tstr: object, **kwargs: Mapping[str, Any]):
         self.log(logging.INFO, msg, *tstr, color_code=ColorCodes.CYAN, **kwargs)
 
-    def debug(self, msg, *tstr, **kwargs):
+    def debug(self, msg: object, *tstr: object, **kwargs: Mapping[str, Any]):
         self.log(logging.DEBUG, msg, *tstr, color_code=ColorCodes.DEFAULT, **kwargs)
 
-    def print(self, *tstr, end: str = "\n", sep=" ", **kwargs):
+    def print(self, *tstr: object, **kwargs: Mapping[str, Any]):
         """Print message(s), unmasked."""
+        kwargs1 = {"sep": " ", "end": "\n", **kwargs}
         if self.vt:
-            self.vt.print(*tstr, end=end, sep=sep, **kwargs)
+            self.vt.print(*tstr, **kwargs1)
         if self.use_stdout:
-            print(*tstr, end=end, sep=sep, **kwargs)
+            print(*tstr, **kwargs1)
         if self.journal:
-            self.journal.info(*tstr, **kwargs)
+            self.journal.info(*tstr, **kwargs1)
 
     def log_box(self, text: str, width: int = 50, color_code: ColorCodes | str = ColorCodes.DEFAULT) -> None:
         """Log provided text in a box of given width (centered).
@@ -307,7 +311,9 @@ class Loggr(logging.Logger):
             filter_text = text
         index = text.find(filter_text)
         strlen = len(filter_text)
-        self.print(text[:index] + color_code + text[index : index + strlen] + ColorCodes.DEFAULT.value + text[index + strlen :], end=end)
+        message = text[:index] + color_code + text[index : index + strlen] + ColorCodes.DEFAULT.value + text[index + strlen :]
+        kwargs: Mapping[str, Any] = {"end": end}
+        self.print(message, **kwargs)
 
     def position(self, x, y, *tstr):
         """Move cursor to position on screen, and optionally print.

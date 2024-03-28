@@ -15,7 +15,8 @@ import io
 import logging
 import os
 import sys
-from typing import Generic, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
+from collections.abc import Mapping
 from collections.abc import Iterable
 
 from pydantic import BaseModel, create_model, ConfigDict
@@ -32,6 +33,7 @@ from pydantic import BaseModel, create_model, ConfigDict
 # import importlib
 # module = importlib.import_module("path", os.path.basename(SCRIPT_DIR))
 
+# These contortions are needed to import from relative modules when running main() from CLI:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 # ? sys.path.append(os.path.dirname(os.path.realpath(SCRIPT_DIR)))
 # __package__ = os.path.basename(SCRIPT_DIR)
@@ -52,6 +54,7 @@ logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
+
 _ST = TypeVar("_ST")
 
 
@@ -66,7 +69,7 @@ class DbFileSchema:
             # Add more types here as needed
         }
 
-    def __init__(self, schema_conf: dict, id_template_values_add: Optional[dict[str, str | dict]] = None) -> None:
+    def __init__(self, schema_conf: dict, id_template_values_add: Optional[Mapping[str, str | Mapping[str, Any]]] = None) -> None:
         self.version = self.ensure_type("version", int, schema_conf.get("version", 0))
         self.upgrade_from = self.ensure_type("upgrade_from", int, schema_conf.get("upgrade_from", max(0, self.version - 1)))
         self.upgrade_ok = self.ensure_type("upgrade_ok", bool, schema_conf.get("upgrade_ok", self.upgrade_from < self.version))
@@ -450,6 +453,10 @@ def create_dynamic_model(schema: DbFileSchema) -> type | None:
 
 
 def get_db(loggr: logging.Logger, args: argparse.Namespace) -> DbFile:
+    """Prepare backend database by loading config file.
+
+    Serves as a usage example for DbFile class.
+    """
     config_paths = [
         # ">root/",
         # ">base/secrets/",
@@ -465,9 +472,6 @@ def get_db(loggr: logging.Logger, args: argparse.Namespace) -> DbFile:
     conf = GetConf(filename)
     conf.conf["config_paths"] = config_paths
     conf.conf["file_paths"] = config_paths
-    site_id = "SITE"  # TODO: (now) get from app_conf.yaml
-    app_type = "APP_TYPE"
-    app_name = "APP_NAME"
 
     schema_conf = conf.get_sub("Schema", default={}, t=dict)
     if not schema_conf:
@@ -475,6 +479,10 @@ def get_db(loggr: logging.Logger, args: argparse.Namespace) -> DbFile:
     if not isinstance(schema_conf, dict):
         raise TypeError(f'Expected "Schema" section to be a dict, got {type(schema_conf)} in "{filename}"')
 
+    # Example of additional fields data for id_template, which can be populated from e.g. app_conf.yaml or other data by DbFile client.
+    site_id = "SITE"
+    app_type = "APP_TYPE"
+    app_name = "APP_NAME"
     id_template_values_add = {
         "site_id": site_id,
         "app_type": app_type,

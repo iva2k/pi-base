@@ -55,6 +55,7 @@ etc_dir = "etc"
 
 CONF_YAML = "conf.yaml"
 
+
 def get_git_hash() -> str:
     try:
         result = run(["git", "rev-parse", "--short", "HEAD"], stdout=PIPE, check=False)  # noqa: S607

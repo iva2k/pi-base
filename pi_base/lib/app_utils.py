@@ -13,12 +13,17 @@ import platform
 from subprocess import check_output, run, CalledProcessError
 import threading
 import time
-from typing import Any, Callable, Optional, overload, TypeVar
+from typing import Any, Callable, Optional, overload, TypeVar, TYPE_CHECKING
+from collections.abc import Mapping
 from collections.abc import Generator
 from uuid import getnode as get_mac
 # import zmq
 
 import requests
+
+
+if TYPE_CHECKING:
+    from .loggr import Loggr
 
 
 class AtDict(dict):
@@ -287,6 +292,12 @@ def run_maybe_async(maybe_future):
 
 # app_info
 
+# Allow list and dict types so .get() can get the whoie section
+# _T = TypeVar("_T", str, float, int, bool, list, dict)
+# _VT = TypeVar("_VT", str, float, int, bool, list, dict)
+_T = TypeVar("_T")
+_VT = TypeVar("_VT", bound=Any)
+
 
 class GetConf:
     """Read configuration file (.yaml or .json)."""
@@ -315,12 +326,6 @@ class GetConf:
 
     def __setitem__(self, key, val):
         self.conf[key] = val
-
-    # Allow list and dict types so .get() can get the whoie section
-    # _T = TypeVar("_T", str, float, int, bool, list, dict)
-    # _VT = TypeVar("_VT", str, float, int, bool, list, dict)
-    _T = TypeVar("_T")
-    _VT = TypeVar("_VT", bound=Any)
 
     @overload
     def get(self, key: str, default: None = None, t: type[_VT] = str, check: bool = False) -> _VT | None:
@@ -686,7 +691,9 @@ def translate_config_paths(config_paths: list[str], translations: Optional[list[
     return [translate_one(p, translations) for p in config_paths]
 
 
-def download_and_execute(url: str, downloaded_file_path: str, command: Optional[list[str]] = None, remove_after: bool = False, timeout: int = 30, loggr: Optional[logging.Logger] = None) -> int:
+def download_and_execute(
+    url: str, downloaded_file_path: str, command: Optional[list[str]] = None, remove_after: bool = False, timeout: int = 30, loggr: Optional[logging.Logger | Loggr] = None
+) -> int:
     """Download from given URL a file and either execute the file or optionally execute the given command. Intended use is to download and install software.
 
     Args:
@@ -704,11 +711,12 @@ def download_and_execute(url: str, downloaded_file_path: str, command: Optional[
         with open(downloaded_file_path, "wb") as file:
             response = requests.get(url, stream=True, timeout=timeout)
             response.raise_for_status()
+            log_kwargs: Mapping[str, Any] = {"end": ""}
             for chunk in response.iter_content(chunk_size=8192):
                 if chunk:
                     file.write(chunk)
                     if loggr:
-                        loggr.info(".", end="")
+                        loggr.info(".", **log_kwargs)
     except requests.exceptions.RequestException as e:
         if loggr:
             loggr.error(f'Error {type(e)} "{e}" while downloading file "{downloaded_file_path}" from {url}.')
@@ -739,7 +747,7 @@ def download_and_execute(url: str, downloaded_file_path: str, command: Optional[
 class PeriodicTask(threading.Thread):
     """Helper class to manage periodic tasks."""
 
-    def __init__(self, interval: float, task_fnc: Callable, *args: object, **kwargs: object) -> None:
+    def __init__(self, interval: float, task_fnc: Callable, *args: object, **kwargs: Mapping[str, Any]) -> None:
         """Constructor.
 
         Args:
@@ -752,7 +760,7 @@ class PeriodicTask(threading.Thread):
         self.interval = interval
         self._task_fnc: Optional[Callable] = task_fnc
         self._args: object = args
-        self._kwargs: object = kwargs
+        self._kwargs: Optional[Mapping[str, Any]] = kwargs
         self._kill_event = threading.Event()
         self._pause_event = threading.Event()
         super().start()
@@ -768,7 +776,10 @@ class PeriodicTask(threading.Thread):
                 next_run = next(gen)
                 time.sleep(max(0, next_run - time.monotonic()))
                 if not self._pause_event.is_set() and self._task_fnc:
-                    self._task_fnc(*self._args, **self._kwargs)
+                    if self._kwargs:
+                        self._task_fnc(*self._args, **self._kwargs)
+                    else:
+                        self._task_fnc(*self._args)
             except StopIteration:  # noqa: PERF203
                 break
 
