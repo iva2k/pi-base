@@ -179,6 +179,8 @@ class GoogleDriveService:
         service = self.get_service()
         if not service:
             return None
+        if not hasattr(service, "files"):
+            raise ValueError('Expected GoogleDrive "drive" service to have "files" attribute')
         if not mimetype:
             mimetype_maybe = mimetypes.guess_type(file_path)[0]
             mimetype = mimetype_maybe or "application/octet-stream"
@@ -197,7 +199,7 @@ class GoogleDriveService:
                 file_metadata["parents"] = [dir_id]
             media = MediaFileUpload(file_path, mimetype=mimetype, resumable=resumable)
             # pylint: disable=maybe-no-member
-            files_service = service.files()  # TODO: (now) FIXME: service of type Resource does not have .files() method!
+            files_service = service.files()  # pyright: ignore[reportAttributeAccessIssue]
             if files_service:
                 file = files_service.create(body=file_metadata, media_body=media, fields="id", supportsAllDrives=dir_id is not None).execute()
             # supportsAllDrives=True is important to use so 'parents' works correctly.
@@ -223,13 +225,15 @@ class GoogleDriveService:
         """
         result = []
         page_token = None
+        if not hasattr(service, "files"):
+            raise ValueError('Expected GoogleDrive "drive" service to have "files" attribute')
         while True:
             try:
                 param: dict[str, str] = {}
                 if page_token:
                     param["pageToken"] = page_token
                 page_token = None
-                files_service = service.files()  # TODO: (now) FIXME: service of type Resource does not have .files() method!
+                files_service = service.files()  # pyright: ignore[reportAttributeAccessIssue]
                 if files_service:
                     files = files_service.list(**param).execute()
                     if files:
@@ -254,13 +258,15 @@ class GoogleDriveService:
         """
         result = []
         page_token = None
+        if not hasattr(service, "drives"):
+            raise ValueError('Expected GoogleDrive "drive" service to have "drives" attribute')
         while True:
             try:
                 param: dict[str, str] = {}
                 if page_token:
                     param["pageToken"] = page_token
                 page_token = None
-                drives_service = service.drives()  # TODO: (now) FIXME: service of type Resource does not have .derives() method!
+                drives_service = service.drives()  # pyright: ignore[reportAttributeAccessIssue]
                 if drives_service:
                     drives = drives_service.list(**param).execute()
                     if drives:
@@ -451,6 +457,8 @@ def upload_file(
 
     Returns: ID of the file uploaded
     """
+    if not hasattr(service, "files"):
+        raise ValueError('Expected GoogleDrive "drive" service to have "files" attribute')
     if not mimetype:
         mimetype_maybe = mimetypes.guess_type(file_path)[0]
         mimetype = mimetype_maybe or "application/octet-stream"
@@ -468,8 +476,7 @@ def upload_file(
         if dir_id:
             file_metadata["parents"] = [dir_id]
         media = MediaFileUpload(file_path, mimetype=mimetype, resumable=resumable)
-        # pylint: disable=maybe-no-member
-        files_service = service.files()  # TODO: (now) FIXME: service of type Resource does not have .files() method!
+        files_service = service.files()  # pyright: ignore[reportAttributeAccessIssue]
         if files_service:
             file = files_service.create(body=file_metadata, media_body=media, fields="id", supportsAllDrives=dir_id is not None).execute()
             # supportsAllDrives=True is important to use so 'parents' works correctly.

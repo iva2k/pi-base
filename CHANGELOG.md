@@ -7,7 +7,7 @@
 * Add missing columns on write (upgrade schema) in DbFile
 * Add _iterator to DbFile id_template config
 * Fix space in DbFile cols/cols_optional in Schema
-* Fix typings in DbFile, Loggr, app_utils, os_utils, printer, remoteiot, winserial, deploy_site
+* Fix "basic" typings in all modules
 
 ## 0.0.21 (2024-03-26)
 
