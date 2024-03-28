@@ -17,8 +17,8 @@
 _start_time_ms=$(($(date +%s%N)/1000000))
 
 # Determine if we're sourced or executed
-# [ "$0" = "${BASH_SOURCE[0]}" ] && { is_sourced=0; script=$(basename "$0"); } || { is_sourced=1; script=$(basename "${BASH_SOURCE[0]}"); }
-( return 0 2>/dev/null ) && { is_sourced=1; script=$(basename "${BASH_SOURCE[0]}"); } || { is_sourced=0; script=$(basename "$0"); }
+# { is_sourced=1; script=$(basename "${BASH_SOURCE[0]}"); }; [ "$0" = "${BASH_SOURCE[0]}" ] && { is_sourced=0; script=$(basename "$0"); }
+{ is_sourced=0; script=$(basename "$0"); }; ( return 0 2>/dev/null ) && { is_sourced=1; script=$(basename "${BASH_SOURCE[0]}"); }
 # echo "DEBUG is_sourced=$is_sourced"
 
 debug=0
@@ -132,7 +132,7 @@ function ssh_cleanup_multiplex () {
   local path; path=~/".ssh/*[@]*[+]*[=]*"
   for file in $(echo "$path"); do
     if [ -S "$file" ]; then
-      basenm="$(basename $file)"
+      basenm="$(basename "$file")"
       user_at_host="${basenm%%+*}"
       echo "Closing \"$file\" for $user_at_host:"
       ${ssh_git} -S "$file" -O exit "user_at_host"
@@ -175,17 +175,21 @@ while test $# -gt 0; do
     maybe_host=$2; shift
     [ -z "${maybe_host}" ] && maybe_host=$host
     ssh_remove_key "$maybe_host"
+    # shellcheck disable=SC2317
     return 0 2>/dev/null || exit 0
     ;;
   ssh_cleanup)
     ssh_cleanup_multiplex
+    # shellcheck disable=SC2317
     return 0 2>/dev/null || exit 0
     ;;
   dev) # Open developer tools
     if [ -n "$(which bcompare 2>/dev/null)" ]; then
       # sudo echo ""
       echo "Opening: bcompare ..."
-      ps ax | grep -v grep | grep -iq bcompare || bcompare &
+      # ps ax | grep -v grep | grep -iq bcompare || bcompare &
+      pgrep bcompare > /dev/null || bcompare &
+
       bcompare "${script}".bak "${script}" &
       # bcompare README.txt.bak README.txt &
       # [ -d "$DEV_SRC_" ] && [ -n "$(which code 2>/dev/null)" ] && code $DEV_SRC_
@@ -193,6 +197,7 @@ while test $# -gt 0; do
       # sudo -b QT_GRAPHICSSYSTEM=native bcompare inst.pkg/ /
       echo
     fi
+    # shellcheck disable=SC2317
     return 0 2>/dev/null || exit 0
     ;;
   -D|--dev) # arg is flag
@@ -262,11 +267,13 @@ while test $# -gt 0; do
     ;;
   -h|--help)
     usage
+    # shellcheck disable=SC2317
     return 0 2>/dev/null || exit 0
     ;;
   *)
     echo "Unknown option/command \"$1\"." >&2
     usage
+    # shellcheck disable=SC2317
     return 1 2>/dev/null || exit 1
     ;;
   esac
@@ -313,6 +320,7 @@ function upload () {
     result=$?
     # [ 1 -eq "$debug" ] && echo "DEBUG result=$result"
 
+    # shellcheck disable=SC2317
     [ 0 -eq "$result" ] || { return "$result" 2>/dev/null || exit "$result"; }
   )
   echo

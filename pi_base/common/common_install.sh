@@ -270,7 +270,9 @@ function disable_vt () {
   # Convert INST_DISABLE_VTS space-separated string to an Array. Note - do not quote, ignore shellcheck SC2206 warning.
   # INST_DISABLE_VTS variable is not an Array (bash and others cannot export Arrays), it is
   # a space-separated list of numbers
-  local arr; arr=( ${INST_DISABLE_VTS} )
+  local arr
+  # shellcheck disable=SC2206
+  arr=( ${INST_DISABLE_VTS} )
   for i in "${arr[@]}"; do
     # Disable getty on VTn, so interactive script can be used on it instead.
     #sudo systemctl stop "getty@tty${i}.service"
@@ -495,12 +497,6 @@ function update_locale () {
   echo
 }
 
-is_pulseaudio() {
-  PS=$(ps ax)
-  echo "$PS" | grep -q pulseaudio
-  return $?
-}
-
 function set_audio_WIP () {
   # https://nerdiy.de/en/howto-raspberrypi-standardlautsprecher-konfigurieren/
   # https://elinux.org/R-Pi_Troubleshooting
@@ -549,7 +545,7 @@ function set_audio_WIP () {
   # }  
 }
 
-is_pulseaudio() {
+function is_pulseaudio () {
   pgrep pulseaudio > /dev/null || pgrep pipewire-pulse > /dev/null
   return $?
 }
