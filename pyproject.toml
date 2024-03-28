@@ -154,7 +154,7 @@ lint = [
 
   "jinja2==3.1.2",
   # "mypy==1.5.1",
-  "pyright==1.1.352",
+  "pyright==1.1.356",
   "types-docutils",
   "types-setuptools",
 ]
