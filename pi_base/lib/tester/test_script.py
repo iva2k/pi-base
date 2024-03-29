@@ -364,7 +364,9 @@ def get_longest_common_path(path1: str, path2: str) -> tuple[str, str, str, str,
     return common_prefix, path1_remainder, path2_remainder, path1_relative, path2_relative
 
 
-def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: Optional[list[str]] = None, loggr: Loggr = None) -> list[tuple[ModuleType, type[TestScriptCommandPluginInterface]]]:
+def get_command_plugins(
+    directory: Optional[str], level: int = 1, file_filter: Optional[list[str]] = None, loggr: Optional[Loggr] = None
+) -> list[tuple[ModuleType, type[TestScriptCommandPluginInterface]]]:
     plugins: list[tuple[ModuleType, type[TestScriptCommandPluginInterface]]] = []
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     # Same as `for root, dirs, filenames in os.walk(directory):`, but with limited depth
@@ -382,34 +384,36 @@ def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: O
             module_path = os.path.join(root, filename)
             prefix, _path1_rem, _path2_rel, _path1_from2, module_path_from_root = get_longest_common_path(SCRIPT_DIR, module_path)
             m1 = os.path.splitext(module_path_from_root)[0]
-            is_rel = m1.startswith(os.path.curdir) or os.path.sep not in m1
+            is_rel = os.path.sep not in m1 or m1.startswith((os.path.curdir + os.path.sep, os.path.pardir + os.path.sep))
+            # is_outside = m1.startswith(os.path.pardir + os.path.sep)
             m2 = m1.replace(os.path.pardir + os.path.sep, ".")
             m3 = "." + m2 if is_rel else m2
-            module_py_path = m3.replace(os.path.sep, ".")
+            module_pypath = m3.replace(os.path.sep, ".")
             package = os.path.basename(SCRIPT_DIR)
             if loggr:
-                loggr.debug(f'Checking file "{module_path}" for command plugins, module_py_path={module_py_path}, package={package}, __package_={__package__}')
+                loggr.debug(f'Checking file "{module_path}" for command plugins, module_pypath={module_pypath}, package={package}, __package_={__package__}')
 
             modules: list[tuple[str | None, str]] = [
-                (None, module_py_path.lstrip(".")),  # Try absolute path, without package
-                (None, module_py_path.split(".")[-1]),  # Try bare module name, without package
+                (None, module_pypath.lstrip(".")),  # Try absolute path, without package
+                (None, module_pypath.split(".")[-1]),  # Try bare module name, without package
             ]
-            if __package__:
-                modules.append((__package__, "." + module_py_path if not is_rel else module_py_path))
+            if __package__ and is_rel:
+                modules.insert(0, (__package__, module_pypath))
             else:
-                modules.append((package, "." + module_py_path if not is_rel else module_py_path))
+                modules.append((package, "." + module_pypath if not is_rel else module_pypath))
 
             err = None
             i = -1
             for i, module in enumerate(modules):
-                package, path = module
+                pkg, pypath = module
                 try:
-                    module_imported = importlib.import_module(path, package)
+                    module_imported = importlib.import_module(pypath, pkg)
                 except Exception as e:
                     err = e
                     continue
                 # Successful import
-                loggr.debug(f'Imported module "{module_path}" using package={package}, path={path} ({i + 1} of {len(modules)})')
+                if loggr:
+                    loggr.debug(f'Imported module "{module_path}" using package={pkg}, path={pypath} ({i + 1} of {len(modules)})')
                 break
 
             # module = __import__(module_name)

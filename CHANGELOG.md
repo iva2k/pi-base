@@ -2,9 +2,7 @@
 
 ## 0.0.29 (unreleased)
 
-
-- Nothing changed yet.
-
+* Fix command plugins import from within package in TestScript for Linux
 
 ## 0.0.28 (2024-03-29)
 
