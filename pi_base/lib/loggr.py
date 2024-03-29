@@ -210,7 +210,7 @@ class Loggr(logging.Logger):
             if self.vt:
                 self.vt.print(level_str, msg, *tstr, **kwargs1)
             if self.use_stdout:
-                self.color_print(f"{level_str}: {' '.join([str(item) for item in [msg] + list(tstr)])}", color_code=color_code)
+                self.color_print(f"{level_str}: {' '.join([str(item) for item in ([msg] + list(tstr))])}", color_code=color_code)
             if self.journal:
                 self.journal.log(level, msg, *tstr)
 
@@ -237,7 +237,7 @@ class Loggr(logging.Logger):
         if self.use_stdout:
             print(*tstr, **kwargs1)
         if self.journal:
-            self.journal.info(*tstr, **kwargs1)
+            self.journal.info(*tstr, **kwargs)
 
     def log_box(self, text: str, width: int = 50, color_code: ColorCodes | str = ColorCodes.DEFAULT) -> None:
         """Log provided text in a box of given width (centered).
