@@ -2,9 +2,7 @@
 
 ## 0.0.26 (unreleased)
 
-
-- Nothing changed yet.
-
+* Add TestScript framework in pi_base.lib.tester
 
 ## 0.0.25 (2024-03-28)
 

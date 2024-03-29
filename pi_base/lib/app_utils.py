@@ -14,6 +14,7 @@ from subprocess import check_output, run, CalledProcessError
 import threading
 import time
 from typing import Any, Callable, Optional, overload, TypeVar, TYPE_CHECKING
+from collections.abc import Awaitable
 from collections.abc import Generator, Mapping
 from uuid import getnode as get_mac
 # import zmq
@@ -37,6 +38,19 @@ class AtDict(dict):
 
     def __delattr__(self, item):
         super().__delitem__(item)
+
+
+class Flag:
+    def __init__(self, value) -> None:
+        self.value = value
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
 
 
 def get_os_name() -> str:
@@ -270,8 +284,10 @@ def _fix_aiohttp1():
 _fix_aiohttp()
 # _fix_aiohttp1()
 
+_AT = TypeVar("_AT")
 
-def run_async(future):
+
+def run_async(future: Awaitable[_AT]) -> _AT:
     """Run the given future (result of an async function call) on an event loop until completion."""
     try:
         loop = asyncio.get_running_loop()
@@ -281,12 +297,13 @@ def run_async(future):
     return loop.run_until_complete(future)
 
 
-def run_maybe_async(maybe_future):
+def run_maybe_async(maybe_future: _AT | Awaitable[_AT]) -> _AT:
     """If the given maybe_future (result of a function call - either async, but not awaited or sync) is not awaited async call, run it on event loop until completion."""
     if inspect.isawaitable(maybe_future):
         return run_async(maybe_future)
     else:
-        return maybe_future
+        # TODO: (soon) Report Pyright bug that barks on completely legit TypeGuard-ed code:
+        return maybe_future  # pyright: ignore[reportReturnType]
 
 
 # app_info

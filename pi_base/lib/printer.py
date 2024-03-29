@@ -45,15 +45,16 @@ Investigated ippeveprinter and ZPL... Where is 'ippeveps' command file (needed f
 # We're not going after extreme performance here
 # pylint: disable=logging-fstring-interpolation
 
+
 import argparse
 import logging
 import os
 import platform
 import subprocess
 import sys
-from typing import Any, Optional
 from collections.abc import Mapping
 from abc import ABC, abstractmethod
+from typing import Any, Optional
 
 from .app_utils import AtDict
 from .os_utils import which
