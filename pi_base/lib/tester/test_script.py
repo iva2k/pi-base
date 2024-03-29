@@ -382,21 +382,26 @@ def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: O
             module_path = os.path.join(root, filename)
             prefix, _path1_rem, _path2_rel, _path1_from2, module_path_from_root = get_longest_common_path(SCRIPT_DIR, module_path)
             m1 = os.path.splitext(module_path_from_root)[0]
-            is_rel = m1.startswith(".")
-            m2 = m1.replace(".." + os.path.sep, ".")
+            is_rel = m1.startswith(os.path.curdir) or os.path.sep not in m1
+            m2 = m1.replace(os.path.pardir + os.path.sep, ".")
             m3 = "." + m2 if is_rel else m2
             module_py_path = m3.replace(os.path.sep, ".")
             package = os.path.basename(SCRIPT_DIR)
             if loggr:
-                loggr.debug(f'Checking file "{module_path}" for command plugins, reducing relative path: m1={m1}, m2={m2} m3={m3} module_by_path={module_py_path}, package={package}')
+                loggr.debug(f'Checking file "{module_path}" for command plugins, module_py_path={module_py_path}, package={package}, __package_={__package__}')
 
-            modules = [
+            modules: list[tuple[str | None, str]] = [
                 (None, module_py_path.lstrip(".")),  # Try absolute path, without package
                 (None, module_py_path.split(".")[-1]),  # Try bare module name, without package
-                (package, "." + module_py_path if not is_rel else module_py_path),  # Try relative path, with package
             ]
+            if __package__:
+                modules.append((__package__, "." + module_py_path if not is_rel else module_py_path))
+            else:
+                modules.append((package, "." + module_py_path if not is_rel else module_py_path))
+
             err = None
-            for module in modules:
+            i = -1
+            for i, module in enumerate(modules):
                 package, path = module
                 try:
                     module_imported = importlib.import_module(path, package)
@@ -404,6 +409,7 @@ def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: O
                     err = e
                     continue
                 # Successful import
+                loggr.debug(f'Imported module "{module_path}" using package={package}, path={path} ({i + 1} of {len(modules)})')
                 break
 
             # module = __import__(module_name)
@@ -498,7 +504,7 @@ class TestScript:
         self.commands: list[TestScriptCommand] = []
 
         self.plugins = AtDict()
-        self.plugins.cnt_embedded = self.add_commands_from_plugins(SCRIPT_DIR, 1, file_filter=[self.__class__.__module__])
+        self.plugins.cnt_embedded = self.add_commands_from_plugins(SCRIPT_DIR, 1, file_filter=[self.__class__.__module__.split(".")[-1]])
         self.plugins.cnt_extensions = self.add_commands_from_plugins(self.plugins_dir, 1, file_filter=["*plugin*"])
 
         self.commands_map = {cmd.command: cmd for cmd in self.commands}
