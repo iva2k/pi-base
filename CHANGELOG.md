@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.25 (unreleased)
+## 0.0.25 (2024-03-28)
 
 * Fix the fix
 
