@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 import signal
 from subprocess import check_output
 import sys
 import time
+from types import FrameType
 
 from .app_utils import GetConf, get_iface, get_hostname, ping_test, cvt, open_vt, reboot
 from .loggr import Loggr
@@ -22,7 +24,7 @@ def get_seed():
 
 
 class Manager:
-    def __init__(self, vt_app=1, vt_me=2):
+    def __init__(self, vt_app: int = 1, vt_me: int = 2) -> None:
         self.loggr = Loggr(use_vt_number=vt_me, use_stdout=False, use_journal_name="manager.py")
 
         self.mandead = False
@@ -39,7 +41,7 @@ class Manager:
         if sig := getattr(signal, "SIGCHLD", None):
             signal.signal(sig, signal.SIG_IGN)
 
-    def signal_term_handler(self, signum, frame):
+    def signal_term_handler(self, signum: int, frame: FrameType | None):
         self.mandead = True
         self.loggr.position(0, 47, "Manager killed!  ")
 
@@ -70,7 +72,7 @@ class Manager:
         # self.loggr.position(0, row, "Process manager.py Done.")
         self.loggr.position(0, 48, "Process manager.py Done.")
 
-    def config(self, row=0):
+    def config(self, row: int = 0):
         filepath = "/etc/manager_conf.yaml"
         self.conf = GetConf(filepath=filepath)
         if not self.conf:
@@ -98,7 +100,7 @@ class Manager:
         # self.loggr.position(0, row)
         return row
 
-    def wait_for_network(self, row=0, timeout=30):
+    def wait_for_network(self, row: int = 0, timeout: int = 30):
         # TODO: (when needed) Allow WiFi, LTE, etc. (based on _conf.yaml?)
         interface = None
         if_info = {"ipaddress": None, "mac": None}
@@ -109,7 +111,7 @@ class Manager:
             "  Hardware MAC        : %(mac)s",
             "  IP Address          : %(ip)s",
         ]
-        count = 0
+        count: int = 0
         while True:
             if count > timeout:
                 self.loggr.cnorm()  # Cursor normal
@@ -175,7 +177,7 @@ class Manager:
         # self.loggr.position(0, row)
         return row
 
-    def get_time(self, row=0):
+    def get_time(self, row: int = 0):
         ntp_url = "pool.ntp.org"
         # TODO: (when needed) use self.loggr.tput() to erase till end of line.
         time_str = "  Time sync           : %s                       "
@@ -191,14 +193,14 @@ class Manager:
         # self.loggr.position(0, row)
         return row
 
-    def run_server_mode(self, row=0):
+    def run_server_mode(self, row: int = 0):
         mode_str = "  App mode            : %s                       "
         self.loggr.position(0, row, mode_str % ("Server" if self.server else "Station",))
         row += 1
         # self.loggr.position(0, row)
         return row
 
-    def run(self, row=0):
+    def run(self, row: int = 0):
         run_str = (
             "  App                 : %(name)s               \n"
             "  Path                : %(path)s               \n"

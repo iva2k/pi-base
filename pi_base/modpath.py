@@ -82,7 +82,7 @@ import inspect
 import os
 import sys
 
-DEBUG = False
+# DEBUG = False
 DEBUG = True
 
 APP_DIRNAME = "app"
@@ -199,7 +199,6 @@ def print_info():
         "caller_dir",
         "caller_has_develop_file",
         "_app_workspace_path",
-        "pibase_shared_lib_dir",
         "app_dir",
         "app_conf_dir",
         "app_shared_lib_dir",
@@ -255,12 +254,9 @@ caller_has_develop_file = (caller_dir != workspace_dir) and os.path.isfile(os.pa
 running_on: str = "<unknown>"
 has_develop_file, site_id, project, additional_python_paths = False, "", "", []
 _app_workspace_path = ""
-# TODO: (soon) Suspecting `pibase_shared_lib_dir` is not needed, as our package is installed, and lib modules are imported by relative import here and by submodule import in the client.
-pibase_shared_lib_dir = os.path.join(module_path, "lib")
 additional_python_paths = []
 hostname = PI_HOSTNAME
 if not module_is_from_package or in_pibase_source:
-    DEBUG = True
     running_on = (
         "pibase_sources_in_app_workspace" if caller_has_develop_file else "pibase_sources"
     )  # This is either a legacy way of running pi_base, or running pi_base script from editable pi_base package.
@@ -283,7 +279,6 @@ if not module_is_from_package or in_pibase_source:
 
 elif app_module_dir == APP_DIRNAME and not is_raspberrypi():
     # Running from build but not on target
-    DEBUG = True
     running_on = "build"
 
     _app_workspace_path = None  # There's no good reason to try to figure out app_workspace_path for running on "build". If anyone asks, cause an exception.
@@ -305,7 +300,6 @@ elif app_module_dir == APP_DIRNAME:
 
 elif app_module_dir in [app_module_name, "lib"]:
     # Running app from repo sources or dev in IDE, with "develop.txt" file in {app_workspace_path}
-    DEBUG = True
     # Running one of {app_workspace}/<project>/<project>.py or {app_workspace}/lib/*.py
     running_on: str = "sources"
 
@@ -361,7 +355,7 @@ def get_app_workspace_dir() -> str:
 
 
 # Python paths where to find imported modules:
-my_paths = [app_shared_lib_dir, pibase_shared_lib_dir]
+my_paths = [app_shared_lib_dir]
 my_paths += additional_python_paths
 for my_path in reversed(my_paths):
     if my_path in sys.path:

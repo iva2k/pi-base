@@ -192,7 +192,7 @@ class Loggr(logging.Logger):
             # self.journal.setLevel(level) # TODO: (when needed) Need a more elegant way to set separate log levels
             self.journal.setLevel(logging.DEBUG)
 
-    def cls(self, *tstr):
+    def cls(self, *tstr: object):
         """Clear screen, and optionally print."""
         self.tput_print("clear", ())
         if len(tstr) > 0:
@@ -315,7 +315,7 @@ class Loggr(logging.Logger):
         kwargs: Mapping[str, Any] = {"end": end}
         self.print(message, **kwargs)
 
-    def position(self, x, y, *tstr):
+    def position(self, x: int, y: int, *tstr: object):
         """Move cursor to position on screen, and optionally print.
 
         0,0 is top left, x is horizontal, y is vertical.

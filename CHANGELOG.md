@@ -8,6 +8,7 @@
 * Add _iterator to DbFile id_template config
 * Fix space in DbFile cols/cols_optional in Schema
 * Fix "basic" typings in all modules
+* Remove `pibase_shared_lib_dir` from modpath and sys.path
 
 ## 0.0.21 (2024-03-26)
 

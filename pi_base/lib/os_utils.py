@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 # We're not going after extreme performance here
 # pylint: disable=logging-fstring-interpolation
@@ -8,7 +9,7 @@ import os
 import platform
 import shutil
 import sys
-from typing import Optional
+from typing import Callable, Optional
 
 from collections.abc import Iterator
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__ if __name__ != "__main__" else None)
 _our_exe_name = os.path.basename(sys.argv[0])
 
 
-def which(progname, additional_paths: "Optional[list[str]]" = None, exit_on_fail=False):
+def which(progname: str | list[str], additional_paths: Optional[list[str]] = None, exit_on_fail: bool = False) -> str | None:
     if isinstance(progname, str):
         progname = [progname]
     if not additional_paths:
@@ -39,8 +40,8 @@ def which(progname, additional_paths: "Optional[list[str]]" = None, exit_on_fail
     return None
 
 
-def get_additional_paths():
-    paths = []
+def get_additional_paths() -> list[str]:
+    paths: list[str] = []
     if platform.system() == "Darwin":
         candidates = [
             "/usr/local/bin",
@@ -51,7 +52,7 @@ def get_additional_paths():
     return paths
 
 
-def find_file(search_dir_list, filename, descr="input", loggr=logger):
+def find_file(search_dir_list: list[str], filename: str, descr: str = "input", loggr: logging.Logger = logger) -> str | None:
     """Find file in all directories given.
 
     @see find_path() in app_utils.py
@@ -87,7 +88,7 @@ def partition_device_name(partition: psutil._common.sdiskpart) -> str:  # pyrigh
     return device_name
 
 
-def disk_has_space(printer=None, disk_usage_limit: Optional[int] = None) -> "tuple[bool, list[str]]":
+def disk_has_space(printer: Optional[Callable[[str]]] = None, disk_usage_limit: Optional[int] = None) -> tuple[bool, list[str]]:
     healthy = True
     summary = []
     if disk_usage_limit:
@@ -104,7 +105,7 @@ def disk_has_space(printer=None, disk_usage_limit: Optional[int] = None) -> "tup
     return healthy, summary
 
 
-def disk_is_healthy_WIP(printer=None) -> "tuple[bool, list[str]]":
+def disk_is_healthy_WIP(printer: Optional[Callable[[str]]] = None) -> tuple[bool, list[str]]:
     healthy = True
     summary = []
     # disk_io = psutil.disk_io_counters()
@@ -129,7 +130,7 @@ def disk_is_healthy_WIP(printer=None) -> "tuple[bool, list[str]]":
     return healthy, summary
 
 
-def walklevel(root_dir: Optional[str] = None, level: int = 1) -> "Iterator[tuple[str, list[str], list[str]]]":
+def walklevel(root_dir: Optional[str] = None, level: int = 1) -> Iterator[tuple[str, list[str], list[str]]]:
     """Similar to os.walk() but with a level parameter.
 
     From https://stackoverflow.com/a/234329

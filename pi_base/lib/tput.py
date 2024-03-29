@@ -1,8 +1,32 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
+from collections.abc import Iterable
 from enum import IntEnum, unique
 import os
-from subprocess import check_output
+
+# from subprocess import check_output
+from subprocess import run
+from typing import Optional
+
+
+## Experimental: hacks to use relative import not in module (e.g. CLI)
+# Experiments revealed that it is sufficient to set __package__ variable to enable relative imports.
+# If any future version of Python breaks that behavior, that assumption will need to be revisited.
+# __init__.py files in the relative import tree are not needed for it to work.
+# import importlib
+# module = importlib.import_module("path", os.path.basename(SCRIPT_DIR))
+
+# These contortions are needed to import from relative modules when running main() from CLI:
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# ? sys.path.append(os.path.dirname(os.path.realpath(SCRIPT_DIR)))
+# __package__ = os.path.basename(SCRIPT_DIR)
+# pylint: disable-next=redefined-builtin
+__package__ = ".".join([os.path.basename(os.path.dirname(SCRIPT_DIR)), os.path.basename(SCRIPT_DIR)])  # noqa: A001
+# pylint: disable=wrong-import-position,relative-beyond-top-level
+# ruff: noqa: E402, TID252
+
+from ..lib.os_utils import which
 
 tput_term = "linux"  # Global default term for tput()
 
@@ -20,35 +44,41 @@ class Color(IntEnum):
     CYAN = 6
     WHITE = 7
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
     @classmethod
-    def get_value(cls, name):
+    def get_value(cls, name: str) -> str:
         if name in cls.__members__:
-            return cls[name].value
+            return str(cls[name].value)
         return name
 
 
-def tput_color(args=()):
+def tput_color(args: Iterable[str] = ()) -> tuple[str, ...]:
     return tuple(map(Color.get_value, args))
 
 
 #  TNORM=$(TERM=linux tput cnorm | sed -n l) ;# Get escape sequence and convert 0x1B into readable form. Side-effect: adds '$' at the end.
 #  TNORM="${TNORM%$}" ;# Trim '$' at the end
 # https://www.gnu.org/software/termutils/manual/termutils-2.0/html_chapter/tput_1.html
-def tput(code, args=(), term=None):
-    if os.name == "nt":
-        return ""
+def tput(code: str, args: Iterable[str] = (), term: Optional[str] = None) -> str:
+    # if os.name == "nt":
+    #     return ""
     if term is None:
         term = tput_term
     if code in ["setaf", "setab"]:
         args = tput_color(args)
-    cmd = f'tput {code} {" ".join(map(str, args))} 2>/dev/null'
+    tput_cmd = which("tput")
+    if not tput_cmd:
+        raise FileNotFoundError("tput command not found")
+    # cmd = f'{tput_cmd} {code} {" ".join(map(str, args))} 2>/dev/null'
+    cmd = f'{tput_cmd} {code} {" ".join(map(str, args))}'
     # print("DEBUG: tput('%s', term='%s') cmd='%s'" % (code, term, cmd) )
     try:
-        result = check_output(cmd, env={"TERM": term}, shell=True, text=True)
-        return result.replace("\n", "").replace("\r", "")
+        result = run(cmd, env={"TERM": term}, shell=True, text=True, capture_output=True, check=False)
+        if result.returncode != 0:
+            return ""
+        return result.stdout.replace("\n", "").replace("\r", "")
     except:
         return ""
 
@@ -89,7 +119,7 @@ def quick_check():
     print("quick_check():")
     print(f"tput_term={tput_term}")
     # https://www.gnu.org/software/termutils/manual/termutils-2.0/html_chapter/tput_1.html
-    for code, args in [
+    for code, args_in in [
         # From ECMA-48 https://www.ecma-international.org/wp-content/uploads/ECMA-48_5th_edition_june_1991.pdf
         # 39 and 49 are the codes to reset default colors in \033[39m and \033[40m - use `tput setaf/setab 9`
         ("setaf", ("RED",)),  #  'setaf' (color)
@@ -135,8 +165,9 @@ def quick_check():
         ("rs2", ()),  #  r2      Reset terminal to sane modes
         ("rs3", ()),  #  r3      Reset terminal to sane modes
     ]:
+        args = (str(a) for a in args_in)
         c = tput(code, args)
-        print("  - %(code)-6s%(args)8s : '%(result)s'" % {"code": code, "args": " ".join(map(str, args)), "result": c.replace("\033", "\\033")})
+        print("  - %(code)-6s%(args)8s : '%(result)s'" % {"code": code, "args": " ".join(map(str, args_in)), "result": c.replace("\033", "\\033")})
 
     print("DONE quick_check()")
 

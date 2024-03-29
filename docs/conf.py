@@ -73,7 +73,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "pi_base"
-copyright = "2024, Ilya Ivanchenko"
+copyright = "2024, Ilya Ivanchenko"  # pylint: disable=redefined-builtin
 author = "Ilya Ivanchenko"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -230,7 +230,7 @@ htmlhelp_basename = "pi_basedoc"
 
 # -- Options for LaTeX output --------------------------------------------------
 
-latex_elements: dict = {
+latex_elements: "dict[str, str]" = {
     # The paper size ("letterpaper" or "a4paper").
     # "papersize": "letterpaper",
     # The font size ("10pt", "11pt" or "12pt").
