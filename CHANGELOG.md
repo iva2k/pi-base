@@ -2,9 +2,7 @@
 
 ## 0.0.24 (unreleased)
 
-
-- Nothing changed yet.
-
+* Fix Loggr.print() log to journal args (a different call path)
 
 ## 0.0.23 (2024-03-28)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import os
 import time
 import logging
@@ -232,12 +233,15 @@ class Loggr(logging.Logger):
     def print(self, *tstr: object, **kwargs: Mapping[str, Any]):
         """Print message(s), unmasked."""
         kwargs1 = {"sep": " ", "end": "\n", **kwargs}
+        kwargs2 = copy.copy(kwargs)
+        del kwargs2["sep"]
+        del kwargs2["end"]
         if self.vt:
             self.vt.print(*tstr, **kwargs1)
         if self.use_stdout:
             print(*tstr, **kwargs1)
         if self.journal:
-            self.journal.info(*tstr, **kwargs)
+            self.journal.info(*tstr, **kwargs2)
 
     def log_box(self, text: str, width: int = 50, color_code: ColorCodes | str = ColorCodes.DEFAULT) -> None:
         """Log provided text in a box of given width (centered).
