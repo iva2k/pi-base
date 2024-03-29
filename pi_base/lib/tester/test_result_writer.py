@@ -3,13 +3,11 @@ from typing import Optional, Union
 # "modpath" must be first of our modules
 # pylint: disable=wrong-import-position
 # ruff: noqa: E402
-from pi_base.modpath import app_conf_dir
+# from pi_base.modpath import app_conf_dir
 
 from .tester_common import TestError
-from test_commit_callbacks import ResultCommitCallback
-from test_script_defines import RESULT_BLOCK_BEGIN, RESULT_BLOCK_END
-
-app_conf_dir += ""
+from .test_commit_callbacks import ResultCommitCallback
+from .test_script_defines import RESULT_BLOCK_BEGIN, RESULT_BLOCK_END
 
 
 class ResultsWriter:

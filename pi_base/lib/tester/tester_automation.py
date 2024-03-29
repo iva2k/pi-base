@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-from tester_api import TesterControlInterface, TesterIndicator, TesterServo, TesterDetector
+from .tester_api import TesterControlInterface, TesterIndicator, TesterServo, TesterDetector
 
 
 class TesterControlExampleStation(TesterControlInterface):
