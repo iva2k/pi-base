@@ -391,7 +391,7 @@ def get_command_plugins(
             module_pypath = m3.replace(os.path.sep, ".")
             package = os.path.basename(SCRIPT_DIR)
             if loggr:
-                loggr.debug(f'Checking file "{module_path}" for command plugins, module_pypath={module_pypath}, package={package}, __package_={__package__}')
+                loggr.debug(f'Checking file "{module_path}" for command plugins, module_pypath={module_pypath}, package={package}, __package__={__package__}')
 
             modules: list[tuple[str | None, str]] = [
                 (None, module_pypath.lstrip(".")),  # Try absolute path, without package

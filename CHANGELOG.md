@@ -2,9 +2,7 @@
 
 ## 0.0.30 (unreleased)
 
-
-- Nothing changed yet.
-
+* Breaking change: Change return data of ResultsWriter.commit_results()
 
 ## 0.0.29 (2024-03-29)
 

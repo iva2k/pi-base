@@ -80,7 +80,7 @@ class ResultsWriter:
         if result_line is not None:
             self.results_buffer.append(f"##, {result_line}" + ("" if returncode is None else f", {returncode}"))
 
-    def commit_results(self, file_name: str) -> "list[tuple[ResultCommitCallback, str]]":
+    def commit_results(self, file_name: str) -> "list[tuple[ResultCommitCallback, TestError, str]]":
         """Commit (save) the result buffer to all registered save locations.
 
         This does *not* clear the results buffer.
@@ -89,17 +89,17 @@ class ResultsWriter:
             file_name : File name of the results file
 
         Returns:
-            List of FAILED callbacks and reason for failure, empty list of all succeeded.
+            List of callbacks and their results with string explaining reason for failure if not success.
         """
-        failed_callbacks = []
+        callback_results = []
         for callback in self.callbacks:
             try:
                 reason = callback.commit(self.results_buffer, file_name)
-                if reason is not None:
-                    failed_callbacks.append((callback, reason))
+                err, msg = reason
+                callback_results.append((callback, err, msg))
             except Exception as e:  # noqa: PERF203
-                failed_callbacks.append((callback, reason))
-        return failed_callbacks
+                callback_results.append((callback, TestError.ERR_FILE_SAVE, f'Error: "{e}"'))
+        return callback_results
 
     def clear_results(self) -> None:
         """Clear the results buffer."""
