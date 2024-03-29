@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.28 (unreleased)
+## 0.0.28 (2024-03-29)
 
 * Fix command plugins import from within package in TestScript
 * Add logging to get_command_plugins() in TestScript
