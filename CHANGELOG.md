@@ -2,9 +2,7 @@
 
 ## 0.0.25 (unreleased)
 
-
-- Nothing changed yet.
-
+* Fix the fix
 
 ## 0.0.24 (2024-03-28)
 

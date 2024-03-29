@@ -234,8 +234,10 @@ class Loggr(logging.Logger):
         """Print message(s), unmasked."""
         kwargs1 = {"sep": " ", "end": "\n", **kwargs}
         kwargs2 = copy.copy(kwargs)
-        del kwargs2["sep"]
-        del kwargs2["end"]
+        if "sep" in kwargs2:
+            del kwargs2["sep"]
+        if "end" in kwargs2:
+            del kwargs2["end"]
         if self.vt:
             self.vt.print(*tstr, **kwargs1)
         if self.use_stdout:
