@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.24 (unreleased)
+## 0.0.24 (2024-03-28)
 
 * Fix Loggr.print() log to journal args (a different call path)
 
