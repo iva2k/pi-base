@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.22 (unreleased)
+## 0.0.22 (2024-03-28)
 
 * Remove hard dependency on `pkg` subfolder in app project folder
 * Report error when `install.sh` is run not from `build` folder

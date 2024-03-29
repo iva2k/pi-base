@@ -1,5 +1,5 @@
 # This version number is updated by pi_base/scripts/version.py (zest.releaser extension), along with pi_base/_version.py:
-pi_base>=0.0.21
+pi_base>=0.0.22
 # For now will use ">=" instead of "=="
 
 pyyaml~=6.0
