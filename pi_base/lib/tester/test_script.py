@@ -336,7 +336,7 @@ def filter_strings(strings: list[str], filters: list[str], return_matched: bool 
     return filtered_strings
 
 
-def get_longest_common_path(path1, path2):
+def get_longest_common_path(path1: str, path2: str) -> tuple[str, str, str, str, str]:
     # TODO: (when needed) Move to app_utils
     path1 = os.path.abspath(path1)
     path2 = os.path.abspath(path2)
@@ -364,10 +364,10 @@ def get_longest_common_path(path1, path2):
     return common_prefix, path1_remainder, path2_remainder, path1_relative, path2_relative
 
 
-def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: Optional[list[str]] = None) -> list[tuple[ModuleType, type[TestScriptCommandPluginInterface]]]:
+def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: Optional[list[str]] = None, loggr: Loggr = None) -> list[tuple[ModuleType, type[TestScriptCommandPluginInterface]]]:
     plugins: list[tuple[ModuleType, type[TestScriptCommandPluginInterface]]] = []
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    # Same as `for root, dirs, filenames in os.walk(directory):`, but with limit of recursion
+    # Same as `for root, dirs, filenames in os.walk(directory):`, but with limited depth
     for root, _dirs, filenames in walklevel(directory, level):
         for filename in filenames:
             if not filename.endswith(".py"):
@@ -378,7 +378,7 @@ def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: O
                 if not filter_res:
                     continue
 
-            module_imported = None
+            module_imported: Optional[ModuleType] = None
             module_path = os.path.join(root, filename)
             prefix, _path1_rem, _path2_rel, _path1_from2, module_path_from_root = get_longest_common_path(SCRIPT_DIR, module_path)
             m1 = os.path.splitext(module_path_from_root)[0]
@@ -387,6 +387,8 @@ def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: O
             m3 = "." + m2 if is_rel else m2
             module_py_path = m3.replace(os.path.sep, ".")
             package = os.path.basename(SCRIPT_DIR)
+            if loggr:
+                loggr.debug(f'Checking file "{module_path}" for command plugins, reducing relative path: m1={m1}, m2={m2} m3={m3} module_by_path={module_py_path}, package={package}')
 
             modules = [
                 (None, module_py_path.lstrip(".")),  # Try absolute path, without package
@@ -410,7 +412,8 @@ def get_command_plugins(directory: Optional[str], level: int = 1, file_filter: O
                 for _filename, obj in inspect.getmembers(module_imported):
                     if inspect.isclass(obj) and obj != TestScriptCommandPluginInterface and issubclass(obj, TestScriptCommandPluginInterface):
                         plugins.append((module_imported, obj))
-
+            elif loggr:
+                loggr.error(f"Failed to import {module_path}: {err}")
     return plugins
 
 
@@ -563,7 +566,7 @@ class TestScript:
 
     def add_commands_from_plugins(self, directory: Optional[str], level: int = 1, file_filter: Optional[list[str]] = None) -> int:
         # Discover plugins with addditional commands:
-        plugins = get_command_plugins(directory, level, file_filter)  # TODO: (now) Implement plugins directory (especially mechanism to transfer them to RPi)
+        plugins = get_command_plugins(directory, level, file_filter, self.loggr)  # TODO: (now) Implement plugins directory (especially mechanism to transfer them to RPi)
         count = 0
         for plugin in plugins:
             module, obj = plugin

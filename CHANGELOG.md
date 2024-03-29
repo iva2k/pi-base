@@ -2,9 +2,7 @@
 
 ## 0.0.28 (unreleased)
 
-
-- Nothing changed yet.
-
+* Add logging to get_command_plugins() for TestScript
 
 ## 0.0.27 (2024-03-29)
 
