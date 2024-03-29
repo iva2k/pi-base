@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.24 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.0.23 (2024-03-28)
 
 * Fix Loggr.print() log to journal args
