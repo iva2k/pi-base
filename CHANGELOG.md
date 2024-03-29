@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.30 (unreleased)
+## 0.0.30 (2024-03-29)
 
 * Breaking change: Change return data of ResultsWriter.commit_results()
 
