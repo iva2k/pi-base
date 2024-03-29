@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.29 (unreleased)
+## 0.0.29 (2024-03-29)
 
 * Fix command plugins import from within package in TestScript for Linux
 
