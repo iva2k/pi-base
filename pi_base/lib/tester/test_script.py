@@ -1233,9 +1233,6 @@ def cli(args) -> int:
     # if dut_type in [DutControlType.USBSERIAL_ON_DUT, DutControlType.USBSERIAL_ADAPTER]:
     #     dut_control = DutControlSerial(loggr, port=args.dut_port, baudrate=115200, timeout=1, ignore_ports=ignore_ports, ignore_ble=ignore_ble, dut_type=dut_type, log_filename=log_filename2)
 
-    # TODO: (when needed) Use if args.tester_type == '??': tester_type = TesterControlType.USBSERIAL_ADAPTER
-    # TODO: (when needed) Use 'gd_results_folder_id' from the secrets file if no args.gd_folder_id, like in bkconnect_provisioner.py
-
     # Initialize and register results callbacks
     results_writer = ResultsWriter()
     local_file_callback = ResultCommitToFileCallback()

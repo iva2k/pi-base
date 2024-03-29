@@ -5,7 +5,7 @@ from tester_api import TesterControlInterface, TesterIndicator, TesterServo, Tes
 
 
 class TesterControlExampleStation(TesterControlInterface):
-    """[Example] Implementation of TesterControlInterface for bkconnect_provisioner station."""
+    """[Example] Implementation of TesterControlInterface for EXAMPLE station."""
 
     def __init__(self, loggr):
         """Constructor.
@@ -17,7 +17,7 @@ class TesterControlExampleStation(TesterControlInterface):
 
 
 class TesterIndicatorExampleStation(TesterIndicator):
-    """[Example] Implementation of TesterIndicator for bkconnect_provisioner station."""
+    """[Example] Implementation of TesterIndicator for EXAMPLE station."""
 
     def __init__(self, loggr):
         """Constructor.
