@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# We're not going after extreme performance here
+# pylint: disable=logging-fstring-interpolation
+
 from __future__ import annotations
 
 import argparse
@@ -31,7 +35,6 @@ from .dut_api import DutControlType, DutControlInterface
 from .test_script_defines import RESULT_BLOCK_BEGIN, RESULT_BLOCK_END
 from .test_commit_callbacks import ResultCommitToFileCallback, ResultCommitToGoogleDriveCallback
 from .test_result_writer import ResultsWriter
-from .tester_api import TesterControlType, TesterControlInterface, TesterDetector, TesterIndicator, TesterLEDDetectorManual, TesterLidServoManual, TesterServo
 
 # from my_coolname import generate as coolname_generate
 
@@ -40,6 +43,7 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable
     from data_entry import DataEntry
     from io import TextIOWrapper
+    from .tester_api import TesterControlInterface
 
 MAX_LINES_IN_SHORT_INFO = 2
 
@@ -478,6 +482,7 @@ class TestScript:
         data_entry: Optional[DataEntry] = None,
         ignore_ble: bool = False,
         plugins_dir: Optional[str] = None,
+        tester_control: Optional[TesterControlInterface] = None,
         dut_control: Optional[DutControlInterface] = None,
     ) -> None:
         if not loggr:
@@ -495,14 +500,8 @@ class TestScript:
         self.debug: bool = debug
         self.data_entry: Optional[DataEntry] = data_entry
         self.plugins_dir: Optional[str] = plugins_dir or SCRIPT_DIR
-        self.dut_control: Optional[DutControlInterface] = dut_control  #
-
-        self.tester_type: TesterControlType = TesterControlType.NO_CONTROL
-        self.tester_control: Optional[TesterControlInterface] = None
-        self.tester_indicator: Optional[TesterIndicator] = None
-        self.tester_lid_servo: Optional[TesterServo] = None
-        self.tester_led_detector: Optional[TesterDetector] = None
-        # self.optics_sensor = None
+        self.dut_control: Optional[DutControlInterface] = dut_control
+        self.tester_control: Optional[TesterControlInterface] = tester_control
 
         # Dictionary of commands, extended by plugins:
         self.commands: list[TestScriptCommand] = []
@@ -643,29 +642,6 @@ class TestScript:
         return self.run_result.name
         # return "PASS" if test_result else "FAIL"
 
-    def configure_tester(
-        self,
-        tester_type: TesterControlType = TesterControlType.NO_CONTROL,
-        tester_control: Optional[TesterControlInterface] = None,
-        indicator: Optional[TesterIndicator] = None,
-        lid_servo: Optional[TesterServo] = None,
-        led_detector: Optional[TesterDetector] = None,
-    ) -> None:
-        """Configure tester external drivers.
-
-        Args:
-            tester_type    (TesterControlType               ): Tester type.                            Defaults to TesterControlType.NO_TESTER.
-            tester_control (TesterControlInterface  , optional): Tester control.                         Defaults to None.
-            indicator      (TesterIndicator, optional): Tester indicator (i.e. RED/GREEN/etc.). Defaults to None.
-            lid_servo      (TesterServo    , optional): LID servo.                              Defaults to None.
-            led_detector   (TesterDetector , optional): UI LED color detector.                  Defaults to None.
-        """
-        self.tester_type = tester_type
-        self.tester_control = tester_control
-        self.tester_indicator = indicator
-        self.tester_lid_servo = lid_servo
-        self.tester_led_detector = led_detector
-
     def abort(self):
         """Aborts the running script."""
         self._stop.value = True
@@ -756,13 +732,9 @@ class TestScript:
         return CommandResult(TestError.ERR_TESTER_NOT_CONFIGURED, [None], "generate_name() method not implemented.")
 
     def indicator_set(self, state: str) -> TestError:
-        if self.tester_indicator:
-            return TestError.ERR_TESTER_DISCONNECTED if self.tester_indicator.indicator(state) else TestError.ERR_OK
+        if self.tester_control:
+            return self.tester_control.indicator_set(state)
         return TestError.ERR_OK
-
-    # def indicator_connect_to_WIP(self, what=None, register=True) -> None:
-    #     if self.tester_indicator and hasattr(self.tester_indicator, "set_serial_instrument"):
-    #         self.tester_indicator.set_serial_instrument(what)
 
     # endregion
 
@@ -1236,7 +1208,7 @@ def cli(args) -> int:
     loggr.info(f'Writing output results to "{out_file}" file.')
 
     # The safest bet is to assume it is a device with USB-Serial chip on the board:
-    tester_type = TesterControlType.USBSERIAL_ON_TESTER  # TODO: (when needed) Add to args
+    # tester_type = TesterControlType.USBSERIAL_ON_TESTER  # TODO: (when needed) Add to args
     tester_control: Optional[TesterControlInterface] = None
     # if tester_type in [TesterControlType.USBSERIAL_ON_TESTER]:
     #     tester_control = TesterControlSerial(loggr, port=args.tester_port, baudrate=115200, timeout=1, ignore_ports=ignore_ports, ignore_ble=ignore_ble, log_filename=log_filename)
@@ -1265,16 +1237,9 @@ def cli(args) -> int:
         debug=args.debug,
         # data_entry=data_entry,
         plugins_dir=args.plugins_dir,
+        tester_control=tester_control,
         dut_control=dut_control,
     )
-
-    indicator: Optional[TesterIndicator] = None
-    lid_servo = TesterLidServoManual(loggr)
-    led_detector = TesterLEDDetectorManual(loggr)
-    # TODO: (when needed) Implement automated tester servo and detector:
-    # lid_servo = TesterLidServoAutomated
-    # led_detector = TesterLEDDetectorAutomated
-    test.configure_tester(tester_type=tester_type, tester_control=tester_control, indicator=indicator, lid_servo=lid_servo, led_detector=led_detector)
 
     # Set up signals to handle Ctrl-C signal.SIGINT
     def signal_term_handler(signum, frame):

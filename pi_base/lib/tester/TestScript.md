@@ -55,7 +55,7 @@ TODO: (when needed) Implement
 
 ## Tester Equipment
 
-`TestScript` controls tester equipment by interacting with object in `.tester_control` property (a subclass of `TesterControlInterface` class), which is dependency-injected by `TestScript.configure_tester()` method which should be called after creating an instance of `TestScript` class.
+`TestScript` controls tester equipment by interacting with object in `.tester_control` property (a subclass of `TesterControlInterface` class), which is dependency-injected by `TestScript` instance constructor.
 
 ## DUT
 

@@ -2,9 +2,9 @@
 
 ## 0.0.31 (unreleased)
 
-
-- Nothing changed yet.
-
+* Breaking change: Remove TestScript.configure_tester(), provide tester_control to TestScript constructor
+* Breaking change: Change TestScript constructor args
+* Add indicator_set() method to TesterControlInterface
 
 ## 0.0.30 (2024-03-29)
 

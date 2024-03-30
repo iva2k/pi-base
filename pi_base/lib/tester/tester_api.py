@@ -67,6 +67,10 @@ class TesterControlInterface:
     def device_id(self, value: str) -> None:
         self._device_id = value
 
+    def indicator_set(self, state: str) -> TestError:
+        """Set tester state indicator."""
+        return TestError.ERR_OK
+
 
 class WIP_TesterIndicatorComponent:
     """Implementation of Tester Indicator Component.
