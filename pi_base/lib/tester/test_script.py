@@ -41,8 +41,8 @@ from .test_result_writer import ResultsWriter
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
-    from data_entry import DataEntry
     from io import TextIOWrapper
+    from .data_entry import DataEntry
     from .tester_api import TesterControlInterface
 
 MAX_LINES_IN_SHORT_INFO = 2

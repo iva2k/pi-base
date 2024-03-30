@@ -3,6 +3,7 @@
 ## 0.0.32 (unreleased)
 
 * Add maybe_create_file_dir() to app_utils
+* Add data_entry module, DataEntry class
 
 ## 0.0.31 (2024-03-29)
 
