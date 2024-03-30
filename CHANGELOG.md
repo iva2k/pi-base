@@ -2,9 +2,7 @@
 
 ## 0.0.32 (unreleased)
 
-
-- Nothing changed yet.
-
+* Add maybe_create_file_dir() to app_utils
 
 ## 0.0.31 (2024-03-29)
 

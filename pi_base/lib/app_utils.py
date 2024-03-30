@@ -707,6 +707,32 @@ def translate_config_paths(config_paths: list[str], translations: Optional[list[
     return [translate_one(p, translations) for p in config_paths]
 
 
+def maybe_create_file_dir(file_path: str, loggr: logging.Logger) -> str:
+    """Ensure directory for the file exists, create if needed.
+
+    Args:
+        file_path (str): Full path to the file
+        loggr (Loggr): Logger
+
+    Returns:
+        str: File directory
+    """
+    if file_path:
+        file_dir = os.path.dirname(os.path.realpath(file_path))
+        if not os.path.isdir(file_dir):
+            if loggr:
+                loggr.info(f'Path "{file_dir}" not found, creating...')
+            try:
+                os.makedirs(file_dir)
+            except OSError as err:
+                if loggr:
+                    loggr.error(f'Error {err.errno} "{err.strerror}" creating directory "{file_dir}".')
+                raise
+            if loggr:
+                loggr.info(f'Path "{file_dir}" created.')
+    return file_dir
+
+
 def download_and_execute(
     url: str, downloaded_file_path: str, command: Optional[list[str]] = None, remove_after: bool = False, timeout: int = 30, loggr: Optional[logging.Logger | Loggr] = None
 ) -> int:
