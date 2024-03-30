@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.32 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.0.31 (2024-03-29)
 
 * Breaking change: Remove TestScript.configure_tester(), provide tester_control to TestScript constructor
