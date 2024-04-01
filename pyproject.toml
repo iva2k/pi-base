@@ -231,6 +231,8 @@ exclude = [
   "lib/swd/openocd/",
   "lib/swd/probes/",
   "lib/swd/pyocd/",
+  "pi_base/lib/_WIP*",
+  "pi_base/lib/_WIP*/**",
 ]
 extend-exclude = [
   "conf.py",
@@ -363,6 +365,8 @@ exclude = [
   "lib/swd/openocd/",
   "lib/swd/probes/",
   "lib/swd/pyocd/",
+  "pi_base/lib/_WIP*",
+  "pi_base/lib/_WIP*/**",
 ]
 
 [[tool.mypy.overrides]]
@@ -396,6 +400,8 @@ exclude = [
   "lib/swd/openocd/",
   "lib/swd/probes/",
   "lib/swd/pyocd/",
+  "pi_base/lib/_WIP*",
+  "pi_base/lib/_WIP*/**",
   "**/node_modules",
   "**/__pycache__",
 ]
