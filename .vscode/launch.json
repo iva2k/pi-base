@@ -7,7 +7,7 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "justMyCode": true
+      "justMyCode": false
     },
     {
       "name": "Python: prerelease",
@@ -245,7 +245,6 @@
       "args": [
         "-D",
         "unique",
-        // site_id, app_type, app_name:
         "BASE",
         "blank",
         "Blank",
@@ -273,7 +272,6 @@
       "args": [
         "-D",
         "add",
-        // site_id, app_type, app_name:
         "BASE",
         "blank",
         "Blank",
