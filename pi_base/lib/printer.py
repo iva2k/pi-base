@@ -78,10 +78,10 @@ def shell(cmd: "list[str]") -> "tuple[int, str, str]":
     """Shell command utility.
 
     Args:
-        cmd ([str]): command and arguments list
+        cmd: command and arguments list
 
     Returns:
-        number, str, str: Returncode, stdout, stderr
+        Tuple of returncode, stdout, stderr from the command
     """
     # logger.debug(f'Running command "{cmd}"')
     output = subprocess.run(cmd, text=True, capture_output=True, check=False)
@@ -139,7 +139,7 @@ class PrinterInterface(ABC):
         # 'https': {'device-class': 'network', 'device-info': 'Internet Printing Protocol (https)', 'device-make-and-model': 'Unknown', 'device-id': '', 'device-location': ''}
 
         Returns:
-            dict[str, dict[str, str]]: indexed by "device-uri", of dicts representing devices, indexed by attribute, such as "device-id", "device-info"
+            Dict indexed by "device-uri", of dicts representing devices, indexed by attribute, such as "device-id", "device-info"
 
         """
         return {}
@@ -151,7 +151,7 @@ class PrinterInterface(ABC):
         Based on pycups: @see http://nagyak.eastron.hu/doc/system-config-printer-libs-1.2.4/pycups-1.9.51/html/
 
         Returns:
-            dict[str, dict[str, str]]: indexed by name, of dicts representing queues, indexed by attribute, such as "device-uri", "printer-make-and-model".
+            Dict indexed by name, of dicts representing queues, indexed by attribute, such as "device-uri", "printer-make-and-model".
             # {'ZT411': {'printer-is-shared': False, 'printer-state': 3, 'printer-state-message': '', 'printer-state-reasons': ['none'], 'printer-type': 2134092, 'printer-uri-supported': 'ipp://localhost/printers/ZT411', 'printer-location': 'Travelling Zebra', 'printer-info': 'ZT411',
             # 'device-uri': 'pusb://Zebra%20Technologies/ZTC%20ZT411-300dpi%20ZPL?serial=99J204300180&Opt=BXVG',
             # 'printer-make-and-model': 'Zebra ZT411-300dpi Driver (peninsula-group.com)' }}
@@ -193,9 +193,6 @@ class CupsPrinter(PrinterInterface):
     Other commands:
       * cupsctl --debug-logging
       * cupsctl --no-debug-logging
-
-    Args:
-        PrinterInterface (_type_): _description_
     """
 
     def __init__(self) -> None:
@@ -305,10 +302,10 @@ class CupsPrinter(PrinterInterface):
         PPD files are on deprecation notice, will be removed in CUPS 3.0, release imminent.
 
         Args:
-            printer_name (str): _description_
-            printer_uri (str): _description_
-            ppd_file (str): _description_
-            options (dict[str, str], optional): _description_. Defaults to None.
+            printer_name: Name of the printer
+            printer_uri: URI of the printer
+            ppd_file: Path to ppd file to use
+            options: Optional arguments (description, location). Defaults to None.
 
         Returns:
             int: Error code
@@ -549,10 +546,10 @@ class LprintPrinter(PrinterInterface):
         """Install a printer.
 
         Args:
-            printer_name (str): _description_
-            printer_uri (str): _description_, " TODO: if 'auto', invoke self.autoadd_printers()
-            ppd_file (str): One of LPrint -m files (see "lprint drivers"), e.g. zpl_2inch-203dpi-tt
-            options (dict[str, str], optional): _description_. Defaults to None.
+            printer_name: Name of the printer
+            printer_uri: URI of the printer
+            ppd_file: Path to ppd file to use, one of LPrint -m files (see "lprint drivers"), e.g. zpl_2inch-203dpi-tt
+            options: Optional arguments (description, location). Defaults to None.
 
         Returns:
             int: Error code
@@ -658,7 +655,7 @@ def winPrint2() -> None:
         win32print.ClosePrinter(hprinter)
 
 
-def maybe_get_printer_handler(driver_type: str, *args: object, **kwargs: object) -> Optional[PrinterInterface]:
+def maybe_get_printer_handler(driver_type: str, *args: object, **kwargs: Mapping[str, Any]) -> Optional[PrinterInterface]:
     inst: Optional[PrinterInterface] = None
     if driver_type.lower() == "cups":
         inst = CupsPrinter(*args, **kwargs)
@@ -670,7 +667,7 @@ def maybe_get_printer_handler(driver_type: str, *args: object, **kwargs: object)
     return inst
 
 
-def OsPrinter(*args: object, **kwargs: object) -> PrinterInterface:
+def OsPrinter(*args: object, **kwargs: Mapping[str, Any]) -> PrinterInterface:
     if os.name == "nt":  # Windows
         driver_type = "Win"
         # driver_type = 'LPrint'  # for debugging LPrint piping on Windows. Can try LPrint on Windows some day.

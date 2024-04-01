@@ -145,12 +145,12 @@ def _get_developer_setup(filename: str, default_site_id: str, default_project: s
     The rest is a list of paths to add to sys.path.
 
     Args:
-        filename (str): File to read
-        default_site_id (str): Default value for site_id
-        default_project (str): Default value for project
+        filename: File to read
+        default_site_id: Default value for site_id
+        default_project: Default value for project
 
     Returns:
-        tuple[str, str, list[str]]: site_id, project, rest
+        Tuple of has_file, site_id, project, hostname, the rest
     """
     rest = []
     has_file = False

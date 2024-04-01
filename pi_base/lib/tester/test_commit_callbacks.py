@@ -23,7 +23,7 @@ class ResultCommitCallback(abc.ABC):
             file_path      : Full path of the file
 
         Returns:
-            str : Why the commit failed, None if successful
+            Tuple of error code and reason why the commit failed if error, None if successful
         """
 
 

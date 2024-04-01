@@ -209,7 +209,11 @@ def get_iface(if_list: Optional[list[str]] = None, require_connected: bool = Tru
 
     By up, it means the interface has been assigned an ipv4 address.
 
-    returns eth0, wlan0, or emtpy (no interface active)
+    Args:
+        if_list: List of interface names to search for
+
+    Returns:
+        Tuple of eth0, dict of interface properties - for the first found connected interface from the given if_list
     """
     if not if_list:
         if_list = ["wlan0", "eth0"]
@@ -245,7 +249,7 @@ def ping_test(url: str = "www.google.com", f_timeout_seconds: Optional[float] = 
         return False
 
 
-def _fix_aiohttp():
+def _fix_aiohttp() -> None:
     """Silence annoying aiohttp RuntimeError upon exit on Windows.
 
     See https://github.com/aio-libs/aiohttp/issues/4324#issuecomment-733884349
@@ -268,7 +272,7 @@ def _fix_aiohttp():
         my_asyncio.proactor_events._ProactorBasePipeTransport.__del__ = silence_event_loop_closed(my_asyncio.proactor_events._ProactorBasePipeTransport.__del__)  # noqa: SLF001
 
 
-def _fix_aiohttp1():
+def _fix_aiohttp1() -> None:
     """Silence annoying aiohttp RuntimeError upon exit on Windows, by adding sleep during event loop shutdown."""
     if platform.system() == "Windows":
         my_asyncio = importlib.import_module("asyncio")
@@ -288,7 +292,14 @@ _AT = TypeVar("_AT")
 
 
 def run_async(future: Awaitable[_AT]) -> _AT:
-    """Run the given future (result of an async function call) on an event loop until completion."""
+    """Run the given future (result of an async function call) on an event loop until completion.
+
+    Args:
+        future: Future to run on an event loop (a result of an async function call)
+
+    Returns:
+        Result of the future
+    """
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -298,7 +309,14 @@ def run_async(future: Awaitable[_AT]) -> _AT:
 
 
 def run_maybe_async(maybe_future: _AT | Awaitable[_AT]) -> _AT:
-    """If the given maybe_future (result of a function call - either async, but not awaited or sync) is not awaited async call, run it on event loop until completion."""
+    """If the given maybe_future (result of a function call - either async, but not awaited or sync) is not awaited async call, run it on event loop until completion.
+
+    Args:
+        maybe_future: Future to run on an event loop (a result of an async function call) or result of non-async function call to pass through
+
+    Returns:
+        Result of the future
+    """
     if inspect.isawaitable(maybe_future):
         return run_async(maybe_future)
     else:
@@ -316,7 +334,7 @@ _VT = TypeVar("_VT", bound=Any)
 
 
 class GetConf:
-    """Read configuration file (.yaml or .json)."""
+    """Read configuration file (.yaml or .json) and provide access to its contents."""
 
     def __init__(self, filepath: Optional[str] = None) -> None:
         self.filepath: Optional[str] = None
@@ -400,16 +418,16 @@ class GetConf:
         Note: always provide default value and t type by name, otherwise they will be used as keys.
 
         Args:
-            keys (str): keys to traverse to get the value.
-            default (_T | None, optional): Default value to return if one of the keys is not found in the data. Defaults to None.
-            t (Optional[type[_VT]], optional): Type of data expected to return. Defaults to str.
-            check (bool, optional): Enforce t type of return data. Defaults to False.
+            keys: keys to traverse to get the value.
+            default: Default value to return if one of the keys is not found in the data. Defaults to None.
+            t: Type of data expected to return. Defaults to str.
+            check: True to enforce t type of return data. Defaults to False.
 
         Raises:
             TypeError: If check=True and data type does not match t.
 
         Returns:
-            _VT | _T | None: Value of the data as selected by the keys, or default.
+            Value: the data as selected by the keys, or default.
         """
         val = default if len(keys) == 0 else self.conf
         try:
@@ -574,20 +592,22 @@ def strftimedelta(format_str: str, td: datetime.timedelta) -> str:
     specified in the format string. This function correctly handles transferring
     values between units and formatting negative timedeltas.
 
-    Parameters:
-    - format_str (str): The format string defining how the timedelta should be
-      formatted. It supports the following specifiers: %d (days), %H (hours),
-      %M (minutes), %S (seconds), and %f (microseconds).
-    - td (datetime.timedelta): The timedelta object to format.
+    Args:
+        format_str: The format string defining how the timedelta should be
+        formatted. It supports the following specifiers: %d (days), %H (hours),
+        %M (minutes), %S (seconds), and %f (microseconds).
+    td: The timedelta object to format.
 
     Returns:
-    - str: The formatted string representation of the timedelta.
+        The formatted string representation of the timedelta.
 
     Example:
-    >>> from datetime import timedelta
-    >>> td = timedelta(days=1, hours=2, minutes=30)
-    >>> strftimedelta('%H:%M:%S', td)
-    '26:30:00'
+        ```
+        from datetime import timedelta
+        td = timedelta(days=1, hours=2, minutes=30)
+        strftimedelta('%H:%M:%S', td)
+        # '26:30:00'
+        ```
     """
     # Handle negative timedelta
     is_negative = td.total_seconds() < 0
@@ -666,8 +686,8 @@ def translate_config_paths(config_paths: list[str], translations: Optional[list[
     It does NOT check paths existence or correctness.
 
     Args:
-        config_paths (list[str]): Paths to translate.
-        translations (list[tuple[str, str]], optional): Translations list, each item is (from, to).
+        config_paths: Paths to translate.
+        translations: Translations list, each item is (from, to).
             It is recommended to start shortcut strings with ">" char which is distinguished from any valid path. Defaults to:
               - "./": Current working directory
               - ">root/": Root directory (where this module is located)
@@ -675,7 +695,7 @@ def translate_config_paths(config_paths: list[str], translations: Optional[list[
               - ">app_conf_dir/": App config directory (load from pi_base.modpath when given in config_paths)
 
     Returns:
-        list[str]: Translated paths.
+        List of translated paths.
     """
 
     def get_app_conf_dir(_shortcut: str) -> str:
@@ -711,11 +731,11 @@ def maybe_create_file_dir(file_path: str, loggr: logging.Logger) -> str:
     """Ensure directory for the file exists, create if needed.
 
     Args:
-        file_path (str): Full path to the file
-        loggr (Loggr): Logger
+        file_path: Full path to the file
+        loggr: Logger
 
     Returns:
-        str: File directory
+        File directory path
     """
     if file_path:
         file_dir = os.path.dirname(os.path.realpath(file_path))
@@ -739,14 +759,14 @@ def download_and_execute(
     """Download from given URL a file and either execute the file or optionally execute the given command. Intended use is to download and install software.
 
     Args:
-        url (str): URL to the download file
-        downloaded_file_path (str): Path to where store the file
-        command (list[str], optional): Command to execute once the file is downloaded. Defaults to None.
-        remove_after (bool, optional): True to remove downloaded file after. Defaults to False.
-        timeout (int, optional): Maximum time to wait. Defaults to 30.
+        url: URL to the download file
+        downloaded_file_path: Path to where store the file
+        command: Command to execute once the file is downloaded. Defaults to None.
+        remove_after: True to remove downloaded file after. Defaults to False.
+        timeout: Maximum time to wait. Defaults to 30.
 
     Returns:
-        int: Error code
+        Error code, 0 for success
     """
     # Download the executable file
     try:
@@ -793,8 +813,8 @@ class PeriodicTask(threading.Thread):
         """Constructor.
 
         Args:
-            interval (int | float): Period or the task
-            task_fnc (function): Task function to call
+            interval: Period or the task (in seconds)
+            task_fnc: Task function to call
             *args: Optional arguments to pass to the task function.
             **kwargs: Optional keyword arguments to pass to the task function.
         """

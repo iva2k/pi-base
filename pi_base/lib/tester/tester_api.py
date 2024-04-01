@@ -47,11 +47,11 @@ class TesterControlInterface:
         """In tester lifecycle: Perform post-dut."""
         return TestError.ERR_OK
 
-    def get_versions(self):
+    def get_versions(self) -> tuple[str, str, str, str]:
         """Get Tester versions info.
 
         Returns:
-        (device_id, board_version, firmware_version, chip_ver)
+            Tuple of device_id, board_version, firmware_version, chip_ver
         """
         return (self.device_id or "N/A", "N/A", "N/A", "N/A")
 
@@ -109,7 +109,7 @@ class TesterIndicator(TesterControlInterface):
         """Return list of possible states.
 
         Returns:
-            list[str]: list of possible states
+            List of possible states
         """
         return []
 
@@ -117,10 +117,10 @@ class TesterIndicator(TesterControlInterface):
         """Set indicator state / display information.
 
         Args:
-            state (str): State to indicate, Should be one of self.states()
+            state: State to indicate, Should be one of self.states()
 
         Returns:
-            int: Error code, 0=OK, 1=ERR_TESTER_DISCONNECTED
+            Error code: 0=OK, 1=ERR_TESTER_DISCONNECTED
         """
         return 0
 
@@ -132,7 +132,7 @@ class TesterServo(TesterControlInterface):
         """Return list of possible positions.
 
         Returns:
-            list[str]: list of possible positions
+            List of possible positions
         """
         return []
 
@@ -140,10 +140,10 @@ class TesterServo(TesterControlInterface):
         """Move servo to position.
 
         Args:
-            position (str): Should be one of self.positions()
+            position: Should be one of self.positions()
 
         Returns:
-            int: Error code, 0=OK
+            Error code, 0=OK
         """
         return 0
 
@@ -151,7 +151,7 @@ class TesterServo(TesterControlInterface):
         """Return current servo position.
 
         Returns:
-            str: Current position
+            Current position
         """
         return "unknown"
 
@@ -163,7 +163,7 @@ class TesterDetector(TesterControlInterface):
         """Return list of possible expected values.
 
         Returns:
-            list[str]: list of possible values that can be detected
+            List of possible values that can be detected
         """
         return []
 
@@ -171,10 +171,10 @@ class TesterDetector(TesterControlInterface):
         """Run detector and confirm its reading match the expected.
 
         Args:
-            expected (str): Expected detector value
+            expected: Expected detector value
 
         Returns:
-            bool: Confirmation
+            True if detector confirms the expected value
         """
         return False
 
@@ -186,11 +186,11 @@ class TesterDetector(TesterControlInterface):
 class TesterLidServoManual(TesterServo):
     """Manual (operator performed) implementation of Lid TesterServo."""
 
-    def __init__(self, loggr):
+    def __init__(self, loggr) -> None:
         """Constructor.
 
         Args:
-            loggr (Loggr): Logger object - should have .get_user_input() method
+            loggr: Logger object - should have .get_user_input() method
 
         Raises:
             ValueError: If loggr is not provided
@@ -231,7 +231,7 @@ class TesterLEDDetectorManual(TesterDetector):
         """Constructor.
 
         Args:
-            loggr (Loggr): Logger object - should have .get_user_yes_no_input() method
+            loggr: Logger object - should have .get_user_yes_no_input() method
 
         Raises:
             ValueError: If loggr is not provided

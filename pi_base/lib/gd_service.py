@@ -67,10 +67,10 @@ class GoogleDriveService:
         """Authenticate using local webserver and webbrowser. Very slow and requires user interaction.
 
         Args:
-            secrets_file (str): Path to secrets json file
+            secrets_file: Path to secrets json file
 
         Returns:
-            object: credentials
+            Credentials object
         """
         self._secrets_file = secrets_file
         if not self.credentials:
@@ -98,10 +98,10 @@ class GoogleDriveService:
         """Authenticate using service account.
 
         Args:
-            secrets_file (str): Path to service account secrets json file
+            secrets_file: Path to service account secrets json file
 
         Returns:
-            object: credentials
+            Credentials object
         """
         self._secrets_file = secrets_file
         if not self.credentials:
@@ -174,7 +174,16 @@ class GoogleDriveService:
     ) -> Optional[GoogleDriveFile]:
         """Upload a file (optionally resumable, and optionally with conversion if dst_mimetype provided and is different than mimetype).
 
-        Returns: uploaded file object
+        Args:
+            dir_id: ID of the parent directory to upload to
+            file_path: Path to the source file to upload
+            mimetype: MIME type of the source file
+            dst_filename: Name of the destination file
+            dst_mimetype: MIME type of the destination file (provide different value for automatic conversion)
+            resumable: Use resumable upload
+
+        Returns:
+            Uploaded file object
         """
         service = self.get_service()
         if not service:
@@ -362,16 +371,16 @@ def gd_connect(
     """Helper function: Open secrets file and Authenticate with Google Drive, and additionally load extra fields from the secrets file.
 
     Args:
-        loggr (Loggr): Logger object
-        gd_secrets (str): File with GD secrets
-        extra_fields_with_values (dict[str, str], optional): Keys define extra fields to load from gd_secrets file, how to use the values is determined by extra_mode. Defaults to None.
-        extra_mode (str, optional): 'override' will load field from secrets file if given value is None. 'default' will use given value as fallback if secrets file does not have the field set.
+        loggr: Logger object
+        gd_secrets: File with GD secrets
+        extra_fields_with_values: Keys define extra fields to load from gd_secrets file, how to use the values is determined by extra_mode. Defaults to None.
+        extra_mode: 'override' will load field from secrets file if given value is None. 'default' will use given value as fallback if secrets file does not have the field set.
                             'override' mode is intended for command line args that should override secrets file values. Defaults to 'override'.
-        skip_msg (str, optional): Text to add to loggr messages when cannot load gd_secrets or connect. Defaults to 'Will skip uploading results files.'.
-        prefix (str, optional): Prefix for all field names in gd_secrets file. Defaults to 'pibase_'.
+        skip_msg: Text to add to loggr messages when cannot load gd_secrets or connect. Defaults to 'Will skip uploading results files.'.
+        prefix: Prefix for all field names in gd_secrets file. Defaults to 'pibase_'.
 
     Returns:
-        tuple[GoogleDriveService, dict[str, str]]: Google Drive service object, Extra fields from the secrets file.
+        Tuple of Google Drive service object, dict with extra fields from the secrets file.
     """
     if extra_fields_with_values is None:
         extra_fields_with_values = {}
@@ -455,7 +464,16 @@ def upload_file(
 ) -> Optional[GoogleDriveFile]:
     """Upload a file (optionally resumable, and optionally with conversion if dst_mimetype provided and is different than mimetype).
 
-    Returns: ID of the file uploaded
+    Args:
+        dir_id: ID of the parent directory to upload to
+        file_path: Path to the source file to upload
+        mimetype: MIME type of the source file
+        dst_filename: Name of the destination file
+        dst_mimetype: MIME type of the destination file (provide different value for automatic conversion)
+        resumable: Use resumable upload
+
+    Returns:
+        ID of the file uploaded
     """
     if not hasattr(service, "files"):
         raise ValueError('Expected GoogleDrive "drive" service to have "files" attribute')

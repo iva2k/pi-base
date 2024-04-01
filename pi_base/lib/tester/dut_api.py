@@ -58,7 +58,7 @@ class DutControlInterface:
         """Get DUT versions info.
 
         Returns:
-        (device_id, board_version, firmware_version, chip_ver)
+            Tuple of device_id, board_version, firmware_version, chip_ver
         """
         return (self.device_id or "N/A", "N/A", "N/A", "N/A")
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# We're not going after extreme performance here
+# pylint: disable=logging-fstring-interpolation
+
 # import os
 import signal
 import sys
@@ -25,9 +28,11 @@ class Test:
     """Test."""
 
     def __init__(self, fnc_input: Callable, fnc_filter_input: Callable) -> None:
-        """@fnc_input is getter of test data (e.g. operator input() or some other automated data provider).
+        """Constructor.
 
-        @fnc_filter_input checks for special commands in the input and returns "True" to stop test, "False" if data is not filtered and test can proceed.
+        Args:
+            fnc_input: getter of test data (e.g. operator input() or some other automated data provider).
+            fnc_filter_input: checks for special commands in the input and returns "True" to stop test, "False" if data is not filtered and test can proceed.
         """
         self.field = "device id"
         if not fnc_filter_input:
@@ -37,10 +42,11 @@ class Test:
             raise ValueError("Expected non-empty fnc_input.")
         self.fnc_input = fnc_input
 
-    def data_entry(self):
+    def data_entry(self) -> "tuple[bool, str]":
         """Request data using provided fnc_input at instantiation.
 
-        @return run,data - if run is False, data should be ignored and test loop stopped, if True, continue and call .run(data).
+        Returns:
+            Tuple of run,data - if run is False, data should be ignored and test loop stopped, if True, continue and call .run(data).
         """
         device_id, other = "", []
         while True:
@@ -73,7 +79,8 @@ class Test:
     def run(self, device_id) -> bool:
         """Run single test.
 
-        @return True if test passed, False if failed.
+        Returns:
+            True if test passed, False if failed.
         """
         # loggr.debug('Test.run(%s)' % (device_id,))
         if device_id == "":

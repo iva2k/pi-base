@@ -23,7 +23,7 @@ class ResultsWriter:
         """Write the script line to the results buffer.
 
         Args:
-            script_line : Script line to write
+            script_line: Script line to write
         """
         if isinstance(script_line, list):
             script_line = ", ".join(script_line)

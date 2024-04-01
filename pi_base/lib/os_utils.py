@@ -58,13 +58,13 @@ def find_file(search_dir_list: list[str], filename: str, descr: str = "input", l
     @see find_path() in app_utils.py
 
     Args:
-        search_dir_list (list[str]): List of directories to search
-        filename (str): File name
-        descr (str, optional): Description of the file for logging. Defaults to "input".
-        loggr (_type_, optional): _description_. Defaults to logger.
+        search_dir_list: List of directories to search
+        filename: File name
+        descr: Description of the file for logging. Defaults to "input".
+        loggr: Logger to use. Defaults to logger.
 
     Returns:
-        str: None or full path to the found file.
+        None or full path to the found file.
     """
     for i, d in enumerate(search_dir_list):
         fullpath = os.path.realpath(os.path.expanduser(os.path.join(d, filename)))
@@ -136,8 +136,8 @@ def walklevel(root_dir: Optional[str] = None, level: int = 1) -> Iterator[tuple[
     From https://stackoverflow.com/a/234329
 
     Args:
-        root_dir (None|str): Directory to traverse. If None - will use current directory.
-        level (int, optional): How many levels to return. Defaults to 1.
+        root_dir: Directory to traverse. If None - will use current directory.
+        level: How many levels to return. Defaults to 1.
 
     Raises:
         FileNotFoundError: If root_dir directory does not exist

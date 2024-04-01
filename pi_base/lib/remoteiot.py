@@ -47,14 +47,14 @@ class RemoteiotConfigFromFile(RemoteiotConfig):
         """Remoteiot config implementation that reads config file.
 
         Args:
-            config_file (str): Full path or basename of config file. If basename is given, will use config_paths to find the file.
-            config_paths (list[str]): Paths to search the config_file and files given in config_file. Paths can start with shortcuts that will be expanded:
+            config_file: Full path or basename of config file. If basename is given, will use config_paths to find the file.
+            config_paths: Paths to search the config_file and files given in config_file. Paths can start with shortcuts that will be expanded:
               - "./": Current working directory
               - ">root/": Root directory (where this module is located)
               - ">base/": Base directory (2 directories up from root)
               - ">app_conf_dir/": App config directory (load from pi_base.modpath when given in config_paths)
               - "~": Environment variable $HOME (expanded by find_path)
-            loggr (Optional[logging.Logger], optional): Logger to report info and errors. Defaults to logger.
+            loggr: Logger to report info and errors. Defaults to logger.
 
         Raises:
             FileNotFoundError: If config_file is not found in config_paths.

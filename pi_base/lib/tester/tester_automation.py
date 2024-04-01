@@ -23,7 +23,7 @@ class TesterIndicatorExampleStation(TesterIndicator):
         """Constructor.
 
         Args:
-            loggr (Loggr): Logger object
+            loggr: Logger object
         """
         self.loggr = loggr
         self._state_values = {
@@ -66,7 +66,7 @@ class TesterLidServoAutomated(TesterServo):
         """Constructor.
 
         Args:
-            loggr (Loggr): Logger object
+            loggr: Logger object
 
         Raises:
             ValueError: If loggr is not provided
@@ -111,7 +111,7 @@ class TesterLEDDetectorAutomated(TesterDetector):
         """Constructor.
 
         Args:
-            loggr (Loggr): Logger object
+            loggr: Logger object
 
         Raises:
             ValueError: If loggr is not provided

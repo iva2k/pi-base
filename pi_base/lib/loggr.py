@@ -248,7 +248,7 @@ class Loggr(logging.Logger):
     def log_box(self, text: str, width: int = 50, color_code: ColorCodes | str = ColorCodes.DEFAULT) -> None:
         """Log provided text in a box of given width (centered).
 
-        Example:
+        Output Example:
         ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
         ┃            Test Setup            ┃
         ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -273,7 +273,7 @@ class Loggr(logging.Logger):
             color_code: The color you want to print the text to the console as
 
         Returns:
-            str : User input
+            User input
         """
         self.color_print(text, color_code=color_code, end=" ")
         return input()
@@ -286,7 +286,7 @@ class Loggr(logging.Logger):
             color_code: The color you want to print the text to the console as
 
         Returns:
-            bool : True if "Yes", False if "No"
+            True if "Yes", False if "No"
         """
         result = False
         while True:
@@ -321,7 +321,7 @@ class Loggr(logging.Logger):
         kwargs: Mapping[str, Any] = {"end": end}
         self.print(message, **kwargs)
 
-    def position(self, x: int, y: int, *tstr: object):
+    def position(self, x: int, y: int, *tstr: object) -> None:
         """Move cursor to position on screen, and optionally print.
 
         0,0 is top left, x is horizontal, y is vertical.
@@ -330,7 +330,7 @@ class Loggr(logging.Logger):
         if len(tstr) > 0:
             self.print(*tstr)
 
-    def el(self, *tstr):
+    def el(self, *tstr) -> None:
         """Clear to end of line, and optionally print."""
         self.tput_print("el", ())
         if len(tstr) > 0:
@@ -342,22 +342,22 @@ class Loggr(logging.Logger):
         if len(tstr) > 0:
             self.print(*tstr)
 
-    def dl(self, num=1):
+    def dl(self, num=1) -> None:
         """Delete <num> lines.
 
         ('dl'   , ( 2,   )),   #  DL      Delete #1 lines (P*)
         """
         self.tput_print("dl", (num,))
 
-    def ech(self, num=1):
+    def ech(self, num=1) -> None:
         """Delete <num> characters."""
         self.tput_print("ech", (num,))
 
-    def cnorm(self):
+    def cnorm(self) -> None:
         """Cursor normal."""
         self.tput_print("cnorm", ())
 
-    def cblock(self):
+    def cblock(self) -> None:
         """Cursor block."""
         self.tput_print("cvvis", ())
 
@@ -365,11 +365,13 @@ class Loggr(logging.Logger):
         """Cursor invisible."""
         self.tput_print("civis", ())
 
-    def cols(self, term=None):
+    def cols(self, term=None) -> int:
+        """Return number of visible columns in the terminal."""
         str_val = self.tput("cols", (), term)
         return int(str_val)
 
-    def lines(self, term=None):
+    def lines(self, term=None) -> int:
+        """Return number of visible lines in the terminal."""
         str_val = self.tput("lines", (), term)
         return int(str_val)
 

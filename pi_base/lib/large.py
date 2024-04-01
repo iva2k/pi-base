@@ -10,8 +10,11 @@ from . import tput
 class Large:
     """Print large message(s) on terminal."""
 
-    def __init__(self, filepath=None):
-        """@filepath chooses which text file to load with strings composing large message(s).
+    def __init__(self, filepath=None) -> None:
+        """Constructor.
+
+        Args:
+            filepath: chooses which text file to load with strings composing large message(s).
 
         Messages are blocks of text, each message followed by a single line with `# <key> <color_fg> <color_bg> <name>` format, where:
          * <key> is used to select the message

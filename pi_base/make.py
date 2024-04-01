@@ -66,7 +66,7 @@ def get_git_hash() -> str:
 
 
 class Builder:
-    def __init__(self, args, system, sites_db: DeploySiteDB, loggr=logger):
+    def __init__(self, args, system, sites_db: DeploySiteDB, loggr=logger) -> None:
         self.loggr = loggr
         if not self.loggr:
             raise ValueError("Please provide loggr argument")
@@ -89,7 +89,7 @@ class Builder:
         self.loggr.debug(f"stage_dir          : {self.stage_dir}")
         self.loggr.debug(f"app_conf_dir       : {app_conf_dir}")
 
-    def rmdir(self, path):
+    def rmdir(self, path) -> None:
         path = os.path.normpath(path)
         self.loggr.debug(f"removing dir {path}...")
         try:
@@ -184,10 +184,13 @@ class Builder:
             self.app_info["PostInstall"] = self.conf_dat["PostInstall"]
         return custom
 
-    def make_modules(self, target_app):
+    def make_modules(self, target_app: str) -> None:
         """Copies modules from common/ to staging directory target_app/modules.
 
         If the list is given in config file 'Modules' section, only the listed files are copied.
+
+        Args:
+            target_app: path to the staging directory
         """
         self.loggr.info("  + Creating lib folder for modules perf conf.'Modules':")
         target_dir = os.path.normpath(os.path.join(target_app, "lib"))
@@ -234,8 +237,12 @@ class Builder:
                 shutil.copytree(src, dst, ignore=ignore, dirs_exist_ok=True)
                 self.loggr.info(f"    = Copied all files from {src}")
 
-    def make_files_per_conf(self, target_app):
-        # Make individual files (copy all files to their destinations in target_app)
+    def make_files_per_conf(self, target_app: str) -> None:
+        """Make individual files (copy all files to their destinations in target_app).
+
+        Args:
+            target_app: path to the staging directory
+        """
         if "Files" in self.conf_dat:
             self.loggr.info("  + Copying additional files per conf.'Files':")
             self.loggr.debug(f"Preparing {target_app}")
@@ -277,8 +284,12 @@ class Builder:
             self.loggr.error(f'Error {e} while executing command "{cmd}"')
             return False
 
-    def make_files_from_template(self, target_dir):
-        # Make files staged in the templates
+    def make_files_from_template(self, target_dir) -> None:
+        """Make files staged in the templates.
+
+        Args:
+            target_app: path to the staging directory
+        """
         if True:  # pylint: disable=using-constant-test
             self.loggr.info("  + Copying template files:")
             self.loggr.debug(f"Preparing {target_dir}")
