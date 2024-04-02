@@ -4,6 +4,7 @@
 
 * Add maybe_create_file_dir() to app_utils
 * Add data_entry module, DataEntry class
+* Breaking change: revise DataEntryInterface methods, parameterize DataEntry for smaller overrides
 
 ## 0.0.31 (2024-03-29)
 

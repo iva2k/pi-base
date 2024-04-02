@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from enum import Enum
-import re
-from typing import Callable, Optional, TYPE_CHECKING
+from typing import Any, Callable, Optional, TYPE_CHECKING
+from collections.abc import Mapping
 
 # "modpath" must be first of our modules
 # pylint: disable=wrong-import-position
 # ruff: noqa: E402
 from pi_base.modpath import app_conf_dir
-from pi_base.lib.tester.tester_common import TestError
+from pi_base.lib.app_utils import AtDict
 
 # Shared monorepo lib
 
@@ -31,322 +31,250 @@ class FilterInterface:
         return FilterResult.FILTER_NONE
 
 
-class DataEntry:
-    """Class to facilitate data entry for test."""
-
+class DataEntryResult(Enum):
     ERR_OK = 0
     ERR_CANCEL = 1
     ERR_RETRY = 2
     ERR_BARCODE_FORMAT = 3
     ERR_UNKNOWN_PN = 4
 
-    def __init__(self, fnc_input: Callable[[str], str], input_filter: FilterInterface, loggr: Loggr) -> None:
+
+class DataEntryInterface:
+    """Abstract class - Interface to facilitate data entry for test.
+
+    Various methods ask for data from the operator using provided loggr for output and fnc_input for data entry at instantiation.
+    """
+
+    # Field names
+    FIELD_OPERATOR_ID = "operator ID"
+    FIELD_DUT_NAME = "device"
+    FIELD_DUT_ID = "device serial number"
+    FIELD_LOT_NUM = "LOT number"
+
+    # Message strings. Subclasses can override.
+    MSG_ENTER_LOT_NUM = "Enter {FIELD_LOT_NUM} and hit [ENTER]: "  # Can use {FIELD_LOT_NUM}
+    MSG_ENTER_LOT_NUM_KEEP = "Enter {FIELD_LOT_NUM} or press [ENTER] to use the current one ({prev_lot_num}): "  # Can use {FIELD_LOT_NUM} and {prev_lot_num}
+    MSG_ENTER_OPERATOR_ID = "Enter {FIELD_OPERATOR_ID} and hit [ENTER]: "  # Can use {FIELD_OPERATOR_ID}
+    MSG_CONNECT_DUT = "Connect {FIELD_DUT_NAME} and hit [ENTER]: "  # Can use {FIELD_DUT_NAME}, {FIELD_DUT_ID}
+    MSG_DISCONNECT_DUT = "Disconnect {FIELD_DUT_NAME} and hit [ENTER]: "  # Can use {FIELD_DUT_NAME}
+    MSG_ENTER_DUT_ID = "Enter {FIELD_DUT_ID} from the serial label and hit [ENTER]: "  # Can use {FIELD_DUT_ID}
+    MSG_BAD_OPERATOR_ID = "  {FIELD_OPERATOR_ID} not recognized. Do not enter spaces."  # Can use {FIELD_OPERATOR_ID}
+    MSG_BAD_LOT_NUM = '  Invalid {FIELD_LOT_NUM} "{lot_num}", please give a {lot_length}{lot_symbol} LOT number.'  # Can use {FIELD_LOT_NUM}, {lot_num}, {lot_length} and {lot_symbol}
+    MSG_BAD_DUT_ID = "  Invalid {FIELD_DUT_ID}"  # Can use {FIELD_DUT_ID}
+
+    def check_if_barcode(self, input_str: str) -> tuple[bool, str]:
+        raise NotImplementedError
+        # is_barcode = False
+        # return input_str, is_barcode
+
+    def enter_operator_id(self) -> tuple[FilterResult, bool, str]:
+        """Request operator to sign-on.
+
+        Returns:
+            run,is_barcode,data - if run is FilterResult.FILTER_NONE - continue with the data, else ignore the data and stop the test loop.
+        """
+        raise NotImplementedError
+
+    def enter_lot_num(self) -> tuple[FilterResult, bool, str]:
+        """Requests LOT number.
+
+        Returns:
+            run,is_barcode,data - if run is FilterResult.FILTER_NONE - continue with the data, else ignore the data and stop the test loop.
+        """
+        raise NotImplementedError
+
+    def enter_dut_connected(self) -> tuple[FilterResult, bool, str]:
+        """Request to connect DUT and "enter".
+
+        Returns:
+            run,is_barcode,data - if run is FilterResult.FILTER_NONE - continue with the data, else ignore the data and stop the test loop.
+        """
+        raise NotImplementedError
+
+    def enter_dut_disconnected(self) -> tuple[FilterResult, bool, str]:
+        """Request to disconnect DUT and "enter".
+
+        Returns:
+            run,is_barcode,data - if run is FilterResult.FILTER_NONE - continue with the data, else ignore the data and stop the test loop.
+        """
+        raise NotImplementedError
+
+    def enter_label_data(self) -> tuple[FilterResult, bool, str]:
+        """Request to enter data from the serial label and "enter".
+
+        Returns:
+             run,is_barcode,data - if run is FilterResult.FILTER_NONE - continue with the data, else ignore the data and stop the test loop.
+        """
+        raise NotImplementedError
+
+    def get_operator_info(self, operator_id: Optional[str] = None) -> str:
+        raise NotImplementedError
+
+    def get_dut_info(self) -> str:
+        raise NotImplementedError
+
+
+class DataEntry(DataEntryInterface):
+    """Class with typical interactions to facilitate data entry for test.
+
+    Standard interactions with the operator and minimal data validations are provided by this class.
+
+    Sub-class it and override methods to customize interactions and data validation.
+    """
+
+    def __init__(self, fnc_input: Callable[[str], str], input_filter: FilterInterface, loggr: Loggr, options: Optional[Mapping[str, Any]] = None) -> None:
         """Constructor.
 
-        @fnc_input is getter of test data (e.g. operator input() or some other automated data provider)
-        @input_filter object should implement FilterInterface that checks for special commands in the input and returns "True" to stop test, "False" if data is not filtered and test can proceed.
+        Args:
+            fnc_input: getter of test data (e.g. operator input() or some other automated data provider)
+            input_filter: object should implement FilterInterface that checks for special commands in the input and returns "True" to stop test, "False" if data is not filtered and test can proceed.
         """
         # self.ensure_lot_len = 5
         # self.ensure_lot_digits = True
         self.ensure_lot_len = None
         self.ensure_lot_digits = False
 
-        self.operator_field_name = "operator ID"
         self.operator_id = None
-
-        self.dut_field_name = "device serial number"
         self.dut_id = None
-
-        self.lot_field_name = "LOT Number"
         self.lot_num = None
-
-        if not input_filter:
-            raise ValueError("Please provide input_filter argument")
-        self.input_filter = input_filter
 
         if not fnc_input:
             raise ValueError("Please provide fnc_input argument")
         self.fnc_input = fnc_input
 
+        if not input_filter:
+            raise ValueError("Please provide input_filter argument")
+        self.input_filter = input_filter
+
         if not loggr:
             raise ValueError("Please provide loggr argument")
         self.loggr = loggr
 
+        # WIP: Configure the barcode scanner (USB HID keyboard type) to add CR+LF suffix, then with "scanner_suffix"
+        # we can detect (see self.check_if_barcode()) that an entry is from scanner, not from keyboard.
+        opts: dict[str, Any] = {
+            "scanner_suffix": ["\n\r", "\r\n"],
+        }
+        opts.update(options if options else {})
+        if isinstance(opts["scanner_suffix"], str):
+            opts["scanner_suffix"] = [opts["scanner_suffix"]]
+
+        self.options = AtDict(**opts)
         self.data_fmt = "{dut_pn}-v{dut_rev}-SN{dut_sn}"  # Format of DataEntry.data_entry() return when barcodes are scanned.
 
-    def operator_signon(self) -> tuple[FilterResult, str]:
-        """Request operator sign-on using provided fnc_input at instantiation.
+    def check_if_barcode(self, input_str: str) -> tuple[bool, str]:
+        is_barcode = False
+        for suffix in self.options["scanner_suffix"]:
+            while input_str.endswith(suffix):
+                input_str = input_str[: -len(suffix)]
+                is_barcode = True
+        return is_barcode, input_str
 
-        Returns: run,data - if run is not FilterResult.FILTER_NONE, data should be ignored and test loop stopped, if FilterResult.FILTER_NONE, continue.
-        """
-        operator_id = ""
-        while True:
-            input_str = self.fnc_input(f"Enter {self.operator_field_name}: ")
-            operator_id = input_str.strip()
-            # TODO: (when needed) Implement decoding of all possible QR label formats.
-            if operator_id == "":
-                if self.loggr:
-                    self.loggr.print(f"  {self.operator_field_name} not recognized. Do not enter spaces.")
-            else:
-                break
-
-        if self.loggr:
-            self.loggr.debug(f'got user entry: "{operator_id}"')
-        filt = self.input_filter.filter_input(self, operator_id, allow_signoff=False)
+    def filtered_input(self, prompt: str, allow_signoff: bool = True) -> tuple[FilterResult, bool, str]:
+        # self.test.loggr.color_print(message, color_code = ColorCodes.BLUE)
+        # fnc_input = input
+        # input_str = self.fnc_input(message + " and hit [Enter]: ").strip()
+        # input_str = fnc_input(message + " and hit [Enter]: ").strip()
+        input_str = self.fnc_input(prompt)
+        is_barcode, input_str = self.check_if_barcode(input_str)
+        input_str = input_str.strip()
+        filt = self.input_filter.filter_input(self, input_str, allow_signoff=allow_signoff)
         if filt != FilterResult.FILTER_NONE:
-            return filt, ""
-        self.operator_id = operator_id
-        return FilterResult.FILTER_NONE, operator_id
+            return filt, is_barcode, ""
+        if len(input_str) > 0 and self.loggr:
+            self.loggr.debug(f'got user entry: "{input_str}"')
+        return filt, is_barcode, input_str
 
-    def operator_lot_num(self) -> tuple[FilterResult, str]:
-        """Requests the operator to input the LOT number.
+    def enter_operator_id(self) -> tuple[FilterResult, bool, str]:
+        is_barcode = False
+        prompt = self.MSG_ENTER_OPERATOR_ID.format(FIELD_OPERATOR_ID=self.FIELD_OPERATOR_ID)
+        while True:
+            filt, is_barcode, input_str = self.filtered_input(prompt, allow_signoff=False)
+            if filt != FilterResult.FILTER_NONE:
+                return filt, is_barcode, ""
+            # TODO: (when needed) Implement decoding of all possible QR label formats.
+            if not input_str:
+                if self.loggr:
+                    self.loggr.print(self.MSG_BAD_OPERATOR_ID.format(FIELD_OPERATOR_ID=self.FIELD_OPERATOR_ID))
+                continue
+            break
+        self.operator_id = input_str
+        return FilterResult.FILTER_NONE, is_barcode, input_str
 
-        Returns:
-            FilterResult, str : A valid 5 digit lot number
-        """
-        lot_num = ""
+    def enter_lot_num(self) -> tuple[FilterResult, bool, str]:
+        is_barcode = False
         filt = FilterResult.FILTER_NONE
 
+        if self.lot_num is None:
+            prompt = self.MSG_ENTER_LOT_NUM.format(FIELD_LOT_NUM=self.FIELD_LOT_NUM)
+        else:
+            prompt = self.MSG_ENTER_LOT_NUM_KEEP.format(FIELD_LOT_NUM=self.FIELD_LOT_NUM, prev_lot_num=self.lot_num)
         while True:
-            if self.lot_num is None:
-                message = "Enter the LOT number: "
-            else:
-                message = f"Enter the LOT number or press ENTER to use the current one ({self.lot_num}): "
+            filt, is_barcode, input_str = self.filtered_input(prompt)
+            if filt != FilterResult.FILTER_NONE:
+                return filt, is_barcode, ""
 
-            lot_num = self.fnc_input(message).strip()
-
-            if len(lot_num) > 0:  # If value entered, parse the input
-                # Check if any filters apply (sign-off, etc...)
-                if (filt := self.input_filter.filter_input(self, lot_num, allow_signoff=True)) == FilterResult.FILTER_NONE:
-                    try:  # If non apply then check if LOT number given is valid
-                        # Check that the lot number is 5 digits
-                        if self.ensure_lot_len and self.ensure_lot_len != len(lot_num):
-                            raise ValueError
-                        if self.ensure_lot_digits:
-                            int(lot_num)  # Check that it is a number
-                        self.lot_num = lot_num  # Given LOT number is valid, accept it
-                    except:
-                        if self.loggr:
-                            self.loggr.print(
-                                f'Given LOT number "{lot_num}" is not valid, please give a {str(self.ensure_lot_len) + "-" if self.ensure_lot_len else ""}{"digit" if self.ensure_lot_digits else "letter"} LOT number.'
+            if input_str:  # If value entered, parse and validate the input
+                try:  # If non apply then check if LOT number given is valid
+                    # Check that the lot number is 5 digits
+                    if self.ensure_lot_len and self.ensure_lot_len != len(input_str):
+                        raise ValueError
+                    if self.ensure_lot_digits:
+                        int(input_str)  # Check that it is a number
+                    self.lot_num = input_str  # Given LOT number is valid, accept it
+                except:
+                    if self.loggr:
+                        self.loggr.print(
+                            self.MSG_BAD_LOT_NUM.format(
+                                lot_num=input_str, lot_length=str(self.ensure_lot_len) + "-" if self.ensure_lot_len else "", lot_symbol="digit" if self.ensure_lot_digits else "letter"
                             )
-                    else:
-                        break
+                        )
                 else:
                     break
             elif self.lot_num:
-                # If empty entry then use the current lot number
-                lot_num = self.lot_num
+                # If empty entry then use the current non-empty lot number
+                input_str = self.lot_num
                 break
-        return filt, lot_num
+        return filt, is_barcode, input_str
 
-    def operator_info(self, operator_id: Optional[str] = None) -> str:
+    def enter_dut_connected(self) -> tuple[FilterResult, bool, str]:
+        is_barcode = False
+        while True:
+            prompt = self.MSG_CONNECT_DUT.format(FIELD_DUT_NAME=self.FIELD_DUT_NAME, FIELD_DUT_ID=self.FIELD_DUT_ID)
+            filt, is_barcode, input_str = self.filtered_input(prompt)
+            if filt != FilterResult.FILTER_NONE:
+                return filt, is_barcode, ""
+            break
+        return filt, is_barcode, input_str
+
+    def enter_dut_disconnected(self) -> tuple[FilterResult, bool, str]:
+        is_barcode = False
+        while True:
+            prompt = self.MSG_DISCONNECT_DUT.format(FIELD_DUT_NAME=self.FIELD_DUT_NAME, FIELD_DUT_ID=self.FIELD_DUT_ID)
+            filt, is_barcode, input_str = self.filtered_input(prompt)
+            if filt != FilterResult.FILTER_NONE:
+                return filt, is_barcode, ""
+            break
+        return filt, is_barcode, input_str
+
+    def enter_label_data(self) -> tuple[FilterResult, bool, str]:
+        is_barcode = False
+        while True:
+            prompt = self.MSG_ENTER_DUT_ID.format(FIELD_DUT_ID=self.FIELD_DUT_ID)
+            filt, is_barcode, input_str = self.filtered_input(prompt)
+            if filt != FilterResult.FILTER_NONE:
+                return filt, is_barcode, ""
+            if not input_str:
+                if self.loggr:
+                    self.loggr.print(self.MSG_BAD_DUT_ID.format(FIELD_DUT_ID=self.FIELD_DUT_ID))
+                continue
+            break
+        return filt, is_barcode, input_str
+
+    def get_operator_info(self, operator_id: Optional[str] = None) -> str:
         if not operator_id:
             operator_id = self.operator_id
-        return f"{self.operator_field_name} {operator_id}"
+        return f"{self.FIELD_OPERATOR_ID} {operator_id}"
 
-    @classmethod
-    def barcode_pcba_pn_sn(cls, value: str, pn_prefix: str = "", sn_prefixes: Optional[list[str]] = None) -> tuple[int, str | None, str | None, str | None]:
-        """Decode all possible PCBA QR label formats.
-
-        Args:
-            value (str): Input value
-
-        Returns:
-            number,str,str,str: Error code, PN, Rev, SN
-        """
-        #  Currently supported formats:
-        # 'dd.ddddd-dd S/N:0002'
-        # 'dd.ddddd SN 0123'
-        if not sn_prefixes:
-            sn_prefixes = ["SN", "S/N"]
-        sn_prefix = "|".join(sn_prefixes)
-        p = re.compile(f"^{pn_prefix}([0-9]+)[.]([0-9]+)(-[0-9]+)?[ ]*({sn_prefix})[:]?[ ]*([0-9]+)$")
-        m = p.match(value.strip().upper())
-        if not m:
-            return DataEntry.ERR_BARCODE_FORMAT, None, None, None
-        else:
-            pn = m.group(1) + "." + m.group(2)
-            rev = m.group(3).lstrip("-")
-            sn = m.group(5)
-            return DataEntry.ERR_OK, pn, rev, sn
-
-    @classmethod
-    def barcode_dut(cls, value: str, pn_refix: str, allowed_pns: Optional[list[str]] = None) -> tuple[int, None | str, None | str, None | str]:
-        """Decode all possible QR label formats and ensure they match known hardware.
-
-        Args:
-            value (str): Input value
-
-        Returns:
-            number,str,str,str: Error code, PN, Rev, SN
-        """
-        returncode, pn, rev, sn = cls.barcode_pcba_pn_sn(value, pn_refix)
-        if returncode != DataEntry.ERR_OK:
-            return returncode, pn, rev, sn
-        if allowed_pns and pn not in allowed_pns:
-            return DataEntry.ERR_UNKNOWN_PN, pn, rev, sn
-        return DataEntry.ERR_OK, pn, rev, sn
-
-    @classmethod
-    def barcode_serial_label_WIP(cls, value: str) -> tuple[int, None, None, str | None]:
-        """Decode all possible QR label formats from serial label.
-
-        Args:
-            value (str): Input value
-
-        Returns:
-            number,str,str,str: Error code, PN, Rev, SN
-        """
-        # MAC address with colons
-        p = re.compile("^([0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F]:[0-9a-fA-F][0-9a-fA-F])$")
-        m = p.match(value.strip().upper())
-        if not m:
-            return DataEntry.ERR_BARCODE_FORMAT, None, None, None
-        else:
-            sn = m.group(1).lower()
-            return DataEntry.ERR_OK, None, None, sn
-
-    @classmethod
-    def barcode_serial_pin_label(cls, value: str) -> tuple[int, None, None, None | str, None | str]:
-        """Decode all possible QR label formats from serial label.
-
-        Args:
-            value (str): Input value
-
-        Returns:
-            number,str,str,str,str: Error code, PN, Rev, SN, PIN
-        """
-        # MAC address with colons
-        p = re.compile("^([0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ([0-9][0-9][0-9][0-9])$")
-        m = p.match(value.strip().upper())
-        if not m:
-            return DataEntry.ERR_BARCODE_FORMAT, None, None, None, None
-        else:
-            sn = m.group(1).lower()
-            pin = m.group(2).lower()
-            return DataEntry.ERR_OK, None, None, sn, pin
-
-    def dut_connect_no_qr(self) -> tuple[FilterResult, Optional[str], bool]:
-        """Request "enter" using provided fnc_input at instantiation.
-
-        Returns: run,data,is_barcode - if run is not FilterResult.FILTER_NONE, data should be ignored and test loop stopped, if FilterResult.FILTER_NONE, continue and call .run(data).
-        """
-        while True:
-            input_str = self.fnc_input("Connect device and hit [Enter]: ").strip()
-
-            filt = self.input_filter.filter_input(self, input_str, allow_signoff=True)
-            if filt != FilterResult.FILTER_NONE:
-                return filt, None, False
-
-            break
-        if len(input_str) > 0 and self.loggr:
-            self.loggr.debug(f'got user entry: "{input_str}", ignoring')
-        return FilterResult.FILTER_NONE, None, False
-
-    def dut_label_sn_pin(self, pre_message: Optional[str] = None) -> tuple[FilterResult, Optional[str], Optional[str], bool]:
-        """Request barcode scan or SN/PIN and "enter" using provided fnc_input at instantiation.
-
-        Returns: run,sn,pin,is_barcode - if run is not FilterResult.FILTER_NONE, sn and pin should be ignored and test loop stopped, if FilterResult.FILTER_NONE, use sn and pin andcontinue.
-        """
-        while True:
-            input_str = self.fnc_input(((pre_message + " ") if pre_message else "") + "Scan barcode on device Serial Label, or enter \n  SERIAL NUMBER [space] PIN  \n and hit [Enter]: ").strip()
-
-            filt = self.input_filter.filter_input(self, input_str, allow_signoff=True)
-            if filt != FilterResult.FILTER_NONE:
-                return filt, None, None, False
-
-            returncode, pn, rev, sn, pin = DataEntry.barcode_serial_pin_label(input_str)
-            if returncode == DataEntry.ERR_OK:
-                # Got a barcode scan
-                if self.loggr:
-                    self.loggr.print(f"  Got serial label barcode: SN={sn}, PIN={pin}.")
-                return FilterResult.FILTER_NONE, sn, pin, True
-
-    def dut_connect_qr_WIP(self) -> tuple[FilterResult, Optional[str], bool]:
-        """Request barcode scan or SN/MAC and "enter" using provided fnc_input at instantiation.
-
-        Returns: run,data,is_barcode - if run is not FilterResult.FILTER_NONE, data should be ignored and test loop stopped, if FilterResult.FILTER_NONE, continue and call .run(data).
-        """
-        while True:
-            input_str = self.fnc_input("Scan device serial label QR code or enter serial number and hit [Enter]: ").strip()
-
-            filt = self.input_filter.filter_input(self, input_str, allow_signoff=True)
-            if filt != FilterResult.FILTER_NONE:
-                return filt, None, False
-
-            returncode, pn, rev, sn = DataEntry.barcode_serial_label_WIP(input_str)
-            if returncode == TestError.ERR_OK:
-                # Got a barcode scan
-                if self.loggr:
-                    self.loggr.print(f"  Got serial label barcode: SN={sn}.")
-                return FilterResult.FILTER_NONE, sn, True
-
-            dut_id = input_str.split(" ")[0].lower()
-            other = input_str.split(" ")[1:]
-            if self.loggr:
-                if len(other) or dut_id == "":
-                    self.loggr.print(f'  {self.dut_field_name} "{input_str}" not recognized. Do not enter spaces.')
-            else:
-                break
-
-        if self.loggr:
-            self.loggr.debug(f'got user entry: "{dut_id}"')
-        self.dut_id = dut_id
-        return FilterResult.FILTER_NONE, dut_id, False
-
-    def dut_pn_entry(self) -> tuple[FilterResult, None | str, bool]:  # TODO: (when needed) Clone and Modify to scan serial label and use at the end of test run
-        """Request data using provided fnc_input at instantiation.
-
-        Returns: run,data,is_barcode - if run is not FilterResult.FILTER_NONE, data should be ignored and test loop stopped, if FilterResult.FILTER_NONE, continue and call .run(data).
-        """
-        pn_refix = ""
-        pns = [
-            "10.00001",
-            "10.00002",  # TODO: (when needed) Set accepted part numbers in config file (app_conf.yaml?? or use work order file somehow?)
-        ]
-        dut_id = ""
-        while True:
-            input_str = self.fnc_input(f"Scan/Enter {self.dut_field_name}: ").strip()
-
-            filt = self.input_filter.filter_input(self, input_str, allow_signoff=True)
-            if filt != FilterResult.FILTER_NONE:
-                return filt, None, False
-
-            returncode, pn, rev, sn = DataEntry.barcode_dut(input_str, pn_refix, pns)
-            if returncode == TestError.ERR_OK:
-                # Got a barcode scan
-                dut_sn = None
-                if self.loggr:
-                    self.loggr.print(f"  Got board barcode: PN={pn_refix}{pn} Rev={rev} SN={sn}.")
-                dut_pn, dut_rev, dut_sn = pn, rev, sn
-                if dut_sn:
-                    # For barcode scanner use, we have to delay
-                    # Format sub-assembly ID from DUT SN
-                    return (
-                        FilterResult.FILTER_NONE,
-                        self.data_fmt.format(
-                            dut_pn=dut_pn,
-                            dut_rev=dut_rev,
-                            dut_sn=dut_sn,
-                        ),
-                        True,
-                    )
-
-            dut_id = input_str.split(" ")[0].lower()
-            other = input_str.split(" ")[1:]
-            if len(other) or dut_id == "":
-                if self.loggr:
-                    self.loggr.print(f'  {self.dut_field_name} "{input_str}" not recognized. Do not enter spaces.')
-            else:
-                break
-
-        if self.loggr:
-            self.loggr.debug(f'got user entry: "{dut_id}"')
-        self.dut_id = dut_id
-        return FilterResult.FILTER_NONE, dut_id, False
-
-    def dut_info(self, dut_id: Optional[str] = None) -> str:
-        if not dut_id:
-            dut_id = self.dut_id
-        return f"{self.dut_field_name} {dut_id}"
+    def get_dut_info(self) -> str:
+        return f"{self.FIELD_DUT_ID} {self.dut_id}"

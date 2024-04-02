@@ -42,7 +42,7 @@ from .test_result_writer import ResultsWriter
 if TYPE_CHECKING:
     from collections.abc import Awaitable
     from io import TextIOWrapper
-    from .data_entry import DataEntry
+    from .data_entry import DataEntryInterface
     from .tester_api import TesterControlInterface
 
 MAX_LINES_IN_SHORT_INFO = 2
@@ -74,12 +74,14 @@ class CommandResult:
         """Constructor.
 
         Args:
-            returncode (TestError) : One of TestError.ERR_*
-            results (list[]) : Measurement results (singular)
-            test_info (str)  : Test failure description
-            block_data (list[str] | list[list[str]], optional): Measurement results (block, to be written over multiple rows in results file). Defaults to None.
+            returncode: One of TestError.ERR_*
+            results: Measurement results (singular)
+            test_info: Test failure description
+            block_data: Measurement results (block, to be written over multiple rows in results file). Defaults to None.
             command_name : Name of the command that this result is from
+            checks : Number of checks
             lineno : Line in the script this command is from
+            elapsed_time : Elapsed time in seconds
         """
         if results is None:
             results = []
@@ -147,7 +149,7 @@ class TestScriptCommand:
             num_expected_tokens     : Number (or a range) of tokens expected
 
         Returns:
-            bool : Whether the number of tokens is valid for the command.
+            True if the number of tokens is valid for the command.
         """
         result = True
         if isinstance(num_expected_tokens, range):
@@ -479,7 +481,7 @@ class TestScript:
         loggr: Loggr,
         verbose: bool = False,
         debug: bool = False,
-        data_entry: Optional[DataEntry] = None,
+        data_entry: Optional[DataEntryInterface] = None,
         ignore_ble: bool = False,
         plugins_dir: Optional[str] = None,
         tester_control: Optional[TesterControlInterface] = None,
@@ -498,7 +500,7 @@ class TestScript:
         self.loggr = loggr
         self.verbose: bool = verbose
         self.debug: bool = debug
-        self.data_entry: Optional[DataEntry] = data_entry
+        self.data_entry: Optional[DataEntryInterface] = data_entry
         self.plugins_dir: Optional[str] = plugins_dir or SCRIPT_DIR
         self.dut_control: Optional[DutControlInterface] = dut_control
         self.tester_control: Optional[TesterControlInterface] = tester_control
@@ -507,7 +509,7 @@ class TestScript:
         self.commands: list[TestScriptCommand] = []
 
         self.plugins = AtDict()
-        self.plugins.cnt_embedded = self.add_commands_from_plugins(SCRIPT_DIR, 1, file_filter=[self.__class__.__module__.split(".")[-1]])
+        self.plugins.cnt_embedded = self.add_commands_from_plugins(SCRIPT_DIR, 1, file_filter=[self.__class__.__module__.rsplit(".", maxsplit=1)[-1]])
         self.plugins.cnt_extensions = self.add_commands_from_plugins(self.plugins_dir, 1, file_filter=["*plugin*"])
 
         self.commands_map = {cmd.command: cmd for cmd in self.commands}
@@ -759,13 +761,8 @@ class TestScript:
 
         Opens all necessary resources.
 
-        Args:
-            port (_type_): _description_
-            baudrate (int, optional): _description_. Defaults to 115200.
-            timeout (int, optional): _description_. Defaults to 1.
-
         Returns:
-            _type_: _description_
+            Error code
         """
         self.loggr.debug("Test.pre()")
         self.tester_transcript.reset()
@@ -853,13 +850,13 @@ class TestScript:
     # endregion
 
     def _run_one_line(self, tokens: list[str]) -> tuple[TestError, list[str], str]:
-        """Parses the CSV line and takes the appropriate action.
+        """Parse the CSV line and takes the appropriate action.
 
         Args:
             tokens : list of parsed line tokens from command CSV file
 
         Returns:
-            (number, array, string|None): (error code, list of pd values [], test info)
+            Tuple of error code, list of results, test info
         """
         returncode = TestError.ERR_OK
         results = []  # results = ['some result 1', 'some result 2']
@@ -1053,15 +1050,15 @@ class TestScript:
     def get_dut_info(self):
         return self.dut_control.device_id if self.dut_control else ""
 
-    def write_report(self, reportfile, timestamp, elapsed_time, fields=None, **kwargs):
+    def write_report(self, reportfile, timestamp, elapsed_time, fields=None, **kwargs) -> None:
         """Write a row to a .CSV report file describing the test.
 
         Args:
-            reportfile (str): File path to write to
-            timestamp (time): Test start time
-            elapsed_time (time): Test duration
-            fields (list[str], optional): Fields in the report file. Note: Changing fields on an existing report file is not going to adjust existing header and data rows.
-            **kwargs (): Values for the custom fields
+            reportfile: File path to write to
+            timestamp: Test start time
+            elapsed_time: Test duration
+            fields: Fields in the report file. Note: Changing fields on an existing report file is not going to adjust existing header and data rows.
+            **kwargs: Values for the custom fields
         """
         self.loggr.info(f'Writing report file "{reportfile}"...')
 
@@ -1093,7 +1090,7 @@ class TestScript:
             f.write(line)
         self.loggr.info("Done writing report file.")
 
-    def print_summary(self, fmt=None, loggr=None, output_mode="fail_only"):
+    def print_summary(self, fmt=None, loggr=None, output_mode="fail_only") -> None:
         """Prints the test summary to a custom loggr or to the instance's `self.loggr`.
 
         Args:

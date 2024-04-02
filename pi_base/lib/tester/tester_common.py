@@ -24,6 +24,7 @@ class TestError(Enum):
     ERR_PORT_CLOSED                    =    8, "The port the device was connected to was closed"
     ERR_FILE_SAVE                      =    9, "Error saving file"
     ERR_NO_CONFIG                      =   10, "Configuration not set"
+    ERR_SIGNOFF                        = 1997, "Operator signed off"
     ERR_OUTPUT_WRITE_OVERRIDE          = 1998, "TODO"
     ERR_ABORT                          = 1999, "The test was aborted"
     ERR_TEST_FAIL                      = 2000, "The test limit check failed"
