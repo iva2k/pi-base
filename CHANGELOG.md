@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.34 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.0.33 (2024-04-02)
 
 * Add pi_base/lib/user_input.py UserInput class for more flexible handling of input and detecting barcode scanner entry symbol
