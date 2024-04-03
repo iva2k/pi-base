@@ -150,10 +150,11 @@ class DataEntry(DataEntryInterface):
             raise ValueError("Please provide loggr argument")
         self.loggr = loggr
 
-        # WIP: Configure the barcode scanner (USB HID keyboard type) to add CR+LF suffix, then with "scanner_suffix"
+        # Configure the barcode scanner (USB HID keyboard type) to add TAB suffix, then with "scanner_suffix"
         # we can detect (see self.check_if_barcode()) that an entry is from scanner, not from keyboard.
+        # That requires to use CustomInput.input passed for fnc_input.
         opts: dict[str, Any] = {
-            "scanner_suffix": ["\n\r", "\r\n"],
+            "scanner_suffix": ["\t"],
         }
         opts.update(options if options else {})
         if isinstance(opts["scanner_suffix"], str):
