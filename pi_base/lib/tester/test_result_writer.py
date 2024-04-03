@@ -78,7 +78,7 @@ class ResultsWriter:
         if result_header is not None:
             self.results_buffer.append(f"##, {result_header}" + ("" if returncode is None else ", error_code"))
         if result_line is not None:
-            self.results_buffer.append(f"##, {result_line}" + ("" if returncode is None else f", {returncode}"))
+            self.results_buffer.append(f"##, {result_line}" + ("" if returncode is None else f", {returncode.name} {returncode.string}"))
 
     def commit_results(self, file_name: str) -> "list[tuple[ResultCommitCallback, TestError, str]]":
         """Commit (save) the result buffer to all registered save locations.
