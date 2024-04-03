@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.34 (unreleased)
+## 0.0.34 (2024-04-02)
 
 * Add terminal init for Linux in UserInput
 
