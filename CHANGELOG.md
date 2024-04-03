@@ -2,9 +2,7 @@
 
 ## 0.0.34 (unreleased)
 
-
-- Nothing changed yet.
-
+* Add terminal init for Linux in UserInput
 
 ## 0.0.33 (2024-04-02)
 

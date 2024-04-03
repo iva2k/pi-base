@@ -8,13 +8,14 @@ from __future__ import annotations
 import logging
 import os
 import re
-import sys
 from typing import TYPE_CHECKING
 
 if os.name == "nt":
     import msvcrt
 else:
     import select
+    import termios
+    import tty
 
 # "modpath" must be first of our modules
 # pylint: disable=wrong-import-position
@@ -137,8 +138,10 @@ class keys:
             b"\x1b[6~": KEY_PGDN,
             b"\x03": KEY_QUIT,
             b"\r": KEY_ENTER,
+            b"\n": KEY_ENTER,
             b"\t": KEY_TAB,
             b"\x1b[Z": KEY_SHIFT_TAB,
+            b"\x1b[\t": KEY_SHIFT_TAB,
             b"\x7f": KEY_BACKSPACE,
             b"\x1b[3~": KEY_DELETE,
             b"\x1b": KEY_ESC,
@@ -211,6 +214,21 @@ class _Screen:
         # Doesn't work here, as it doesn't advance cursor
         # Screen.clear_num_pos(width - len(s))
 
+    @classmethod
+    def init_tty(cls):
+        if os.name == "nt":
+            pass
+        else:
+            cls.org_termios = termios.tcgetattr(0)
+            tty.setraw(0)
+
+    @classmethod
+    def deinit_tty(cls):
+        if os.name == "nt":
+            pass
+        else:
+            termios.tcsetattr(0, termios.TCSANOW, cls.org_termios)
+
     # Clear specified number of positions
     @staticmethod
     def clear_num_pos(num) -> None:
@@ -235,14 +253,14 @@ class _Screen:
         # vals = resp[:-1].split(b";")
         # return (int(vals[2]), int(vals[1]))
 
-        data = ""
-        while not data.endswith("R"):
+        data = b""
+        while not data.endswith(b"R"):
             if os.name == "nt":
-                data = data + msvcrt.getch().decode()
+                data = data + msvcrt.getch()
             else:
-                data = data + sys.stdin.read(1)
+                data = data + os.read(0, 32)
         # response data = "^[[{y};{x}R"
-        res = re.match(r".*\[(?P<y>\d*);(?P<x>\d*)R", data)
+        res = re.match(r".*\[(?P<y>\d*);*(?P<x>\d*)R", data.decode())
         if not res:
             return -1, -1
         x = int(res.group("x")) - 1
@@ -645,6 +663,7 @@ class UserInput:
                 return res
 
     def input(self, msg: str, default: str | None = None) -> str:
+        _Screen.init_tty()
         self.reset()
         self.content = [default or ""]
         if msg:
@@ -654,14 +673,16 @@ class UserInput:
             self.x = x
             self.y = y
         res = self.loop()
+        data = ""
         if res is True:
-            _Screen.wr("\n")
+            _Screen.wr("\r\n")
             if self.debug and self.loggr:
                 key_story_str = ";".join([bytes([c]).decode() for c in self.key_story])
                 key_story_str = convert_non_printable_to_hex(key_story_str)
                 self.loggr.debug(f'input keys received: "{key_story_str}" -> "{self.content[0]}"')
-            return self.content[0]
-        return ""
+            data = self.content[0]
+        _Screen.deinit_tty()
+        return data
 
 
 def convert_non_printable_to_hex(input_string: str) -> str:
