@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.35 (unreleased)
+## 0.0.35 (2024-04-02)
 
 * Clean debug log in UserInput
 
