@@ -2,9 +2,7 @@
 
 ## 0.0.35 (unreleased)
 
-
-- Nothing changed yet.
-
+* Clean debug log in UserInput
 
 ## 0.0.34 (2024-04-02)
 

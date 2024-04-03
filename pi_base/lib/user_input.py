@@ -679,7 +679,7 @@ class UserInput:
             if self.debug and self.loggr:
                 key_story_str = ";".join([bytes([c]).decode() for c in self.key_story])
                 key_story_str = convert_non_printable_to_hex(key_story_str)
-                self.loggr.debug(f'input keys received: "{key_story_str}" -> "{self.content[0]}"')
+                self.loggr.debug(f'input keys received: "{key_story_str}" -> "{self.content[0]}"\r\n')
             data = self.content[0]
         _Screen.deinit_tty()
         return data
